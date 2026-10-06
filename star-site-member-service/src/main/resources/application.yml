@@ -42,4 +42,4 @@ management:
 
 logging:
   level:
-    com.xiaopu.starsite: info
+    com.xp.starsite: info
