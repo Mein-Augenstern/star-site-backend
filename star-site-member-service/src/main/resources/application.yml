@@ -12,6 +12,8 @@ spring:
       server-addr: 127.0.0.1:8848
       discovery:
         namespace: public
+        # 本地开发强制注册 127.0.0.1（网段变化时 LB 才连得通）；生产去掉用真实 IP
+        ip: 127.0.0.1
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     # 宿主机 3306 被本机原生 MySQL 占用，docker MySQL 映射在 3307

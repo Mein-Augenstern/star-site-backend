@@ -13,7 +13,11 @@
 
     <modules>
         <module>star-site-common</module>
+        <module>star-site-gateway</module>
         <module>star-site-member-service</module>
+        <module>star-site-family-service</module>
+        <module>star-site-file-service</module>
+        <module>star-site-health-service</module>
     </modules>
 
     <properties>
@@ -85,6 +89,16 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring-boot.version}</version>
+                </plugin>
+                <!-- 没继承 spring-boot-starter-parent，须自己开 -parameters，
+                     否则 Boot 3.2 下不写名字的 @PathVariable/@RequestParam 解析失败 -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                    <configuration>
+                        <parameters>true</parameters>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

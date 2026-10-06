@@ -1,27 +1,27 @@
-package com.xp.starsite.member.interceptor;
+package com.xp.starsite.common.web;
 
 import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.io.IOException;
 
 /**
- * JWT 校验拦截器：校验 Authorization: Bearer <token>，
- * 通过后把 memberId / username 放入 request attribute
+ * 可复用的 MVC JWT 拦截器（业务服务在 WebConfig 里注册为 @Bean 使用；
+ * 故意不加 @Component，避免被 WebFlux 网关的组件扫描误加载）
  */
-@Component
-@RequiredArgsConstructor
-public class JwtInterceptor implements HandlerInterceptor {
+public class JwtAuthInterceptor implements HandlerInterceptor {
 
     private final JwtUtil jwtUtil;
+
+    public JwtAuthInterceptor(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
