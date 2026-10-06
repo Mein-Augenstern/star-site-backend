@@ -4,6 +4,7 @@ import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -12,15 +13,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.UUID;
 
 /**
- * 本地磁盘存储：{rootDir}/{yyyyMM}/{uuid}.{ext}
+ * 本地磁盘存储（默认；file.storage-type=local 或未配置时启用）
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "file.storage-type", havingValue = "local", matchIfMissing = true)
 public class LocalFileStorage implements FileStorage {
 
     private final Path rootDir;
@@ -37,9 +36,7 @@ public class LocalFileStorage implements FileStorage {
 
     @Override
     public String save(InputStream in, String originalFilename, String contentType) {
-        String month = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
-        String ext = extOf(originalFilename);
-        String key = month + "/" + UUID.randomUUID() + ext;
+        String key = StorageKeys.newKey(originalFilename);
         Path target = rootDir.resolve(key);
         try {
             Files.createDirectories(target.getParent());
@@ -62,13 +59,5 @@ public class LocalFileStorage implements FileStorage {
         } catch (IOException e) {
             throw new BizException(ResultCode.SYSTEM_ERROR.getCode(), "文件读取失败");
         }
-    }
-
-    private String extOf(String filename) {
-        int dot = filename.lastIndexOf('.');
-        if (dot < 0 || dot == filename.length() - 1) {
-            return "";
-        }
-        return filename.substring(dot).toLowerCase();
     }
 }
