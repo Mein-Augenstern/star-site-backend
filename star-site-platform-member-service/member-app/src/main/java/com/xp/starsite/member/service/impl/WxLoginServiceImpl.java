@@ -3,6 +3,9 @@ package com.xp.starsite.member.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.util.JwtUtil;
+import com.xp.starsite.member.constant.Gender;
+import com.xp.starsite.member.constant.IdentityType;
+import com.xp.starsite.member.constant.MemberStatus;
 import com.xp.starsite.member.entity.Member;
 import com.xp.starsite.member.entity.MemberIdentity;
 import com.xp.starsite.member.integration.WxSessionGateway;
@@ -44,7 +47,7 @@ public class WxLoginServiceImpl implements WxLoginService {
 
         // 1) openid 精确命中 → 直接登录
         MemberIdentity identity = identityMapper.selectOne(new LambdaQueryWrapper<MemberIdentity>()
-                .eq(MemberIdentity::getIdentityType, "WECHAT_MP")
+                .eq(MemberIdentity::getIdentityType, IdentityType.WECHAT_MP)
                 .eq(MemberIdentity::getIdentifier, session.openid()));
         // 2) unionid 跨端归一：同主体其他端（公众号/PC扫码）已注册过 → 认回同一账号
         Member member;
@@ -52,7 +55,7 @@ public class WxLoginServiceImpl implements WxLoginService {
             member = memberMapper.selectById(identity.getMemberId());
         } else if (session.unionid() != null && !session.unionid().isBlank()) {
             MemberIdentity unionIdentity = identityMapper.selectOne(new LambdaQueryWrapper<MemberIdentity>()
-                    .eq(MemberIdentity::getIdentityType, "WECHAT_MP")
+                    .eq(MemberIdentity::getIdentityType, IdentityType.WECHAT_MP)
                     .eq(MemberIdentity::getUnionid, session.unionid())
                     .last("LIMIT 1"));
             if (unionIdentity != null) {
@@ -71,8 +74,8 @@ public class WxLoginServiceImpl implements WxLoginService {
             member.setUsername(null);
             member.setPassword(null);
             member.setNickname("微信用户" + session.openid().substring(Math.max(0, session.openid().length() - 6)));
-            member.setGender(0);
-            member.setStatus(1);
+            member.setGender(Gender.UNKNOWN);
+            member.setStatus(MemberStatus.ACTIVE);
             memberMapper.insert(member);
             log.info("微信静默注册: memberId={}", member.getId());
         }
@@ -81,7 +84,7 @@ public class WxLoginServiceImpl implements WxLoginService {
         if (identity == null) {
             identity = new MemberIdentity();
             identity.setMemberId(member.getId());
-            identity.setIdentityType("WECHAT_MP");
+            identity.setIdentityType(IdentityType.WECHAT_MP);
             identity.setIdentifier(session.openid());
             identity.setUnionid(session.unionid());
             identity.setCredential(session.sessionKey());
@@ -94,7 +97,7 @@ public class WxLoginServiceImpl implements WxLoginService {
             identityMapper.updateById(identity);
         }
 
-        if (member.getStatus() != 1) {
+        if (member.getStatus() != MemberStatus.ACTIVE) {
             throw new BizException(403, "账号已被禁用");
         }
         String token = jwtUtil.generateToken(member.getId(),
@@ -125,7 +128,7 @@ public class WxLoginServiceImpl implements WxLoginService {
 
         // 2) openid 已绑其他账号 → 拒绝重复绑定；已绑同一账号 → 幂等返回
         MemberIdentity existing = identityMapper.selectOne(new LambdaQueryWrapper<MemberIdentity>()
-                .eq(MemberIdentity::getIdentityType, "WECHAT_MP")
+                .eq(MemberIdentity::getIdentityType, IdentityType.WECHAT_MP)
                 .eq(MemberIdentity::getIdentifier, session.openid()));
         if (existing != null && !existing.getMemberId().equals(target.getId())) {
             throw new BizException(400, "该微信已绑定其他账号，请先在原账号解绑");
@@ -144,7 +147,7 @@ public class WxLoginServiceImpl implements WxLoginService {
         MemberIdentity identity = existing;
         if (identity == null) {
             identity = new MemberIdentity();
-            identity.setIdentityType("WECHAT_MP");
+            identity.setIdentityType(IdentityType.WECHAT_MP);
             identity.setIdentifier(session.openid());
             identity.setMemberId(target.getId());
             identity.setUnionid(session.unionid());

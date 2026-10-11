@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
 import com.xp.starsite.common.util.JwtUtil;
+import com.xp.starsite.member.constant.Gender;
+import com.xp.starsite.member.constant.MemberStatus;
 import com.xp.starsite.member.dto.LoginDTO;
 import com.xp.starsite.member.dto.MemberUpdateDTO;
 import com.xp.starsite.member.dto.PasswordUpdateDTO;
@@ -43,8 +45,8 @@ public class MemberServiceImpl implements MemberService {
         member.setUsername(dto.getUsername());
         member.setPassword(passwordEncoder.encode(dto.getPassword()));
         member.setNickname(StringUtils.hasText(dto.getNickname()) ? dto.getNickname() : dto.getUsername());
-        member.setGender(0);
-        member.setStatus(1);
+        member.setGender(Gender.UNKNOWN);
+        member.setStatus(MemberStatus.ACTIVE);
         memberMapper.insert(member);
         log.info("新会员注册: id={}, username={}", member.getId(), member.getUsername());
     }
@@ -56,7 +58,7 @@ public class MemberServiceImpl implements MemberService {
         if (member == null || !passwordEncoder.matches(dto.getPassword(), member.getPassword())) {
             throw new BizException(ResultCode.USERNAME_OR_PASSWORD_ERROR);
         }
-        if (member.getStatus() != 1) {
+        if (member.getStatus() != MemberStatus.ACTIVE) {
             throw new BizException(ResultCode.ACCOUNT_DISABLED);
         }
         String token = jwtUtil.generateToken(member.getId(), member.getUsername());

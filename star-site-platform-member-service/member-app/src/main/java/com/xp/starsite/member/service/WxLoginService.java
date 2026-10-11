@@ -2,6 +2,10 @@ package com.xp.starsite.member.service;
 
 import com.xp.starsite.member.vo.LoginVO;
 
+/**
+ * 微信登录/绑定用例接口（app 层）。
+ * 与账密登录（MemberService）同构：都返回签发 JWT 的 LoginVO。
+ */
 public interface WxLoginService {
 
     /** 小程序登录：静默注册/登录，返回与账号密码登录同构的 LoginVO */

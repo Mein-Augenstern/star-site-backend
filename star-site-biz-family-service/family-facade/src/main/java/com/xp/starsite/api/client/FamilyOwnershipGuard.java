@@ -56,7 +56,7 @@ public class FamilyOwnershipGuard {
         try {
             r = call.get();
         } catch (Exception e) {
-            log.error("调用 family 服务失败（fail-closed 拒绝请求）: {}", e.getMessage());
+            log.error("调用 family 服务失败（fail-closed 拒绝请求）: {}", e.getMessage(), e);
             throw new BizException(ResultCode.SYSTEM_ERROR.getCode(), "家庭服务暂不可用，请稍后再试");
         }
         if (r == null || r.getCode() != ResultCode.SUCCESS.getCode()) {
