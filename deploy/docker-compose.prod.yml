@@ -1,0 +1,180 @@
+# star-site 生产部署（双机 split：node-a 入口+状态层 / node-b 业务层）
+# 用法：
+#   node-a: IMAGE_TAG=<sha> docker compose -f docker-compose.prod.yml --profile node-a up -d
+#   node-b: IMAGE_TAG=<sha> docker compose -f docker-compose.prod.yml --profile node-b up -d
+# 变量来自同目录 .env.prod（bootstrap-node.sh 会放好），勿提交 git。
+
+x-app-env: &app-env
+  SPRING_DATASOURCE_URL: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT:-3306}/star_site?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+  SPRING_DATASOURCE_USERNAME: root
+  SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+  JWT_SECRET: ${JWT_SECRET}
+  SPRING_CLOUD_NACOS_SERVER_ADDR: ${NACOS_ADDR}
+  SPRING_CLOUD_NACOS_DISCOVERY_IP: ${NACOS_DISCOVERY_IP}   # 本机内网 IP（跨节点发现关键）
+  STAR_ASYNC_ENABLED: ${STAR_ASYNC_ENABLED:-false}
+  FILE_STORAGE_TYPE: ${FILE_STORAGE_TYPE:-local}
+
+x-app-build: &app-build
+  pull_policy: never
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
+    args: { MODULE: placeholder }
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+  # ================= node-a：入口 + 状态层 =================
+  mysql:
+    profiles: ["node-a"]
+    image: mysql:8.0
+    container_name: star-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: star_site
+      TZ: Asia/Shanghai
+      # 2G 机器减负
+      MYSQL_ARGS: --performance-schema=off --innodb-buffer-pool-size=128M
+    command: ["mysqld", "--performance-schema=off", "--innodb-buffer-pool-size=128M"]
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${MYSQL_HOST_BIND:-127.0.0.1}:3306:3306"
+    mem_limit: 512m
+    <<: *restart
+
+  redis:
+    profiles: ["node-a"]
+    image: redis:7-alpine
+    container_name: star-redis
+    command: ["redis-server", "--maxmemory", "96mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis-data:/data
+    mem_limit: 128m
+    <<: *restart
+
+  nacos:
+    profiles: ["node-a"]
+    image: nacos/nacos-server:v2.3.2-slim
+    container_name: star-nacos
+    environment:
+      MODE: standalone
+      NACOS_AUTH_ENABLE: "false"
+      JVM_XMS: 192m
+      JVM_XMX: 320m
+      TZ: Asia/Shanghai
+    volumes:
+      - nacos-data:/home/nacos/data
+    ports:
+      - "${NACOS_HOST_BIND:-0.0.0.0}:8848:8848"
+      - "9848:9848"
+    mem_limit: 768m
+    <<: *restart
+
+  platform-gateway:
+    profiles: ["node-a"]
+    image: ${ACR_PREFIX}/gateway:${IMAGE_TAG:-latest}
+    pull_policy: never
+    container_name: star-gateway
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: ${DISCOVERY_IP_A}
+      JAVA_OPTS: -Xmx256m -Xms128m
+    mem_limit: 384m
+    <<: *restart
+    depends_on: [mysql, nacos]
+
+  platform-member:
+    profiles: ["node-a"]
+    image: ${ACR_PREFIX}/platform-member:${IMAGE_TAG:-latest}
+    pull_policy: never
+    container_name: star-member
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: ${DISCOVERY_IP_A}
+      WX_MP_APPID: ${WX_MP_APPID:-}
+      WX_MP_SECRET: ${WX_MP_SECRET:-}
+      ADMIN_MEMBER_IDS: ${ADMIN_MEMBER_IDS:-}
+      STAR_ASYNC_ENABLED: "false"
+      JAVA_OPTS: -Xmx192m -Xms64m
+    mem_limit: 320m
+    <<: *restart
+    depends_on: [mysql, nacos]
+
+  nginx:
+    profiles: ["node-a"]
+    image: nginx:1.27-alpine
+    container_name: star-nginx
+    volumes:
+      - ./nginx/star-site.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./nginx/www:/var/www/certbot:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    mem_limit: 64m
+    <<: *restart
+
+  # ================= node-b：业务层 =================
+  family:
+    profiles: ["node-b"]
+    image: ${ACR_PREFIX}/biz-family:${IMAGE_TAG:-latest}
+    pull_policy: never
+    container_name: star-family
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: ${DISCOVERY_IP_B}
+      JAVA_OPTS: -Xmx192m -Xms64m
+    mem_limit: 320m
+    <<: *restart
+
+  health:
+    profiles: ["node-b"]
+    image: ${ACR_PREFIX}/biz-health:${IMAGE_TAG:-latest}
+    pull_policy: never
+    container_name: star-health
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: ${DISCOVERY_IP_B}
+      STAR_ASYNC_ENABLED: "true"
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://open.bigmodel.cn/api/paas/v4}
+      JAVA_OPTS: -Xmx224m -Xms64m
+    mem_limit: 320m
+    <<: *restart
+
+  platform-file:
+    profiles: ["node-b"]
+    image: ${ACR_PREFIX}/file:${IMAGE_TAG:-latest}
+    pull_policy: never
+    container_name: star-file
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: ${DISCOVERY_IP_B}
+      FILE_STORAGE_TYPE: ${FILE_STORAGE_TYPE:-local}
+      JAVA_OPTS: -Xmx192m -Xms64m
+    volumes:
+      - file-data:/app/data/files
+    mem_limit: 320m
+    <<: *restart
+
+  platform-reminder:
+    profiles: ["node-b"]
+    image: ${ACR_PREFIX}/reminder:${IMAGE_TAG:-latest}
+    pull_policy: never
+    container_name: star-reminder
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: ${DISCOVERY_IP_B}
+      STAR_ASYNC_ENABLED: "false"
+      JAVA_OPTS: -Xmx192m -Xms64m
+    mem_limit: 320m
+    <<: *restart
+
+volumes:
+  mysql-data:
+  redis-data:
+  nacos-data:
+  file-data:

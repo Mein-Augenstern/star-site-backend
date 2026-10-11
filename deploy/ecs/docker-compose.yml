@@ -1,0 +1,22 @@
+services:
+  frps:
+    image: snowdreamtech/frps:latest
+    container_name: star-frps
+    restart: unless-stopped
+    network_mode: host          # vhost 需监听宿主 8080 供 Caddy 反代
+    volumes:
+      - ./frps.toml:/etc/frp/frps.toml:ro
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: star-caddy
+    restart: unless-stopped
+    network_mode: host          # Linux 宿主直接监听 80/443，反代本机 frps vhost
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data        # 自动 HTTPS 证书
+      - caddy-config:/config
+
+volumes:
+  caddy-data:
+  caddy-config:

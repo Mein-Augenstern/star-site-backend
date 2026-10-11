@@ -1,0 +1,12 @@
+# Caddy：TLS 自动签发（Let's Encrypt）+ 域名路由到 frp vhost
+# 前提：两条域名 A 记录指向本机 ECS 公网 IP，且域名已完成 ICP 备案
+
+# 主入口（H5 / 管理端）
+star.example.com {
+	reverse_proxy 127.0.0.1:8080
+}
+
+# 小程序 request 合法域名（API）
+api.star.example.com {
+	reverse_proxy 127.0.0.1:8080
+}

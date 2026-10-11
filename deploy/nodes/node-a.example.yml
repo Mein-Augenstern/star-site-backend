@@ -1,0 +1,8 @@
+# node-a@***REMOVED-ECS-IP*** 单机过渡形态覆盖层：
+# 1) 网关绑 127.0.0.1:18080（8080 被 frps 占用），宿主机 nginx 80 反代 /api/
+# 2) nginx 容器不绑端口（宿主机 nginx 已持有 80；profiles 合并是并集，不能用 disabled 排除）
+services:
+  platform-gateway:
+    ports: !override ["127.0.0.1:18080:8080"]
+  nginx:
+    ports: !override []

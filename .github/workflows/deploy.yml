@@ -1,0 +1,67 @@
+name: deploy
+# push main → 构建变更模块镜像 → 推 ACR → SSH 更新两台 ECS
+# 前提：repo Secrets 配置 ACR_REGISTRY/ACR_USERNAME/ACR_PASSWORD、SSH_HOST_A/SSH_HOST_B、SSH_PRIVATE_KEY
+on:
+  push:
+    branches: [main]
+    paths:
+      - "star-site-*/**"
+      - "docker/**"
+      - ".github/workflows/deploy.yml"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 2 }
+
+      - id: changed
+        run: |
+          CHANGED=$(git diff --name-only HEAD~1 HEAD | cut -d/ -f1 | sort -u)
+          SVCS=""
+          grep -q 'star-site-platform-gateway' <<<"$CHANGED" && SVCS="$SVCS gateway"
+          grep -q 'star-site-platform-member-service' <<<"$CHANGED" && SVCS="$SVCS platform-member"
+          grep -q 'star-site-biz-family-service' <<<"$CHANGED" && SVCS="$SVCS family"
+          grep -q 'star-site-biz-health-service' <<<"$CHANGED" && SVCS="$SVCS health"
+          grep -q 'star-site-platform-file-service' <<<"$CHANGED" && SVCS="$SVCS file"
+          grep -q 'star-site-platform-reminder-service' <<<"$CHANGED" && SVCS="$SVCS reminder"
+          # 公共依赖（common/api/Dockerfile）变更 → 全量
+          grep -qE 'star-site-common|star-site-api|docker/Dockerfile' <<<"$CHANGED" && SVCS="gateway platform-member family health file reminder"
+          echo "services=$SVCS" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build & push changed services
+        env: { SERVICES: "${{ steps.changed.outputs.services }}" }
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          declare -A MOD=([gateway]=star-site-platform-gateway [platform-member]=star-site-platform-member-service \
+            [family]=star-site-biz-family-service [health]=star-site-biz-health-service \
+            [file]=star-site-platform-file-service [reminder]=star-site-platform-reminder-service)
+          for s in $SERVICES; do
+            docker build -f docker/Dockerfile --build-arg "MODULE=${MOD[$s]}" \
+              -t "$ACR_REGISTRY/$s:$SHA" -t "$ACR_REGISTRY/$s:latest" .
+            docker push "$ACR_REGISTRY/$s:$SHA"
+          done
+
+      - name: Roll out node-a
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST_A }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: cd /opt/star-site && IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.prod.yml --profile node-a pull && IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.prod.yml --profile node-a up -d && docker image prune -f
+
+      - name: Roll out node-b
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST_B }}
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: cd /opt/star-site && IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.prod.yml --profile node-b pull && IMAGE_TAG=${{ github.sha }} docker compose -f docker-compose.prod.yml --profile node-b up -d && docker image prune -f

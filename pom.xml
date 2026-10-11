@@ -13,11 +13,16 @@
 
     <modules>
         <module>star-site-common</module>
-        <module>star-site-gateway</module>
-        <module>star-site-member-service</module>
-        <module>star-site-family-service</module>
-        <module>star-site-file-service</module>
-        <module>star-site-health-service</module>
+        <module>star-site-api</module>
+        <module>star-site-platform-gateway</module>
+        <module>star-site-platform-member-service</module>
+        <module>star-site-biz-family-service</module>
+        <module>star-site-platform-file-service</module>
+        <module>star-site-biz-health-service</module>
+        <module>star-site-biz-insurance-service</module>
+        <module>star-site-platform-reminder-service</module>
+        <module>star-site-biz-archive-service</module>
+        <module>star-site-biz-finance-service</module>
     </modules>
 
     <properties>
@@ -29,6 +34,8 @@
         <spring-cloud-alibaba.version>2023.0.1.2</spring-cloud-alibaba.version>
         <mybatis-plus.version>3.5.12</mybatis-plus.version>
         <jjwt.version>0.12.7</jjwt.version>
+        <rocketmq-spring.version>2.3.4</rocketmq-spring.version>
+        <rocketmq.version>5.3.1</rocketmq.version>
     </properties>
 
     <dependencyManagement>
@@ -78,6 +85,33 @@
                 <groupId>com.xp.starsite</groupId>
                 <artifactId>star-site-common</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.xp.starsite</groupId>
+                <artifactId>star-site-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-spring-boot-starter</artifactId>
+                <version>${rocketmq-spring.version}</version>
+            </dependency>
+            <!-- rocketmq-spring 2.3.4 的已知配套问题：其代码调用 setNamespaceV2
+                 （client 5.2+ 才有），但传递依赖 client 5.1.4——显式对齐到与 broker 同代 -->
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-client</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-remoting</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-acl</artifactId>
+                <version>${rocketmq.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

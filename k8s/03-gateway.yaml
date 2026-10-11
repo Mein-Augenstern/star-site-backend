@@ -1,0 +1,39 @@
+# 网关：集群唯一对外入口（NodePort 30080）
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-gateway
+  namespace: star-site
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: platform-gateway }
+  template:
+    metadata:
+      labels: { app: platform-gateway }
+    spec:
+      containers:
+        - name: app
+          image: star-site/gateway:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: star-site-config }
+            - secretRef: { name: star-site-secret }
+          env:
+            - { name: SPRING_CLOUD_NACOS_DISCOVERY_IP, value: platform-gateway }
+          ports: [{ containerPort: 8080 }]
+          readinessProbe: { httpGet: { path: /actuator/health, port: 8080 }, initialDelaySeconds: 20 }
+          livenessProbe: { httpGet: { path: /actuator/health, port: 8080 }, initialDelaySeconds: 40 }
+          resources:
+            limits: { memory: "384Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-gateway
+  namespace: star-site
+spec:
+  type: NodePort
+  selector: { app: platform-gateway }
+  ports:
+    - { port: 8080, targetPort: 8080, nodePort: 30080 }

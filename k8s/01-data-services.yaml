@@ -1,0 +1,154 @@
+# 统一 Deployment+Service 模板说明：每个服务一个文档块；
+# 镜像名与 docker compose app profile 对齐（star-site/<服务>:latest）
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-member
+  namespace: star-site
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: platform-member }
+  template:
+    metadata:
+      labels: { app: platform-member }
+    spec:
+      containers:
+        - name: app
+          image: star-site/platform-member:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: star-site-config }
+            - secretRef: { name: star-site-secret }
+          env:
+            - { name: SPRING_CLOUD_NACOS_DISCOVERY_IP, value: platform-member }
+          ports: [{ containerPort: 8081 }]
+          readinessProbe: { httpGet: { path: /actuator/health, port: 8081 }, initialDelaySeconds: 30, periodSeconds: 10 }
+          livenessProbe: { httpGet: { path: /actuator/health, port: 8081 }, initialDelaySeconds: 60, periodSeconds: 20 }
+          resources:
+            requests: { memory: "256Mi" }
+            limits: { memory: "384Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-member
+  namespace: star-site
+spec:
+  selector: { app: platform-member }
+  ports: [{ port: 8081, targetPort: 8081 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: family
+  namespace: star-site
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: family }
+  template:
+    metadata:
+      labels: { app: family }
+    spec:
+      containers:
+        - name: app
+          image: star-site/biz-family:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: star-site-config }
+            - secretRef: { name: star-site-secret }
+          env:
+            - { name: SPRING_CLOUD_NACOS_DISCOVERY_IP, value: family }
+          ports: [{ containerPort: 8082 }]
+          readinessProbe: { httpGet: { path: /actuator/health, port: 8082 }, initialDelaySeconds: 30 }
+          livenessProbe: { httpGet: { path: /actuator/health, port: 8082 }, initialDelaySeconds: 60 }
+          resources:
+            limits: { memory: "384Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: family
+  namespace: star-site
+spec:
+  selector: { app: family }
+  ports: [{ port: 8082, targetPort: 8082 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-file
+  namespace: star-site
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: platform-file }
+  template:
+    metadata:
+      labels: { app: platform-file }
+    spec:
+      containers:
+        - name: app
+          image: star-site/file:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: star-site-config }
+            - secretRef: { name: star-site-secret }
+          env:
+            - { name: SPRING_CLOUD_NACOS_DISCOVERY_IP, value: platform-file }
+          ports: [{ containerPort: 8083 }]
+          volumeMounts: [{ name: file-data, mountPath: /app/data/files }]
+          readinessProbe: { httpGet: { path: /actuator/health, port: 8083 }, initialDelaySeconds: 30 }
+          livenessProbe: { httpGet: { path: /actuator/health, port: 8083 }, initialDelaySeconds: 60 }
+          resources:
+            limits: { memory: "384Mi" }
+      volumes:
+        - name: file-data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-file
+  namespace: star-site
+spec:
+  selector: { app: platform-file }
+  ports: [{ port: 8083, targetPort: 8083 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: health
+  namespace: star-site
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: health }
+  template:
+    metadata:
+      labels: { app: health }
+    spec:
+      containers:
+        - name: app
+          image: star-site/biz-health:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: star-site-config }
+            - secretRef: { name: star-site-secret }
+          env:
+            - { name: SPRING_CLOUD_NACOS_DISCOVERY_IP, value: health }
+          ports: [{ containerPort: 8084 }]
+          readinessProbe: { httpGet: { path: /actuator/health, port: 8084 }, initialDelaySeconds: 30 }
+          livenessProbe: { httpGet: { path: /actuator/health, port: 8084 }, initialDelaySeconds: 60 }
+          resources:
+            limits: { memory: "384Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: health
+  namespace: star-site
+spec:
+  selector: { app: health }
+  ports: [{ port: 8084, targetPort: 8084 }]

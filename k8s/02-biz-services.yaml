@@ -1,0 +1,148 @@
+# 业务域服务：insurance / reminder / archive / finance（均依赖 broker，MQ env 已在 ConfigMap）
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insurance
+  namespace: star-site
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: insurance }
+  template:
+    metadata:
+      labels: { app: insurance }
+    spec:
+      containers:
+        - name: app
+          image: star-site/biz-insurance:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: star-site-config }
+            - secretRef: { name: star-site-secret }
+          env:
+            - { name: SPRING_CLOUD_NACOS_DISCOVERY_IP, value: insurance }
+          ports: [{ containerPort: 8085 }]
+          readinessProbe: { httpGet: { path: /actuator/health, port: 8085 }, initialDelaySeconds: 30 }
+          livenessProbe: { httpGet: { path: /actuator/health, port: 8085 }, initialDelaySeconds: 60 }
+          resources:
+            limits: { memory: "384Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: insurance
+  namespace: star-site
+spec:
+  selector: { app: insurance }
+  ports: [{ port: 8085, targetPort: 8085 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform-reminder
+  namespace: star-site
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: platform-reminder }
+  template:
+    metadata:
+      labels: { app: platform-reminder }
+    spec:
+      containers:
+        - name: app
+          image: star-site/reminder:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: star-site-config }
+            - secretRef: { name: star-site-secret }
+          env:
+            - { name: SPRING_CLOUD_NACOS_DISCOVERY_IP, value: platform-reminder }
+          ports: [{ containerPort: 8086 }]
+          readinessProbe: { httpGet: { path: /actuator/health, port: 8086 }, initialDelaySeconds: 30 }
+          livenessProbe: { httpGet: { path: /actuator/health, port: 8086 }, initialDelaySeconds: 60 }
+          resources:
+            limits: { memory: "384Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: platform-reminder
+  namespace: star-site
+spec:
+  selector: { app: platform-reminder }
+  ports: [{ port: 8086, targetPort: 8086 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: archive
+  namespace: star-site
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: archive }
+  template:
+    metadata:
+      labels: { app: archive }
+    spec:
+      containers:
+        - name: app
+          image: star-site/biz-archive:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: star-site-config }
+            - secretRef: { name: star-site-secret }
+          env:
+            - { name: SPRING_CLOUD_NACOS_DISCOVERY_IP, value: archive }
+          ports: [{ containerPort: 8087 }]
+          readinessProbe: { httpGet: { path: /actuator/health, port: 8087 }, initialDelaySeconds: 30 }
+          livenessProbe: { httpGet: { path: /actuator/health, port: 8087 }, initialDelaySeconds: 60 }
+          resources:
+            limits: { memory: "384Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: archive
+  namespace: star-site
+spec:
+  selector: { app: archive }
+  ports: [{ port: 8087, targetPort: 8087 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finance
+  namespace: star-site
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: finance }
+  template:
+    metadata:
+      labels: { app: finance }
+    spec:
+      containers:
+        - name: app
+          image: star-site/biz-finance:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: star-site-config }
+            - secretRef: { name: star-site-secret }
+          env:
+            - { name: SPRING_CLOUD_NACOS_DISCOVERY_IP, value: finance }
+          ports: [{ containerPort: 8088 }]
+          readinessProbe: { httpGet: { path: /actuator/health, port: 8088 }, initialDelaySeconds: 30 }
+          livenessProbe: { httpGet: { path: /actuator/health, port: 8088 }, initialDelaySeconds: 60 }
+          resources:
+            limits: { memory: "384Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: finance
+  namespace: star-site
+spec:
+  selector: { app: finance }
+  ports: [{ port: 8088, targetPort: 8088 }]

@@ -1,0 +1,17 @@
+# frp 服务端（ECS 上）
+# 与 frpc.toml 的 auth.token 必须一致；token 请换成强随机值
+
+bindAddr = "0.0.0.0"
+bindPort = 7000
+
+# 虚拟 HTTP Host 端口：Caddy 反代目标
+vhostHTTPPort = 8080
+
+# 隧道认证（务必改强随机 token）
+auth.token = "change-me-to-a-random-token"
+
+# dashboard 仅本机访问（排查用：curl 127.0.0.1:7500）
+webServer.addr = "127.0.0.1"
+webServer.port = 7500
+webServer.user = "admin"
+webServer.password = "change-me-dashboard"

@@ -13,3 +13,6 @@ logs/
 
 # 本地环境覆盖
 *.local.yml
+
+# mimosa 扫描状态
+.mimosa/

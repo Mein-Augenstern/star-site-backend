@@ -1,0 +1,10 @@
+# 构建上下文排除：容器内自行 mvn 构建，宿主编译产物绝不能进镜像
+**/target/
+!docker/jars/
+.idea/
+*.iml
+docker/mysql-init/*.sql.bak
+star-site-platform-file-service/data/
+logs/
+*.log
+.git/

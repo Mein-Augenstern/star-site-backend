@@ -1,4 +1,23 @@
-# star-site 本地开发基础设施（生产部署到 ECS 时再调内存参数）
+# star-site 容器编排
+#  日常开发：docker compose --profile app up -d          （本机全栈）
+#  家庭生产：本 Mac 常驻 + frpc 隧道到 ECS 公网入口
+#    docker compose --profile app --profile prod up -d
+#  前提：基础镜像已 retag；frpc.toml 填 ECS IP/token；Mac 设置防睡眠
+# 应用服务镜像化部署：docker compose --profile app up -d --build
+# 配置经环境变量覆盖指向容器化基础设施（K8s-ready：将来 ConfigMap/Secret 同样注入）
+# 国内环境注意：基础镜像与 RocketMQ 镜像需先经加速源拉取并 retag（pull_policy: never）
+
+# ---------- 应用服务共用锚点 ----------
+x-app-env: &app-env
+  SPRING_CLOUD_NACOS_SERVER_ADDR: star-nacos:8848
+  SPRING_DATASOURCE_URL: jdbc:mysql://star-mysql:3306/star_site?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+  SPRING_DATASOURCE_USERNAME: root
+  SPRING_DATASOURCE_PASSWORD: root123
+  JWT_SECRET: star-site-local-dev-secret-change-me-32bytes!
+x-app-build: &app-build
+  context: ..
+  dockerfile: docker/Dockerfile
+
 services:
   mysql:
     image: mysql:8.0
@@ -12,15 +31,16 @@ services:
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_0900_ai_ci
-      - --innodb-buffer-pool-size=128M
+      - --innodb-buffer-pool-size=96M
       - --performance-schema=OFF
-      - --max-connections=100
+      - --max-connections=60
     ports:
       - "3307:3306"   # 宿主机 3306 被本机原生 MySQL 占用，容器映射到 3307
     volumes:
       - mysql-data:/var/lib/mysql
       - ./mysql-init:/docker-entrypoint-initdb.d:ro
-    mem_limit: 512m
+    mem_limit: 384m
+    cpus: 1.0
     restart: unless-stopped
 
   redis:
@@ -30,7 +50,8 @@ services:
     command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru --appendonly no
     ports:
       - "6379:6379"
-    mem_limit: 192m
+    mem_limit: 128m
+    cpus: 0.25
     restart: unless-stopped
 
   nacos:
@@ -47,7 +68,215 @@ services:
       - "8848:8848"   # HTTP 控制台/OpenAPI
       - "9848:9848"   # gRPC（nacos-client 2.x 必需）
     mem_limit: 384m
+    cpus: 0.5
     restart: unless-stopped
+
+  # 国内环境：先经加速源拉取并 retag 成官方名（见 docker/pull-rocketmq.sh）
+  rocketmq-namesrv:
+    profiles: ["mq"]
+    image: apache/rocketmq:5.3.1
+    pull_policy: never
+    container_name: star-rocketmq-namesrv
+    command: sh mqnamesrv
+    environment:
+      # apache/rocketmq 官方镜像用 HEAP_OPTS 覆盖堆（JVM_XMS 系列是另一镜像项目的约定，无效）
+      HEAP_OPTS: "-Xms128m -Xmx128m -Xmn64m"
+    ports:
+      - "9876:9876"   # namesrv
+    mem_limit: 320m
+    cpus: 0.25
+    restart: unless-stopped
+
+  rocketmq-broker:
+    profiles: ["mq"]
+    image: apache/rocketmq:5.3.1
+    pull_policy: never
+    container_name: star-rocketmq-broker
+    # -n 用容器名走 compose 内网；broker 对外注册地址由 broker.conf 的 brokerIP1=127.0.0.1
+    command: sh mqbroker -n star-rocketmq-namesrv:9876 -c /home/rocketmq/conf/broker.conf
+    depends_on:
+      - rocketmq-namesrv
+    environment:
+      # apache/rocketmq 官方镜像：runbroker.sh 默认 -Xms2g + AlwaysPreTouch，
+      # 不覆盖会在 mem_limit 内启动即被 OOM Kill（无任何日志）。HEAP_OPTS 覆盖堆。
+      # 注意不要限 MaxMetaspaceSize：broker 类加载需要 ~200m，128m 会触发 Metaspace OOM
+      HEAP_OPTS: "-Xms256m -Xmx256m -Xmn96m -XX:MaxDirectMemorySize=128m"
+      JAVA_OPT_EXT: "-XX:MaxMetaspaceSize=256m"
+    ports:
+      - "10911:10911" # broker 主端口
+      - "10909:10909" # VIP 通道
+    volumes:
+      - ./rocketmq/broker.conf:/home/rocketmq/conf/broker.conf:ro
+    # 注意：不要把 named volume 挂到 /home/rocketmq/store——5.3.1 首启 persist
+    # store/config/*.json 时 config 子目录不存在会启动失败；本地开发数据不持久化
+    mem_limit: 1g
+    restart: unless-stopped
+
+  # ---------- 应用服务（--profile app） ----------
+  platform-gateway:
+    profiles: ["app"]
+    image: star-site/gateway:latest
+    pull_policy: never
+    build:
+      <<: *app-build
+      args: { MODULE: star-site-platform-gateway }
+    container_name: star-platform-gateway
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: star-platform-gateway
+      JAVA_OPTS: -Xmx192m -Xms64m
+    ports:
+      - "8080:8080"
+    depends_on: [mysql, redis, nacos]
+    mem_limit: 384m
+    restart: unless-stopped
+
+  platform-member:
+    profiles: ["app"]
+    image: star-site/platform-member:latest
+    pull_policy: never
+    build:
+      <<: *app-build
+      args: { MODULE: star-site-platform-member-service }
+    container_name: star-platform-member
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: star-platform-member
+      # 微信小程序登录：配 WX_MP_SECRET 走真实 jscode2session；留空走 mock（code 即 openid）
+      WX_MP_APPID: ${WX_MP_APPID:-wx8bb4b89c676c6df8}
+      WX_MP_SECRET: ${WX_MP_SECRET:-}
+      JAVA_OPTS: -Xmx160m -Xms64m
+    depends_on: [mysql, nacos]
+    mem_limit: 320m
+    restart: unless-stopped
+
+  family:
+    profiles: ["app"]
+    image: star-site/biz-family:latest
+    pull_policy: never
+    build:
+      <<: *app-build
+      args: { MODULE: star-site-biz-family-service }
+    container_name: star-family
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: star-family
+      JAVA_OPTS: -Xmx160m -Xms64m
+    depends_on: [mysql, nacos]
+    mem_limit: 320m
+    restart: unless-stopped
+
+  platform-file:
+    profiles: ["app"]
+    image: star-site/file:latest
+    pull_policy: never
+    build:
+      <<: *app-build
+      args: { MODULE: star-site-platform-file-service }
+    container_name: star-platform-file
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: star-platform-file
+      JAVA_OPTS: -Xmx160m -Xms64m
+    volumes:
+      - file-data:/app/data/files
+    depends_on: [mysql, nacos]
+    mem_limit: 320m
+    restart: unless-stopped
+
+  health:
+    profiles: ["app"]
+    image: star-site/biz-health:latest
+    pull_policy: never
+    build:
+      <<: *app-build
+      args: { MODULE: star-site-biz-health-service }
+    container_name: star-health
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: star-health
+      # star-async 异步命令组件开关（调度器随 @EnableScheduling 运行）
+      STAR_ASYNC_ENABLED: "true"
+      LLM_API_KEY: ***REMOVED-GLM-KEY***
+      LLM_MODEL: glm-4.5-air
+      JAVA_OPTS: -Xmx192m -Xms64m
+    depends_on: [mysql, nacos]
+    mem_limit: 320m
+    restart: unless-stopped
+
+  insurance:
+    profiles: ["app"]
+    image: star-site/biz-insurance:latest
+    pull_policy: never
+    build:
+      <<: *app-build
+      args: { MODULE: star-site-biz-insurance-service }
+    container_name: star-insurance
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: star-insurance
+    depends_on: [mysql, nacos]
+    mem_limit: 320m
+    restart: unless-stopped
+
+  platform-reminder:
+    profiles: ["app"]
+    image: star-site/reminder:latest
+    pull_policy: never
+    build:
+      <<: *app-build
+      args: { MODULE: star-site-platform-reminder-service }
+    container_name: star-platform-reminder
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: star-platform-reminder
+      JAVA_OPTS: -Xmx192m -Xms64m
+    ports:
+      - "8086:8086"   # 联调：internal/scan 手动触发
+    depends_on: [mysql, nacos]
+    mem_limit: 320m
+    restart: unless-stopped
+
+  archive:
+    profiles: ["app"]
+    image: star-site/biz-archive:latest
+    pull_policy: never
+    build:
+      <<: *app-build
+      args: { MODULE: star-site-biz-archive-service }
+    container_name: star-archive
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: star-archive
+    depends_on: [mysql, nacos]
+    mem_limit: 320m
+    restart: unless-stopped
+  finance:
+    profiles: ["app"]
+    image: star-site/biz-finance:latest
+    pull_policy: never
+    build:
+      <<: *app-build
+      args: { MODULE: star-site-biz-finance-service }
+    container_name: star-finance
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: star-finance
+      LLM_API_KEY: ***REMOVED-GLM-KEY***
+      LLM_MODEL: glm-4.5-air
+    depends_on: [mysql, nacos]
+    mem_limit: 320m
+    restart: unless-stopped
+
+  frpc:
+    profiles: ["prod"]
+    image: snowdreamtech/frpc:latest
+    container_name: star-frpc
+    restart: unless-stopped
+    network_mode: host          # 隧道直连本机网关端口 8080
+    volumes:
+      - ./frpc.toml:/etc/frp/frpc.toml:ro
 
 volumes:
   mysql-data:
+  file-data:

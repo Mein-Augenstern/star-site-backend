@@ -1,0 +1,70 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: star-site-platform-gateway
+  cloud:
+    nacos:
+      server-addr: 127.0.0.1:8848
+      discovery:
+        namespace: public
+        # 本地开发强制注册 127.0.0.1（网段变化时 LB 才连得通）；生产去掉用真实 IP
+        ip: 127.0.0.1
+    gateway:
+      routes:
+        - id: member-route
+          uri: lb://star-site-platform-member
+          predicates:
+            - Path=/api/auth/**,/api/member/**,/api/admin/**
+        - id: family-route
+          uri: lb://star-site-biz-family
+          predicates:
+            - Path=/api/family/**
+        - id: file-route
+          uri: lb://star-site-platform-file
+          predicates:
+            - Path=/api/file/**
+        - id: health-route
+          uri: lb://star-site-biz-health
+          predicates:
+            - Path=/api/health/**
+        - id: insurance-route
+          uri: lb://star-site-biz-insurance
+          predicates:
+            - Path=/api/insurance/**
+        - id: reminder-route
+          uri: lb://star-site-platform-reminder
+          predicates:
+            - Path=/api/reminder/**
+        - id: archive-route
+          uri: lb://star-site-biz-archive
+          predicates:
+            - Path=/api/archive/**
+        - id: finance-route
+          uri: lb://star-site-biz-finance
+          predicates:
+            - Path=/api/finance/**
+      # 跨域统一在网关处理
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            maxAge: 3600
+
+jwt:
+  # 与各下游服务保持一致；生产用环境变量注入
+  secret: "${JWT_SECRET:star-site-local-dev-secret-change-me-32bytes!}"
+  expire-minutes: 720
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    com.xp.starsite: info
