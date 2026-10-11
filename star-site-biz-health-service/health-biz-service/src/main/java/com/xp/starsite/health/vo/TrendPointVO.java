@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 
 /**
  * 趋势点：某成员某指标的某一年的值
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class TrendPointVO {

@@ -38,6 +38,9 @@ import static org.mockito.Mockito.when;
 
 /**
  * 家庭档案单元测试：归属防线 + 提醒事件载荷 + 估值留痕（mock 全部依赖）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @ExtendWith(MockitoExtension.class)
 class ArchiveServiceTest {

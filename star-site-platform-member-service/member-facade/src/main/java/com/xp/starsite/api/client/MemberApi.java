@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 /**
  * member 服务内部接口（Feign 契约）：提醒触达取联系方式。
  * /internal/** 不经网关路由，仅限内网服务间调用。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @FeignClient(name = "star-site-platform-member", contextId = "memberInternalApi", path = "/internal/member")
 public interface MemberApi {

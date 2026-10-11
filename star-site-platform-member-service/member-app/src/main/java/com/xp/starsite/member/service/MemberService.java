@@ -9,6 +9,9 @@ import com.xp.starsite.member.vo.MemberVO;
 
 /**
  * 会员服务接口
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 public interface MemberService {
 

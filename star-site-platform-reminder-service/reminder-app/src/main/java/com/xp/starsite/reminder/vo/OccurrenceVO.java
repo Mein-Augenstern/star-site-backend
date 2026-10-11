@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 
 /**
  * 提醒实例视图（ upcoming 列表 / "最近要办的事"）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class OccurrenceVO {

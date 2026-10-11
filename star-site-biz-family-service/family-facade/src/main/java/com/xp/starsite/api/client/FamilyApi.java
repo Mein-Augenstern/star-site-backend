@@ -14,6 +14,9 @@ import java.util.List;
  * FamilyOwnershipGuard 使用，不要直接调本接口。
  *
  * /internal/** 不经网关路由（外网 404），仅限内网服务间调用。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @FeignClient(name = "star-site-biz-family", contextId = "familyInternalApi", path = "/internal/family")
 public interface FamilyApi {

@@ -5,6 +5,9 @@ import lombok.Data;
 
 /**
  * 上传出参
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 @Builder

@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 
 /**
  * 现金流量表（V1 简化口径）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class CashFlowVO {

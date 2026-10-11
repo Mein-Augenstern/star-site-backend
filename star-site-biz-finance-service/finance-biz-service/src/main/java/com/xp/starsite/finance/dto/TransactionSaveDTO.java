@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 /**
  * 记账入参
  * mode 由 direction 决定：1 收入 / 2 支出（单账户）；3 转账（两账户）；4 调整（差额校准）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class TransactionSaveDTO {

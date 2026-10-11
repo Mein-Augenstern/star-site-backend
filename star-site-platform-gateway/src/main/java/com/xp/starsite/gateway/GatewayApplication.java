@@ -6,6 +6,9 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 /**
  * API 网关：统一入口、路由分发、JWT 前置校验（WebFlux）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @SpringBootApplication(scanBasePackages = "com.xp.starsite")
 @EnableDiscoveryClient

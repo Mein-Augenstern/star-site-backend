@@ -5,7 +5,11 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
-/** 分类支出占比（饼图点） */
+/** 分类支出占比（饼图点）
+ *
+ * @author xiaopu
+ * @since 2026-10
+ */
 @Data
 @AllArgsConstructor
 public class CategoryShareVO {

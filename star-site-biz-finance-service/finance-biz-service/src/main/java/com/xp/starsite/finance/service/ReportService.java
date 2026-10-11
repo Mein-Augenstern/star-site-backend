@@ -10,6 +10,9 @@ import java.util.List;
 /**
  * 三张表报表服务（全部为查询层聚合，无中间表）。
  * 首参 memberId 用于数据归属。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 public interface ReportService {
 

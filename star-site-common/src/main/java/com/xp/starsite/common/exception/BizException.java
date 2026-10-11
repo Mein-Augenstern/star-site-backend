@@ -5,6 +5,9 @@ import lombok.Getter;
 
 /**
  * 业务异常：service 层抛出，由全局异常处理器转成统一响应
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Getter
 public class BizException extends RuntimeException {

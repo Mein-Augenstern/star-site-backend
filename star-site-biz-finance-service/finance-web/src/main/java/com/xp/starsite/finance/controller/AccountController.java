@@ -21,6 +21,9 @@ import java.util.List;
 
 /**
  * 资金账户接口（全部需 JWT；数据按当前账号隔离）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @RestController
 @RequestMapping("/api/finance/accounts")

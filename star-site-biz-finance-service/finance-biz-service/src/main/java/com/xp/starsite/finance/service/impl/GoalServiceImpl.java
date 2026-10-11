@@ -18,6 +18,9 @@ import java.util.List;
 
 /**
  * 家庭目标实现（V1 进度手动更新；F5 可联动账户/流水自动攒）。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Service

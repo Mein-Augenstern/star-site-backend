@@ -8,6 +8,9 @@ import java.time.LocalDateTime;
 
 /**
  * 就医记录视图
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class VisitVO {

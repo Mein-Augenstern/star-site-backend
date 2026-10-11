@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 
 /**
  * 预算视图（含当月使用情况）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class BudgetVO {

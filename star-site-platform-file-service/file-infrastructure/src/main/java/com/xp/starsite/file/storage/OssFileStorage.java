@@ -19,6 +19,9 @@ import java.io.InputStream;
  * 阿里云 OSS 存储（file.storage-type=oss 时启用）。
  * bucket 保持私有，文件一律经本服务流式转发（JWT 保护）；
  * ECS 上把 OSS_ENDPOINT 换成同地域内网 endpoint 可免流量费。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Component

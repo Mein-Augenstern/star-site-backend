@@ -6,6 +6,9 @@ import lombok.Data;
 
 /**
  * 修改密码入参
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class PasswordUpdateDTO {

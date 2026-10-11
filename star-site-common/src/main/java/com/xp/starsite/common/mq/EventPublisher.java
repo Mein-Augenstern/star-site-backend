@@ -4,6 +4,9 @@ package com.xp.starsite.common.mq;
  * 领域事件发布器（业务服务面向此接口编程，实现可替换/降级）
  * <p>
  * 使用方在配置类里 @Import(StarSiteMqConfig.class) 并配置 rocketmq.name-server 启用。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 public interface EventPublisher {
 

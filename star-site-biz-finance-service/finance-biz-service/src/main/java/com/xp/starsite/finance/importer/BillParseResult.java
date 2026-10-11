@@ -7,6 +7,9 @@ import java.util.List;
 
 /**
  * 账单解析结果
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class BillParseResult {

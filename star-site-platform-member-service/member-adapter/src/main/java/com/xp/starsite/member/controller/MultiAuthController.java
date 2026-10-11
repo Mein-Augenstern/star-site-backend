@@ -22,6 +22,12 @@ import java.util.Map;
 
 /**
  * 多端认证接口：wx-login 免 token；identities/bind/profile 需 JWT。
+ *
+ * <p>会员域多登录方式入口：微信静默登录/注册、账密绑定微信、登录方式列表与解绑
+ * （至少保留一种防自锁）、资料完善、邮箱验证码绑定（开发态验证码走内存+日志）。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @RestController
 @RequestMapping("/api/auth")

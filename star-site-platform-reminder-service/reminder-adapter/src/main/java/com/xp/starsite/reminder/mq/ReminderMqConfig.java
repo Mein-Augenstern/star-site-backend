@@ -11,6 +11,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * 健康聚焦阶段 MQ 停用（yml 注释 rocketmq 段）→ 本配置不生效 → 降级纯 @Scheduled 扫描。
  * 必须条件装配：@RocketMQMessageListener 的 BeanPostProcessor 是无条件的，
  * MQ 停用时若仍注册消费者会"connect to null"导致启动失败。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Configuration
 @ConditionalOnProperty(prefix = "rocketmq", name = "name-server")

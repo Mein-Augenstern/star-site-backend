@@ -9,6 +9,9 @@ import java.time.LocalDateTime;
 
 /**
  * 文件记录
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 @TableName("file")

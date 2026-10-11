@@ -14,6 +14,9 @@ import java.io.IOException;
 /**
  * 可复用的 MVC JWT 拦截器（业务服务在 WebConfig 里注册为 @Bean 使用；
  * 故意不加 @Component，避免被 WebFlux 网关的组件扫描误加载）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 public class JwtAuthInterceptor implements HandlerInterceptor {
 

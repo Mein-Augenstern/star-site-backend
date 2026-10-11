@@ -24,6 +24,9 @@ import org.springframework.util.StringUtils;
 
 /**
  * 会员服务实现
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Service

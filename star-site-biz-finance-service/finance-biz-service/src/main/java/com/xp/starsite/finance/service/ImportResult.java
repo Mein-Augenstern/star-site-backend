@@ -6,6 +6,9 @@ import lombok.Data;
 
 /**
  * 账单导入结果
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 @AllArgsConstructor

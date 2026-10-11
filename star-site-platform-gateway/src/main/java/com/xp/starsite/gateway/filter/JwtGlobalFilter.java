@@ -22,6 +22,9 @@ import java.nio.charset.StandardCharsets;
 /**
  * 全局 JWT 校验过滤器：白名单外一律要求 Authorization: Bearer <token>。
  * 校验通过后原样转发（下游服务各自保留拦截器做纵深防御）。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Component

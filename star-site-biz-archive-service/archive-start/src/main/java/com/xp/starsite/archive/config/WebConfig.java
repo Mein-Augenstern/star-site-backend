@@ -12,6 +12,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * Web 配置：全部接口需要 JWT（CORS 统一在网关处理）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Configuration
 @RequiredArgsConstructor

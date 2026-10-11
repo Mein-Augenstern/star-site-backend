@@ -24,6 +24,9 @@ import java.util.List;
  * 财务健康诊断：聚合三张表 + 近 3 月收支 → LLM 生成诊断建议。
  * 实时生成不落库（数据持续变化，缓存意义低）；LLM 不可用时抛 400 提示未启用 / 503 不可用。
  * fail-open：archive 不可用时按 0 计入并在数据中标注。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Service

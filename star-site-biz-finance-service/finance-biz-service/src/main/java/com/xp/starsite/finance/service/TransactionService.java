@@ -6,6 +6,9 @@ import com.xp.starsite.finance.vo.TransactionVO;
 
 /**
  * 记账流水服务。首参 memberId 用于归属校验。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 public interface TransactionService {
 

@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 服务间内部接口（Feign 提供方）。/internal/** 不经网关，外网 404。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @RestController
 @RequestMapping("/internal/member")

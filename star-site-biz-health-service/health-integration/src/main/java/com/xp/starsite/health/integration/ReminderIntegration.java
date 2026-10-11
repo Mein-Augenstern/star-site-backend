@@ -12,6 +12,9 @@ import java.util.List;
 /**
  * 提醒中心集成层（SOFA integration 层）：health 域对外部提醒域的唯一出口。
  * 领域内其他类禁止直接依赖提醒域的 Feign/Mapper。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Component

@@ -26,6 +26,9 @@ import java.util.List;
 /**
  * 记账流水实现。不变式：流水与账户余额在同一数据库事务内变更，任何一笔流水
  * 都能由 balance_after 快照对账。删除回滚余额；转账整组回滚。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Service

@@ -7,6 +7,9 @@ import java.util.List;
 
 /**
  * 家庭目标服务。首参 memberId 用于归属校验。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 public interface GoalService {
 

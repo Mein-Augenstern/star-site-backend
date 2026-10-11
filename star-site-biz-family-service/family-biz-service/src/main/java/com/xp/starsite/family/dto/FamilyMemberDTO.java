@@ -11,6 +11,9 @@ import java.time.LocalDate;
 
 /**
  * 成员档案新增/编辑入参
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class FamilyMemberDTO {

@@ -36,6 +36,9 @@ import static org.mockito.Mockito.when;
 
 /**
  * 三张表单元测试：资产负债聚合、archive 降级、收支口径、快照幂等（mock 全部依赖）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @ExtendWith(MockitoExtension.class)
 class ReportServiceTest {

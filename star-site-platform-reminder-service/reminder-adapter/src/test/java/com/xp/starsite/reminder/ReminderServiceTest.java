@@ -30,6 +30,9 @@ import static org.mockito.Mockito.when;
 
 /**
  * 提醒中心单元测试：规则 upsert/撤销、重复日期推算、扫描投递（mock 全部依赖）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @ExtendWith(MockitoExtension.class)
 class ReminderServiceTest {

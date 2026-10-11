@@ -11,6 +11,9 @@ import java.util.List;
 /**
  * 异步命令 mapper。独占子包（common.async.mapper）：包即扫描边界，
  * 避免同包的 Executor 等接口被 @MapperScan 误注册成 mybatis 代理。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 public interface AsyncCommandMapper extends BaseMapper<AsyncCommand> {
 

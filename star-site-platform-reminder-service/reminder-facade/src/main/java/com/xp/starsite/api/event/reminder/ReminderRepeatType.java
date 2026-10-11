@@ -2,6 +2,9 @@ package com.xp.starsite.api.event.reminder;
 
 /**
  * 提醒重复类型
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 public enum ReminderRepeatType {
 

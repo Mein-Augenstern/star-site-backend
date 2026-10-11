@@ -7,6 +7,9 @@ import com.xp.starsite.insurance.vo.PolicyVO;
 
 /**
  * 保单服务。方法首参 memberId 为当前登录顶梁柱，用于归属校验（防横向越权）。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 public interface InsuranceService {
 

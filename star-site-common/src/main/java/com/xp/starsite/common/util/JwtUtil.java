@@ -14,6 +14,13 @@ import java.util.Date;
 
 /**
  * JWT 工具（jjwt 0.12.x API）
+ *
+ * <p>全平台统一的 token 签发/解析入口：member 服务登录成功后 generateToken，
+ * 各业务服务的 JwtAuthInterceptor（MVC）与网关 JwtGlobalFilter（WebFlux）用 parseToken 校验，
+ * claim 名以 AuthConstants 为准。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Component
 public class JwtUtil {

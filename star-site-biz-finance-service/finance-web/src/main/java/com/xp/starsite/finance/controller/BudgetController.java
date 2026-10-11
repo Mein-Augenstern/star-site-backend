@@ -21,6 +21,9 @@ import java.util.List;
 
 /**
  * 月度预算接口（全部需 JWT）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @RestController
 @RequestMapping("/api/finance/budgets")

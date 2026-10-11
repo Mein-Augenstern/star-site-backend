@@ -21,6 +21,9 @@ import java.util.stream.Collectors;
  * 从而隔离 mybatis 类型缺失问题（common 无 mybatis 运行时依赖，provided 仅编译期）。
  * <p>
  * 按服务开关：环境变量 STAR_ASYNC_ENABLED=true。消费服务还需 @EnableScheduling。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @ConditionalOnProperty(name = "star.async.enabled", havingValue = "true")

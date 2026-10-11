@@ -22,6 +22,9 @@ import java.util.List;
  * </pre>
  *
  * fail-closed：family 服务不可用时拒绝请求，而不是放行。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @RequiredArgsConstructor

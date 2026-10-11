@@ -27,6 +27,9 @@ import static org.mockito.Mockito.when;
 
 /**
  * 财务 AI 诊断单元测试：数据聚合进 Prompt、未配 key 降级、LLM 失败翻译（mock 全部依赖）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @ExtendWith(MockitoExtension.class)
 class FinanceDiagnosisTest {

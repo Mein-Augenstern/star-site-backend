@@ -10,6 +10,9 @@ import java.time.LocalDateTime;
 
 /**
  * 提醒规则（事件消费端 upsert，撤销物理删——衍生物无历史价值，唯一键才干净）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 @TableName("reminder_rule")

@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 /**
  * reminder 服务内部接口（Feign 契约）：跨服务提醒规则注册/删除。
  * /internal/** 不经网关路由，仅限内网服务间调用。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @FeignClient(name = "star-site-platform-reminder", contextId = "reminderInternalApi", path = "/internal/reminder")
 public interface ReminderApi {

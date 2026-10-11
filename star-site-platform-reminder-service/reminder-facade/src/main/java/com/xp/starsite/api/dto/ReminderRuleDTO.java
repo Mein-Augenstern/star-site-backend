@@ -7,6 +7,9 @@ import java.time.LocalDate;
 
 /**
  * 提醒规则（跨服务 upsert 语义：source+bizType+bizId 幂等）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class ReminderRuleDTO implements Serializable {

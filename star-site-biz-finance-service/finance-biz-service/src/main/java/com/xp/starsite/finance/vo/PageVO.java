@@ -6,6 +6,9 @@ import java.util.List;
 
 /**
  * 简单分页视图（域内自持）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class PageVO<T> {

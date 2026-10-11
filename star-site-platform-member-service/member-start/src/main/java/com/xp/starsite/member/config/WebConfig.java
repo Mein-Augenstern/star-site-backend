@@ -12,6 +12,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * Web 配置：JWT 拦截器（common 复用版，只拦 /api/member/**）+ CORS
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Configuration
 @RequiredArgsConstructor

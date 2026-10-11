@@ -7,7 +7,14 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-/** 异步命令（star-async 组件核心模型） */
+/** 异步命令（star-async 组件核心模型）
+ *
+ * 落 async_command 表的一行即一条待执行命令：状态机 PENDING/RUNNING/SUCCESS/DEAD，
+ * 由 AsyncCommandConfig 的调度器认领执行，业务方经 AsyncCommandService 提交。
+ *
+ * @author xiaopu
+ * @since 2026-10
+ */
 @Data
 @TableName("async_command")
 public class AsyncCommand {

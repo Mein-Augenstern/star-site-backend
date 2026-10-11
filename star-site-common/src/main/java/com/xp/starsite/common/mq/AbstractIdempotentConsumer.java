@@ -11,6 +11,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * 不在同一事务（消费端各自管理业务事务），因此本基类适用于
  * 「至少一次投递 + 业务幂等」的场景——doConsume 内部仍须保证业务可重入
  * （如 upsert），极端情况（业务成功、记录幂等失败）由 MQ 重试兜底。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 public abstract class AbstractIdempotentConsumer {

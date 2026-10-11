@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 
 /**
  * 资产负债表
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class BalanceSheetVO {

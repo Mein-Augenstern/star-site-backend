@@ -40,6 +40,9 @@ import java.util.stream.Collectors;
 /**
  * 家庭资产实现。估值手动更新（季度节奏），每次变更自动追加历史留痕。
  * 车辆年检是资产域唯一提醒联动：年检日期非空 → ANNUAL 提醒（事务消息）。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Service

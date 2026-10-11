@@ -27,6 +27,9 @@ import java.util.Set;
  * 资金账户实现。
  * 归属防线：财务资源直接挂 owner_member_id（无 familyMemberId 概念），按 id 取资源比对 owner，
  * 他人资源 403——与保单/档案同款 fail-closed。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Service

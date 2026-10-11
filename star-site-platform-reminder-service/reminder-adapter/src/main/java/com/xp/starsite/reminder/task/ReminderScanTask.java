@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 /**
  * 每日提醒扫描：补生成实例 + 投递到期通知。
  * 单实例部署无需分布式锁；多实例部署时再引入（技术雷达后置项）。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Component

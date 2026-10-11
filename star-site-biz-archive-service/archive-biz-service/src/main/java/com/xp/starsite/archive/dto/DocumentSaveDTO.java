@@ -8,6 +8,9 @@ import java.time.LocalDate;
 
 /**
  * 证件创建/编辑入参
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class DocumentSaveDTO {

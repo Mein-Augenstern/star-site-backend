@@ -8,6 +8,9 @@ import java.math.BigDecimal;
 
 /**
  * 单条指标入参
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class IndicatorDTO {

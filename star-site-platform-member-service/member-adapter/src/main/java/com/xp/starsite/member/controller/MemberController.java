@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 会员资料接口（需 JWT，由 JwtInterceptor 拦截）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @RestController
 @RequestMapping("/api/member")

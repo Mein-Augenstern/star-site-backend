@@ -5,7 +5,11 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
-/** 月度收支趋势点（近 12 个月） */
+/** 月度收支趋势点（近 12 个月）
+ *
+ * @author xiaopu
+ * @since 2026-10
+ */
 @Data
 @AllArgsConstructor
 public class MonthlyTrendVO {

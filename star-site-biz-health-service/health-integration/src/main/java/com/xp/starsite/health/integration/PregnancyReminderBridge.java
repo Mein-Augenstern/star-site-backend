@@ -15,6 +15,9 @@ import java.util.List;
  * 领域内其他类禁止直接依赖提醒域的 Feign/Mapper。
  *
  * 职责：将孕期产检里程碑自动注册为提醒中心的待办规则（幂等 upsert）。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Component

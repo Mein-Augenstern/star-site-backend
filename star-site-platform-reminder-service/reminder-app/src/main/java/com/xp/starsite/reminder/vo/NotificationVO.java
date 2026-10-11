@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 
 /**
  * 站内通知视图（铃铛下拉）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class NotificationVO {

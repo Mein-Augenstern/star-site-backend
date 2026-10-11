@@ -39,6 +39,9 @@ import java.util.Set;
  *   archive 不可用时 fail-open（archiveAsset=null + archiveAvailable=false），与归属校验的 fail-closed 区分。
  * - 收支：仅 direction 1/2 计入；转账/调整不计。
  * - 快照：每日 02:30 落一行（uk(owner,date) 幂等），曲线由此出。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Service

@@ -7,6 +7,9 @@ import java.time.LocalDate;
 
 /**
  * 注册/更新提醒规则（全量 upsert 语义）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

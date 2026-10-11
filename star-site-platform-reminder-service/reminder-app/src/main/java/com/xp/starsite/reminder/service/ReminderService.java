@@ -9,6 +9,9 @@ import java.util.List;
 
 /**
  * 提醒中心服务
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 public interface ReminderService {
 

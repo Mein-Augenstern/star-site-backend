@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 
 /**
  * 家庭视图
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class FamilyVO {

@@ -5,7 +5,11 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/** 用户自建提醒规则视图 */
+/** 用户自建提醒规则视图
+ *
+ * @author xiaopu
+ * @since 2026-10
+ */
 @Data
 public class UserRuleVO {
 

@@ -7,6 +7,9 @@ import com.xp.starsite.common.mq.event.EventEnvelope;
 /**
  * 信封化解码工具：@RocketMQMessageListener 的 payload 是裸 String，
  * 先 decode 成 EventEnvelope 再按 eventType 分发处理。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 public final class EnvelopeDecoder {
 

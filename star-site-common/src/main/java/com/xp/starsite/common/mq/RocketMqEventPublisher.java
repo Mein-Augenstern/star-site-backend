@@ -21,6 +21,9 @@ import java.util.UUID;
  * 不用 rocketmq-spring 的自动装配 Producer，因为 common 模块不能有 @Component
  * （启动类 scanBasePackages 扫全 starsite 包，裸组件会污染网关）；
  * 由 RocketMqConfig 显式 @Bean 装配、随容器销毁。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 class RocketMqEventPublisher implements EventPublisher, DisposableBean {
 

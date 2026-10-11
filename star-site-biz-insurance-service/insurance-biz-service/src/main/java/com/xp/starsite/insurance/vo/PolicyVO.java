@@ -8,6 +8,9 @@ import java.time.LocalDateTime;
 
 /**
  * 保单视图
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class PolicyVO {

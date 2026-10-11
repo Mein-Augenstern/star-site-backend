@@ -21,6 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 证件夹接口（全部需 JWT；memberId 用于归属校验）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @RestController
 @RequestMapping("/api/archive/documents")

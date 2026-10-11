@@ -38,6 +38,9 @@ import java.util.stream.Collectors;
  * - 缴费提醒（主提醒）走事务消息，「落库成功 ⇔ 事件一定发出」；
  * - 到期提醒 / 删除撤销走普通发送，丢失只少一条提醒、不产生脏数据，不值得为它扩事务范围。
  * 消费端（reminder-service，Step 2）以 (source, bizType, bizId) 幂等。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Service

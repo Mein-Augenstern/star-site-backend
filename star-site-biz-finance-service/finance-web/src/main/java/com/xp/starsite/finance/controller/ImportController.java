@@ -15,6 +15,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 账单导入接口（全部需 JWT）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @RestController
 @RequestMapping("/api/finance/import")

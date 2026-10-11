@@ -25,6 +25,9 @@ import java.util.List;
 
 /**
  * 家庭资产接口（全部需 JWT；memberId 用于归属校验）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @RestController
 @RequestMapping("/api/archive/assets")

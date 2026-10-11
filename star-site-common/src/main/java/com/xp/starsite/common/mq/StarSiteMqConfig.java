@@ -18,6 +18,9 @@ import org.springframework.core.env.Environment;
  * 注意：本类会被无 rocketmq 依赖的服务（health/member/family 等）在组件扫描时
  * introspect，方法签名不得出现 rocketmq 类型（只在方法体内 new，条件成立才执行）；
  * 配置一律从 Environment 读，不在签名里引 RocketMQProperties。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Configuration
 public class StarSiteMqConfig {

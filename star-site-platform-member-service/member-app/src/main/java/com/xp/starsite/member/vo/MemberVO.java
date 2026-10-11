@@ -6,6 +6,9 @@ import java.time.LocalDateTime;
 
 /**
  * 会员对外视图（不含密码）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class MemberVO {

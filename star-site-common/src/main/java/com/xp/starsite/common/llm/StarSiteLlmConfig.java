@@ -18,6 +18,9 @@ import org.springframework.web.client.RestClient;
  * 全部参数配置化（代码零写死）：llm.base-url / llm.api-key / llm.model /
  * llm.vision-model / llm.temperature / llm.vision-temperature /
  * llm.connect-timeout-ms / llm.read-timeout-ms。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Configuration
@@ -61,6 +64,7 @@ public class StarSiteLlmConfig {
                           "temperature": %s
                         }
                         """.formatted(model, escape(systemPrompt), escape(userPrompt), temperature);
+                long start = System.currentTimeMillis();
                 try {
                     JsonNode resp = client.post()
                             .uri("/chat/completions")
@@ -73,10 +77,13 @@ public class StarSiteLlmConfig {
                     if (content.isMissingNode() || content.asText().isBlank()) {
                         throw new LlmException("LLM 返回为空", null);
                     }
+                    externalDigest("chat", model, true, start, null);
                     return content.asText();
                 } catch (LlmException e) {
+                    externalDigest("chat", model, false, start, e.getMessage());
                     throw e;
                 } catch (Exception e) {
+                    externalDigest("chat", model, false, start, e.getMessage());
                     log.warn("LLM 调用失败: {}", e.getMessage());
                     throw new LlmException("LLM 调用失败: " + e.getMessage(), e);
                 }
@@ -92,12 +99,13 @@ public class StarSiteLlmConfig {
                                     java.util.Map.of("role", "system", "content", systemPrompt),
                                     java.util.Map.of("role", "user", "content", java.util.List.of(
                                             java.util.Map.of("type", "text", "text", userPrompt),
-                                    java.util.Map.of("type", "image_url",
-                                            "image_url", java.util.Map.of("url", imageDataUrl))))),
+                                            java.util.Map.of("type", "image_url",
+                                                    "image_url", java.util.Map.of("url", imageDataUrl))))),
                             "temperature", visionTemperature));
                 } catch (Exception e) {
                     throw new LlmException("多模态请求构造失败", e);
                 }
+                long start = System.currentTimeMillis();
                 try {
                     JsonNode resp = client.post()
                             .uri("/chat/completions")
@@ -110,13 +118,26 @@ public class StarSiteLlmConfig {
                     if (content.isMissingNode() || content.asText().isBlank()) {
                         throw new LlmException("LLM 返回为空", null);
                     }
+                    externalDigest("vision", visionModel, true, start, null);
                     return content.asText();
                 } catch (LlmException e) {
+                    externalDigest("vision", visionModel, false, start, e.getMessage());
                     throw e;
                 } catch (Exception e) {
+                    externalDigest("vision", visionModel, false, start, e.getMessage());
                     log.warn("LLM 多模态调用失败: {}", e.getMessage());
                     throw new LlmException("LLM 调用失败: " + e.getMessage(), e);
                 }
+            }
+
+            /** 外呼摘要（external-digest）：只记动作/模型/是否成功/耗时，不记 prompt 与响应体（防大结构体+防敏感信息） */
+            private void externalDigest(String action, String usedModel, boolean success, long start, String error) {
+                com.xp.starsite.common.log.DigestLoggers.emit(
+                        com.xp.starsite.common.log.DigestLoggers.EXTERNAL,
+                        com.xp.starsite.common.log.DigestLoggers.fields(
+                                "kind", "llm", "action", action, "model", usedModel,
+                                "status", success ? "success" : "error", "error", error,
+                                "costMs", System.currentTimeMillis() - start));
             }
 
             /** JSON 字符串字面量转义（引号/反斜杠/换行），避免手拼 payload 破坏 JSON */

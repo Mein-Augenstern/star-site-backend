@@ -18,6 +18,9 @@ import java.util.Map;
 /**
  * star-async 异步命令管控端（管理员运维：卡单/重试/监控）。
  * 鉴权：JWT 必过网关；可选 ADMIN_MEMBER_IDS 白名单（逗号分隔，留空=开发态放行所有登录用户）。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @RestController
 @RequestMapping("/api/admin/async")

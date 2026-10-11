@@ -17,6 +17,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 /**
  * 提醒事件消费者：Register/Cancel 经 eventId 幂等后分发到规则 upsert/撤销。
  * 消费失败 MQ 自动重试，超限进 DLQ。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @RocketMQMessageListener(

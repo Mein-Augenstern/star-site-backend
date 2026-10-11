@@ -11,6 +11,9 @@ import java.util.stream.Collectors;
 
 /**
  * 解析器注册表：收集全部 BillParser 实现，按格式探测选择。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Component
 @RequiredArgsConstructor

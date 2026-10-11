@@ -5,6 +5,9 @@ import lombok.Getter;
 
 /**
  * 统一响应码约定：0 成功；4xx 客户端错误；5xx 服务端错误
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Getter
 @AllArgsConstructor

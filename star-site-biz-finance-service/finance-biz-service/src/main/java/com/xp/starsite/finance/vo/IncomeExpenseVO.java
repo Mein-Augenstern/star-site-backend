@@ -6,6 +6,9 @@ import java.math.BigDecimal;
 
 /**
  * 收支表（期间内；调整/转账不计收支）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class IncomeExpenseVO {

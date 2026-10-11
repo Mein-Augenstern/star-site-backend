@@ -6,6 +6,12 @@ import java.io.Serializable;
 
 /**
  * 统一响应体：{code, message, data}
+ *
+ * <p>全平台所有 REST 接口的出参标准封装：controller 返回 {@code R.ok(data)} / {@code R.fail(...)}，
+ * 前端与跨服务调用方按 code 判定成败，配合 ResultCode 统一错误语义。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class R<T> implements Serializable {

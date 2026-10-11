@@ -11,6 +11,9 @@ import com.xp.starsite.common.async.AsyncCommandConfig;
 
 /**
  * 体检报告微服务启动类
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @SpringBootApplication(scanBasePackages = "com.xp.starsite")
 @EnableDiscoveryClient

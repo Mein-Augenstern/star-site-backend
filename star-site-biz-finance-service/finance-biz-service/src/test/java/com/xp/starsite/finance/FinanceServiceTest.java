@@ -30,6 +30,9 @@ import static org.mockito.Mockito.when;
 
 /**
  * 财务域单元测试：余额联动、转账双流水、删除回滚、归属 403（mock 全部依赖，不连库）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @ExtendWith(MockitoExtension.class)
 class FinanceServiceTest {

@@ -25,6 +25,9 @@ import java.util.Map;
  * <p>
  * 失败语义：解码失败抛出走 DLQ；业务失败（格式无法识别/账户不存在等）记失败日志不重试
  * （重试同样会失败），前端经 /api/finance/import/logs 轮询可见。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @RocketMQMessageListener(topic = "TOPIC_FILE", consumerGroup = "G_finance_file")

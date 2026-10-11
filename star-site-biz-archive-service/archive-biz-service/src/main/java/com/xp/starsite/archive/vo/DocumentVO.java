@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 
 /**
  * 证件视图
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class DocumentVO {

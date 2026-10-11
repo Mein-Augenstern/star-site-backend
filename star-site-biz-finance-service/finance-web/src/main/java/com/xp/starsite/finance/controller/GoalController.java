@@ -21,6 +21,9 @@ import java.util.List;
 
 /**
  * 家庭目标接口（全部需 JWT）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @RestController
 @RequestMapping("/api/finance/goals")

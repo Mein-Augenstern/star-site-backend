@@ -16,7 +16,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * 幂等消费基类单元测试（mock JdbcTemplate，不连库）
+ * 幂等消费基类单测：验证 (consumerGroup, eventId) 去重语义（mock JdbcTemplate，不连库）——
+ * 首次消费执行、重复消息跳过、非重复类 SQL 异常原样上抛交 MQ 重试。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 class AbstractIdempotentConsumerTest {
 

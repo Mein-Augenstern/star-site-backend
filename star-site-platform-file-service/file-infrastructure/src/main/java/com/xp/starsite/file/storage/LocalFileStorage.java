@@ -16,6 +16,9 @@ import java.nio.file.StandardCopyOption;
 
 /**
  * 本地磁盘存储（默认；file.storage-type=local 或未配置时启用）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Component

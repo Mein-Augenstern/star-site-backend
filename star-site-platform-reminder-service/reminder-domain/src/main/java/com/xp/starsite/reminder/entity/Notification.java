@@ -9,6 +9,9 @@ import java.time.LocalDateTime;
 
 /**
  * 站内通知（前端铃铛数据源）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 @TableName("notification")

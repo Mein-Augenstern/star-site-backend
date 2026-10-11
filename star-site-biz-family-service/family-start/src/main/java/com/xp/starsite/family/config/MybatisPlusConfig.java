@@ -8,6 +8,9 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * MyBatis-Plus 配置：分页插件
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Configuration
 public class MybatisPlusConfig {

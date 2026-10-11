@@ -25,6 +25,9 @@ import static org.mockito.Mockito.when;
 
 /**
  * 提醒事件消费者测试：信封解码 + eventId 幂等分发
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @ExtendWith(MockitoExtension.class)
 class ReminderEventConsumerTest {

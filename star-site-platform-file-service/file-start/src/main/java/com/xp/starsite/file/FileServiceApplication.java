@@ -8,6 +8,9 @@ import org.springframework.context.annotation.Import;
 
 /**
  * 文件微服务启动类
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @SpringBootApplication(scanBasePackages = "com.xp.starsite")
 @EnableDiscoveryClient

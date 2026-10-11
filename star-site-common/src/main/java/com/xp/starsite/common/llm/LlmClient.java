@@ -3,6 +3,9 @@ package com.xp.starsite.common.llm;
 /**
  * LLM 客户端（业务域面向此接口编程；GLM/OpenAI 兼容协议实现见 StarSiteLlmConfig）。
  * 未配置 llm.api-key 时容器中不存在本 Bean，调用方须容忍（ObjectProvider）。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 public interface LlmClient {
 

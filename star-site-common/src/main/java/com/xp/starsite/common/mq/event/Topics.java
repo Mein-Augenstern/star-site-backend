@@ -4,6 +4,9 @@ package com.xp.starsite.common.mq.event;
  * Topic 规划：按消费方划分（消费方负责订阅与幂等），
  * 生产方只管往 topic 发事件，不感知谁在消费。
  * 领域事件载荷定义在 star-site-api（如 event.reminder 包）。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 public final class Topics {
 

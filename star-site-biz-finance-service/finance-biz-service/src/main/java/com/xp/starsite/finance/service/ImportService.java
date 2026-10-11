@@ -4,6 +4,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 账单导入服务（V1 同步直传；事件异步化见 技术/07 取舍说明）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 public interface ImportService {
 

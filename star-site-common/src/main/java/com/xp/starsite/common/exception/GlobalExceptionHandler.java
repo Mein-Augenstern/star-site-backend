@@ -12,6 +12,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
  * 全局异常处理：所有异常统一转成 R 响应体
+ *
+ * <p>全平台各 Web 服务以 @Import（或组件扫描）引入本 @RestControllerAdvice：
+ * 业务异常 BizException 按 code 透出、参数校验失败转 400、未知异常兜底 500 且不泄露堆栈。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @RestControllerAdvice

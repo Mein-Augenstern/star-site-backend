@@ -14,6 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 认证接口（免 token）
+ *
+ * <p>会员域 REST 入口：提供账号注册与账密登录，登录成功签发 JWT，供小程序/Web 前端调用。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @RestController
 @RequestMapping("/api/auth")

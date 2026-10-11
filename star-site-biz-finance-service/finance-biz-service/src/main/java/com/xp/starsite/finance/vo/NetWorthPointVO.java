@@ -7,6 +7,9 @@ import java.time.LocalDate;
 
 /**
  * 净资产曲线点
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class NetWorthPointVO {

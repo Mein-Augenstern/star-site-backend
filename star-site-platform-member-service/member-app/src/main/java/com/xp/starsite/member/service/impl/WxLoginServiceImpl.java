@@ -26,6 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
  * 经典时序：wx.login() code → jscode2session → openid+unionid+session_key
  * → 按 unionid 归一、openid 兜底查身份 → 命中登录 / 未命中静默注册 → 签发 JWT。
  * session_key 落 identity.credential，永不下发。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Service

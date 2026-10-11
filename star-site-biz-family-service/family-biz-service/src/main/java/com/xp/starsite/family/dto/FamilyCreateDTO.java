@@ -6,6 +6,9 @@ import lombok.Data;
 
 /**
  * 创建家庭入参
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class FamilyCreateDTO {

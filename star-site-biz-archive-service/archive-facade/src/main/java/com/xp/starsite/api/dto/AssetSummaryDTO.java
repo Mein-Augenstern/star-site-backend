@@ -8,6 +8,9 @@ import java.math.BigDecimal;
 
 /**
  * 资产总览快照（跨服务传输：财务资产负债表的资产侧取数）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 @NoArgsConstructor

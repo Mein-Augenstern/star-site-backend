@@ -8,7 +8,11 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-/** 登录身份（一个账号 N 种登录方式；多端归一） */
+/** 登录身份（一个账号 N 种登录方式；多端归一）
+ *
+ * @author xiaopu
+ * @since 2026-10
+ */
 @Data
 @TableName("member_identity")
 public class MemberIdentity {

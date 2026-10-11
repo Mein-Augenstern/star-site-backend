@@ -15,7 +15,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/** star-async 核心语义单测：退避/死信/幂等提交 */
+/** star-async 核心语义单测：退避/死信/幂等提交
+ *
+ * @author xiaopu
+ * @since 2026-10
+ */
 class AsyncCommandServiceTest {
 
     private AsyncCommand cmd(long id, int retry, int maxRetry) {

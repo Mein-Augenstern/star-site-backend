@@ -7,6 +7,9 @@ import java.time.LocalDate;
 
 /**
  * 目标视图（含进度）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class GoalVO {

@@ -10,6 +10,9 @@ import java.time.LocalDate;
 
 /**
  * 就医记录创建入参
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 public class VisitCreateDTO {

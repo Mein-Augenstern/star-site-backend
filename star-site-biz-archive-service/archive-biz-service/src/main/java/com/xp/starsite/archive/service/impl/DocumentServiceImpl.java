@@ -29,6 +29,9 @@ import java.util.Set;
 /**
  * 证件夹实现。提醒事件取舍与保单域一致：
  * 到期提醒（主提醒）走事务消息与落库原子；撤销走普通发送（丢失仅多一条提醒噪声）。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Service

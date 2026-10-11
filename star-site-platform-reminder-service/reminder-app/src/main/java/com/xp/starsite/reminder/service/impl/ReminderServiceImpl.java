@@ -36,6 +36,9 @@ import java.util.Set;
  * 调度模型（取舍见架构文档 D3）：每日扫描补生成未来 N 天实例（(rule_id,due_date)
  * 唯一键幂等），当天到期的 PENDING 实例投站内通知——天粒度满足缴费/到期场景；
  * 延迟消息精确投递留作 V2 自定义"某日某时"提醒的练兵场景。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Service

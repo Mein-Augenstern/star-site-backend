@@ -12,6 +12,9 @@ import java.util.List;
 /**
  * 异步命令提交入口：在业务事务内调用 submit，命令与业务变更同事务原子落库
  * （asyncmd 的立身之本），提交方只管写，调度器负责可靠执行与重试。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -63,6 +66,11 @@ public class AsyncCommandService {
         cmd.setStatus(AsyncCommand.SUCCESS);
         cmd.setClaimToken(null);
         mapper.updateById(cmd);
+        // task-digest：异步命令成功摘要（执行是否成功 + 关键信息）
+        com.xp.starsite.common.log.DigestLoggers.emit(com.xp.starsite.common.log.DigestLoggers.TASK,
+                com.xp.starsite.common.log.DigestLoggers.fields(
+                        "kind", "async_cmd", "cmdType", cmd.getCmdType(),
+                        "cmdId", cmd.getId(), "status", "success"));
     }
 
     /** 失败重试：指数退避（60s·2^n，封顶 1h）；超限置 DEAD（死信） */
@@ -74,6 +82,11 @@ public class AsyncCommandService {
             cmd.setStatus(AsyncCommand.DEAD);
             cmd.setLastError(truncate(msg));
             mapper.updateById(cmd);
+            com.xp.starsite.common.log.DigestLoggers.emit(com.xp.starsite.common.log.DigestLoggers.TASK,
+                    com.xp.starsite.common.log.DigestLoggers.fields(
+                            "kind", "async_cmd", "cmdType", cmd.getCmdType(),
+                            "cmdId", cmd.getId(), "status", "dead",
+                            "retry", retry, "error", msg));
             log.error("async cmd DEAD: id={}, type={}, lastError={}", cmd.getId(), cmd.getCmdType(), msg);
             return;
         }
@@ -83,6 +96,12 @@ public class AsyncCommandService {
         cmd.setNextRunAt(LocalDateTime.now().plusSeconds(backoffSeconds));
         cmd.setLastError(truncate(msg));
         mapper.updateById(cmd);
+        // task-digest：重试摘要（指数退避可视）
+        com.xp.starsite.common.log.DigestLoggers.emit(com.xp.starsite.common.log.DigestLoggers.TASK,
+                com.xp.starsite.common.log.DigestLoggers.fields(
+                        "kind", "async_cmd", "cmdType", cmd.getCmdType(),
+                        "cmdId", cmd.getId(), "status", "retry",
+                        "retry", retry + 1, "backoffSeconds", backoffSeconds, "error", msg));
         log.warn("async cmd retry #{}: id={}, type={}, backoff={}s, err={}",
                 retry + 1, cmd.getId(), cmd.getCmdType(), backoffSeconds, msg);
     }

@@ -9,6 +9,9 @@ import org.springframework.context.annotation.Import;
 
 /**
  * 家庭档案微服务启动类（证件 + 资产两个小域合署）
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @SpringBootApplication(scanBasePackages = "com.xp.starsite")
 @EnableDiscoveryClient

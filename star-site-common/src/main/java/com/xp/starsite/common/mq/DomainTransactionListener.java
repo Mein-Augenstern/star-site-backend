@@ -11,6 +11,9 @@ import org.slf4j.LoggerFactory;
  * 事务消息监听器：半消息送达后执行业务方本地事务，成功提交 / 异常回滚。
  * 使用原生 rocketmq-client API（非 rocketmq-spring 注解式），
  * 由 RocketMqEventPublisher 内置，业务方零感知。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 class DomainTransactionListener implements TransactionListener {
 

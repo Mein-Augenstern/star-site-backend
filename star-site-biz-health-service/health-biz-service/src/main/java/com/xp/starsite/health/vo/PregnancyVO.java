@@ -6,7 +6,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-/** 孕期档案视图：孕周中枢 + 产检计划 + 体重参考 */
+/** 孕期档案视图：孕周中枢 + 产检计划 + 体重参考
+ *
+ * @author xiaopu
+ * @since 2026-10
+ */
 @Data
 public class PregnancyVO {
 

@@ -22,6 +22,9 @@ import java.util.List;
  * 体检报告 AI 解读：聚合报告 + 指标 → LLM → 结果落库缓存（同报告不重复花钱，force 强制重解读）。
  * LlmClient 可选：未配 llm.api-key 时抛 400"未启用"提示；LLM 调用失败抛 503。
  * 越权防线：复用 getDetail 聚合（内部已做归属校验），此处按 id+owner 查询即安全。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Slf4j
 @Service
