@@ -1,27 +1,22 @@
 package com.xp.starsite.health.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * 体检报告（health_report）：一次体检的元数据档案，指标明细在 {@link HealthIndicator}。
+ * 体检报告（health_report 表）：一次体检的元数据档案，指标明细在 {@link HealthIndicator}。
  * 删除为逻辑删（deleted）；AI 解读文本落本表缓存（interpretation/interpretedAt）。
+ * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
  * @author xiaopu
  * @since 2026-10
  */
 @Data
-@TableName("health_report")
 public class HealthReport {
 
     /** 主键 */
-    @TableId(type = IdType.AUTO)
     private Long id;
 
     /** 家庭成员 id（family 服务的自然人档案） */
@@ -55,7 +50,6 @@ public class HealthReport {
     private LocalDateTime interpretedAt;
 
     /** 逻辑删标志（0 正常 1 已删） */
-    @TableLogic
     private Integer deleted;
 
     /** 创建时间（DB 维护） */

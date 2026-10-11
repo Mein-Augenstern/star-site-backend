@@ -1,6 +1,5 @@
 package com.xp.starsite.health.ai;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.llm.LlmClient;
 import com.xp.starsite.api.client.FamilyOwnershipGuard;
@@ -60,10 +59,7 @@ public class ReportInterpretationService {
             return new InterpretationResult(report.getInterpretation(),
                     report.getInterpretedAt() == null ? null : report.getInterpretedAt().toString(), true);
         }
-        List<HealthIndicator> indicators = indicatorMapper.selectList(
-                new LambdaQueryWrapper<HealthIndicator>()
-                        .eq(HealthIndicator::getReportId, reportId)
-                        .orderByAsc(HealthIndicator::getSortNo));
+        List<HealthIndicator> indicators = indicatorMapper.selectByReportId(reportId);
 
         LlmClient client = llmClient.getIfAvailable();
         if (client == null) {
@@ -100,9 +96,7 @@ public class ReportInterpretationService {
             throw new BizException(503, "AI 服务暂不可用，请稍后再试");
         }
 
-        report.setInterpretation(text);
-        report.setInterpretedAt(LocalDateTime.now());
-        reportMapper.updateById(report);
+        reportMapper.updateInterpretation(reportId, text, LocalDateTime.now());
         log.info("AI 解读完成: report={}, len={}", reportId, text.length());
         return new InterpretationResult(text, report.getInterpretedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), false);
     }

@@ -1,26 +1,22 @@
 package com.xp.starsite.health.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * 体检报告指标（health_indicator）：报告单上的具体检验/检查项目。
- * report_year 冗余存储，趋势查询免 join。
+ * 体检报告指标（health_indicator 表）：报告单上的具体检验/检查项目。
+ * report_year 冗余存储，趋势查询免 join；无逻辑删（随报告重录物理清除）。
+ * 纯 POJO——表结构映射在 DAL 的 mapper XML。
  *
  * @author xiaopu
  * @since 2026-10
  */
 @Data
-@TableName("health_indicator")
 public class HealthIndicator {
 
     /** 主键 */
-    @TableId(type = IdType.AUTO)
     private Long id;
 
     /** 所属报告 id（health_report.id） */

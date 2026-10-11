@@ -1,7 +1,5 @@
 package com.xp.starsite.health.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
@@ -24,6 +22,7 @@ import java.util.Set;
 
 /**
  * 日常指标服务实现。越权防线约定见 {@link com.xp.starsite.health.service.MetricService}。
+ * 数据访问全部经 DAL（{@link DailyMetricMapper}），SQL 收敛在 mapper XML。
  *
  * @author xiaopu
  * @since 2026-10
@@ -63,14 +62,15 @@ public class MetricServiceImpl implements MetricService {
         if (scope.isEmpty()) {
             return PageVO.of(List.of(), 0, page, size);
         }
-        LambdaQueryWrapper<DailyMetric> wrapper = new LambdaQueryWrapper<DailyMetric>()
-                .in(DailyMetric::getFamilyMemberId, scope)
-                .eq(StringUtils.hasText(metricType), DailyMetric::getMetricType, metricType)
-                .orderByDesc(DailyMetric::getMetricDate)
-                .orderByDesc(DailyMetric::getId);
-        Page<DailyMetric> result = metricMapper.selectPage(Page.of(page, size), wrapper);
-        List<MetricVO> vos = result.getRecords().stream().map(this::toVO).toList();
-        return PageVO.of(vos, result.getTotal(), result.getCurrent(), result.getSize());
+        String type = StringUtils.hasText(metricType) ? metricType : null;
+        long total = metricMapper.countByScope(scope, type);
+        if (total == 0) {
+            return PageVO.of(List.of(), 0, page, size);
+        }
+        long offset = (page - 1) * size;
+        List<MetricVO> vos = metricMapper.selectPage(scope, type, offset, (int) size)
+                .stream().map(this::toVO).toList();
+        return PageVO.of(vos, total, page, size);
     }
 
     @Override
@@ -80,17 +80,13 @@ public class MetricServiceImpl implements MetricService {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "指标记录不存在");
         }
         ownershipGuard.requireOwned(memberId, m.getFamilyMemberId());
-        metricMapper.deleteById(id);
+        metricMapper.markDeleted(id);
     }
 
     @Override
     public List<MetricTrendPoint> metricTrends(Long memberId, Long familyMemberId, String metricType) {
         ownershipGuard.requireOwned(memberId, familyMemberId);
-        return metricMapper.selectList(
-                        new LambdaQueryWrapper<DailyMetric>()
-                                .eq(DailyMetric::getFamilyMemberId, familyMemberId)
-                                .eq(DailyMetric::getMetricType, metricType)
-                                .orderByAsc(DailyMetric::getMetricDate))
+        return metricMapper.selectTrend(familyMemberId, metricType)
                 .stream()
                 .map(m -> new MetricTrendPoint(m.getMetricDate(), m.getValueNum()))
                 .toList();

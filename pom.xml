@@ -32,7 +32,7 @@
         <spring-boot.version>3.2.4</spring-boot.version>
         <spring-cloud.version>2023.0.1</spring-cloud.version>
         <spring-cloud-alibaba.version>2023.0.1.2</spring-cloud-alibaba.version>
-        <mybatis-plus.version>3.5.12</mybatis-plus.version>
+        <mybatis.version>3.0.3</mybatis.version>
         <jjwt.version>0.12.7</jjwt.version>
         <rocketmq-spring.version>2.3.4</rocketmq-spring.version>
         <rocketmq.version>5.3.1</rocketmq.version>
@@ -62,9 +62,9 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-                <version>${mybatis-plus.version}</version>
+                <groupId>org.mybatis.spring.boot</groupId>
+                <artifactId>mybatis-spring-boot-starter</artifactId>
+                <version>${mybatis.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>

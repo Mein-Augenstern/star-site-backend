@@ -17,7 +17,7 @@
 
     <modules>
         <module>health-core-model</module>
-        <module>health-core-service</module>
+        <module>health-dal</module>
         <module>health-integration</module>
         <module>health-biz-service</module>
         <module>health-web</module>

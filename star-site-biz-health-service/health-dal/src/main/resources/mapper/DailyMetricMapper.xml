@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 日常指标 SQL（DAL）：逻辑删 -->
+<mapper namespace="com.xp.starsite.health.mapper.DailyMetricMapper">
+
+    <sql id="cols">
+        id, family_member_id, metric_date, metric_type, value_num, remark, deleted, created_at, updated_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO daily_metric
+            (family_member_id, metric_date, metric_type, value_num, remark)
+        VALUES
+            (#{familyMemberId}, #{metricDate}, #{metricType}, #{valueNum}, #{remark})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.health.entity.DailyMetric">
+        SELECT <include refid="cols"/> FROM daily_metric
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <update id="markDeleted">
+        UPDATE daily_metric SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <select id="selectPage" resultType="com.xp.starsite.health.entity.DailyMetric">
+        SELECT <include refid="cols"/> FROM daily_metric
+        WHERE deleted = 0
+          AND family_member_id IN
+        <foreach collection="scopeIds" item="sid" open="(" separator="," close=")">#{sid}</foreach>
+        <if test="metricType != null and metricType != ''">AND metric_type = #{metricType}</if>
+        ORDER BY metric_date DESC, id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countByScope" resultType="long">
+        SELECT COUNT(*) FROM daily_metric
+        WHERE deleted = 0
+          AND family_member_id IN
+        <foreach collection="scopeIds" item="sid" open="(" separator="," close=")">#{sid}</foreach>
+        <if test="metricType != null and metricType != ''">AND metric_type = #{metricType}</if>
+    </select>
+
+    <select id="selectTrend" resultType="com.xp.starsite.health.entity.DailyMetric">
+        SELECT <include refid="cols"/> FROM daily_metric
+        WHERE deleted = 0 AND family_member_id = #{familyMemberId} AND metric_type = #{metricType}
+        ORDER BY metric_date ASC
+    </select>
+</mapper>

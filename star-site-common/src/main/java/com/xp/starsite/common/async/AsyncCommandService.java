@@ -1,7 +1,6 @@
 package com.xp.starsite.common.async;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.xp.starsite.common.async.mapper.AsyncCommandMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AsyncCommandService {
 
-    private final BaseMapper<AsyncCommand> mapper;
+    private final AsyncCommandMapper mapper;
 
     @Value("${spring.application.name:unknown}")
     private String appName;
@@ -48,24 +47,20 @@ public class AsyncCommandService {
 
     /** 幂等提交：同 type+bizKey 已有未完成命令时跳过（防重复触发，如定时任务反复提交） */
     public AsyncCommand submitIdempotent(String cmdType, String bizKey, String payloadJson) {
-        Long count = mapper.selectCount(new LambdaQueryWrapper<AsyncCommand>()
-                .eq(AsyncCommand::getCmdType, cmdType)
-                .eq(AsyncCommand::getBizKey, bizKey)
-                .in(AsyncCommand::getStatus, AsyncCommand.PENDING, AsyncCommand.RUNNING));
-        if (count > 0) {
+        if (mapper.countUnfinished(cmdType, bizKey) > 0) {
             return null;
         }
         return submit(cmdType, bizKey, payloadJson);
     }
 
     public List<AsyncCommand> findByIds(List<Long> ids) {
-        return mapper.selectBatchIds(ids);
+        return ids.isEmpty() ? List.of() : mapper.selectByIds(ids);
     }
 
     public void markSuccess(AsyncCommand cmd) {
         cmd.setStatus(AsyncCommand.SUCCESS);
         cmd.setClaimToken(null);
-        mapper.updateById(cmd);
+        mapper.updateState(cmd);
         // task-digest：异步命令成功摘要（执行是否成功 + 关键信息）
         com.xp.starsite.common.log.DigestLoggers.emit(com.xp.starsite.common.log.DigestLoggers.TASK,
                 com.xp.starsite.common.log.DigestLoggers.fields(
@@ -81,7 +76,7 @@ public class AsyncCommandService {
         if (retry >= (cmd.getMaxRetry() == null ? 5 : cmd.getMaxRetry())) {
             cmd.setStatus(AsyncCommand.DEAD);
             cmd.setLastError(truncate(msg));
-            mapper.updateById(cmd);
+            mapper.updateState(cmd);
             com.xp.starsite.common.log.DigestLoggers.emit(com.xp.starsite.common.log.DigestLoggers.TASK,
                     com.xp.starsite.common.log.DigestLoggers.fields(
                             "kind", "async_cmd", "cmdType", cmd.getCmdType(),
@@ -95,7 +90,7 @@ public class AsyncCommandService {
         cmd.setStatus(AsyncCommand.PENDING);
         cmd.setNextRunAt(LocalDateTime.now().plusSeconds(backoffSeconds));
         cmd.setLastError(truncate(msg));
-        mapper.updateById(cmd);
+        mapper.updateState(cmd);
         // task-digest：重试摘要（指数退避可视）
         com.xp.starsite.common.log.DigestLoggers.emit(com.xp.starsite.common.log.DigestLoggers.TASK,
                 com.xp.starsite.common.log.DigestLoggers.fields(

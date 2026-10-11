@@ -1,7 +1,5 @@
 package com.xp.starsite.health.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
@@ -21,6 +19,7 @@ import java.util.Set;
 
 /**
  * 就医记录服务实现。越权防线约定见 {@link com.xp.starsite.health.service.VisitService}。
+ * 数据访问全部经 DAL（{@link VisitRecordMapper}），SQL 收敛在 mapper XML。
  *
  * @author xiaopu
  * @since 2026-10
@@ -56,13 +55,14 @@ public class VisitServiceImpl implements VisitService {
         if (scope.isEmpty()) {
             return PageVO.of(List.of(), 0, page, size);
         }
-        LambdaQueryWrapper<VisitRecord> wrapper = new LambdaQueryWrapper<VisitRecord>()
-                .in(VisitRecord::getFamilyMemberId, scope)
-                .orderByDesc(VisitRecord::getVisitDate)
-                .orderByDesc(VisitRecord::getId);
-        Page<VisitRecord> result = visitMapper.selectPage(Page.of(page, size), wrapper);
-        List<VisitVO> vos = result.getRecords().stream().map(this::toVO).toList();
-        return PageVO.of(vos, result.getTotal(), result.getCurrent(), result.getSize());
+        long total = visitMapper.countByScope(scope);
+        if (total == 0) {
+            return PageVO.of(List.of(), 0, page, size);
+        }
+        long offset = (page - 1) * size;
+        List<VisitVO> vos = visitMapper.selectPage(scope, offset, (int) size)
+                .stream().map(this::toVO).toList();
+        return PageVO.of(vos, total, page, size);
     }
 
     @Override
@@ -72,7 +72,7 @@ public class VisitServiceImpl implements VisitService {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "就医记录不存在");
         }
         ownershipGuard.requireOwned(memberId, visit.getFamilyMemberId());
-        visitMapper.deleteById(id);
+        visitMapper.markDeleted(id);
     }
 
     /** 列表/搜索的数据范围（指定成员单查，否则全家收口），与报告服务同语义 */

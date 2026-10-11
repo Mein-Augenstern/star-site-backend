@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 孕期档案 SQL（DAL）：一人一条，逻辑删 -->
+<mapper namespace="com.xp.starsite.health.mapper.PregnancyProfileMapper">
+
+    <sql id="cols">
+        id, family_member_id, lmp_date, height_cm, pre_pregnancy_weight,
+        ended, remark, deleted, created_at, updated_at
+    </sql>
+
+    <select id="selectByFamilyMemberId" resultType="com.xp.starsite.health.entity.PregnancyProfile">
+        SELECT <include refid="cols"/> FROM pregnancy_profile
+        WHERE family_member_id = #{familyMemberId} AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO pregnancy_profile
+            (family_member_id, lmp_date, height_cm, pre_pregnancy_weight, ended)
+        VALUES
+            (#{familyMemberId}, #{lmpDate}, #{heightCm}, #{prePregnancyWeight}, #{ended})
+    </insert>
+
+    <update id="update">
+        UPDATE pregnancy_profile
+        SET lmp_date = #{lmpDate}, height_cm = #{heightCm}, pre_pregnancy_weight = #{prePregnancyWeight}
+        WHERE id = #{id} AND deleted = 0
+    </update>
+</mapper>

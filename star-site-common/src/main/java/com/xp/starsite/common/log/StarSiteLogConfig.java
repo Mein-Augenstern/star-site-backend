@@ -79,4 +79,11 @@ public class StarSiteLogConfig {
     public WriteTemplate writeTemplate(Environment env) {
         return new WriteTemplate(env.getProperty("spring.application.name", "unknown"));
     }
+
+    /** 雪花 id（替代 MyBatis-Plus ASSIGN_ID）：需要 insert 前拿 id 的场景经业务层显式调用 */
+    @Bean
+    public com.xp.starsite.common.util.IdGenerator idGenerator(Environment env) {
+        return new com.xp.starsite.common.util.IdGenerator(
+                env.getProperty("star.snowflake.worker-id", Long.class, 1L));
+    }
 }

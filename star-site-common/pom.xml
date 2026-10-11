@@ -102,11 +102,11 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- star-async 异步命令：仅编译期需要，provided（业务服务自带 mybatis-plus starter；
+        <!-- star-async 异步命令：仅编译期需要，provided（业务服务自带 mybatis starter；
              网关不依赖且不 @Import 本组件配置，扫描 introspection 不会触达） -->
         <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
             <scope>provided</scope>
         </dependency>
 

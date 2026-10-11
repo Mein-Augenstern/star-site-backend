@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 体检报告 SQL（DAL）：全部参数绑定 #{}，逻辑删查询统一 deleted=0 -->
+<mapper namespace="com.xp.starsite.health.mapper.HealthReportMapper">
+
+    <sql id="cols">
+        id, family_member_id, report_year, checkup_date, hospital, title, summary,
+        file_id, remark, interpretation, interpreted_at, deleted, created_at, updated_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO health_report
+            (family_member_id, report_year, checkup_date, hospital, title, summary, file_id, remark)
+        VALUES
+            (#{familyMemberId}, #{reportYear}, #{checkupDate}, #{hospital}, #{title}, #{summary}, #{fileId}, #{remark})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.health.entity.HealthReport">
+        SELECT <include refid="cols"/> FROM health_report
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <update id="markDeleted">
+        UPDATE health_report SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <select id="selectPage" resultType="com.xp.starsite.health.entity.HealthReport">
+        SELECT <include refid="cols"/> FROM health_report
+        WHERE deleted = 0
+          AND family_member_id IN
+        <foreach collection="scopeIds" item="sid" open="(" separator="," close=")">#{sid}</foreach>
+        <if test="year != null">AND report_year = #{year}</if>
+        ORDER BY checkup_date DESC, id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countByScope" resultType="long">
+        SELECT COUNT(*) FROM health_report
+        WHERE deleted = 0
+          AND family_member_id IN
+        <foreach collection="scopeIds" item="sid" open="(" separator="," close=")">#{sid}</foreach>
+        <if test="year != null">AND report_year = #{year}</if>
+    </select>
+
+    <select id="search" resultType="com.xp.starsite.health.entity.HealthReport">
+        SELECT <include refid="cols"/> FROM health_report
+        WHERE deleted = 0
+          AND family_member_id IN
+        <foreach collection="scopeIds" item="sid" open="(" separator="," close=")">#{sid}</foreach>
+          AND (
+            title LIKE CONCAT('%', #{keyword}, '%')
+            OR hospital LIKE CONCAT('%', #{keyword}, '%')
+            OR summary LIKE CONCAT('%', #{keyword}, '%')
+            <if test="reportIds != null and reportIds.size() > 0">
+                OR id IN
+                <foreach collection="reportIds" item="rid" open="(" separator="," close=")">#{rid}</foreach>
+            </if>
+          )
+        ORDER BY checkup_date DESC, id DESC
+        LIMIT 50
+    </select>
+
+    <update id="updateInterpretation">
+        UPDATE health_report SET interpretation = #{interpretation}, interpreted_at = #{interpretedAt}
+        WHERE id = #{id} AND deleted = 0
+    </update>
+</mapper>

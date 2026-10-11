@@ -1,7 +1,5 @@
 package com.xp.starsite.health.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
@@ -34,6 +32,8 @@ import java.util.stream.Collectors;
  * 越权防线：凡带 familyMemberId 的入参先经 {@link FamilyOwnershipGuard} 校验归属；
  * 列表/搜索不传 familyMemberId 时强制收口在「自己家庭的成员集合」内；
  * fail-closed：family 服务不可用即拒绝请求。
+ * 数据访问全部经 DAL（{@link HealthReportMapper}/{@link HealthIndicatorMapper}），
+ * SQL 收敛在 mapper XML，业务层零 SQL 拼装。
  *
  * @author xiaopu
  * @since 2026-10
@@ -72,25 +72,20 @@ public class ReportServiceImpl implements ReportService {
         if (scope.isEmpty()) {
             return PageVO.of(List.of(), 0, page, size);
         }
-        LambdaQueryWrapper<HealthReport> wrapper = new LambdaQueryWrapper<HealthReport>()
-                .in(HealthReport::getFamilyMemberId, scope)
-                .eq(year != null, HealthReport::getReportYear, year)
-                .orderByDesc(HealthReport::getCheckupDate)
-                .orderByDesc(HealthReport::getId);
-        Page<HealthReport> result = reportMapper.selectPage(Page.of(page, size), wrapper);
-        List<HealthReportVO> vos = result.getRecords().stream()
-                .map(r -> toVO(r, null)).toList();
-        return PageVO.of(vos, result.getTotal(), result.getCurrent(), result.getSize());
+        long total = reportMapper.countByScope(scope, year);
+        if (total == 0) {
+            return PageVO.of(List.of(), 0, page, size);
+        }
+        long offset = (page - 1) * size;
+        List<HealthReportVO> vos = reportMapper.selectPage(scope, year, offset, (int) size)
+                .stream().map(r -> toVO(r, null)).toList();
+        return PageVO.of(vos, total, page, size);
     }
 
     @Override
     public HealthReportVO getDetail(Long memberId, Long id) {
         HealthReport report = requireOwnedReport(memberId, id);
-        List<HealthIndicatorVO> indicators = indicatorMapper.selectList(
-                        new LambdaQueryWrapper<HealthIndicator>()
-                                .eq(HealthIndicator::getReportId, id)
-                                .orderByAsc(HealthIndicator::getSortNo)
-                                .orderByAsc(HealthIndicator::getId))
+        List<HealthIndicatorVO> indicators = indicatorMapper.selectByReportId(id)
                 .stream().map(this::toIndicatorVO).toList();
         return toVO(report, indicators);
     }
@@ -100,8 +95,7 @@ public class ReportServiceImpl implements ReportService {
     public void addIndicators(Long memberId, Long reportId, IndicatorBatchDTO dto) {
         HealthReport report = requireOwnedReport(memberId, reportId);
         // 重录覆盖：先清掉该报告旧指标
-        indicatorMapper.delete(new LambdaQueryWrapper<HealthIndicator>()
-                .eq(HealthIndicator::getReportId, reportId));
+        indicatorMapper.deleteByReportId(reportId);
         int sort = 0;
         for (IndicatorDTO i : dto.getIndicators()) {
             HealthIndicator indicator = new HealthIndicator();
@@ -126,7 +120,7 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public void deleteReport(Long memberId, Long id) {
         requireOwnedReport(memberId, id);
-        reportMapper.deleteById(id);
+        reportMapper.markDeleted(id);
     }
 
     @Override
@@ -140,30 +134,15 @@ public class ReportServiceImpl implements ReportService {
         }
         String kw = keyword.trim();
         // 命中指标名的报告 id（指标名命中也算报告命中）
-        Set<Long> reportIds = indicatorMapper.selectList(
-                        new LambdaQueryWrapper<HealthIndicator>()
-                                .like(HealthIndicator::getItemName, kw))
+        Set<Long> reportIds = indicatorMapper.selectByKeywordLike(kw)
                 .stream().map(HealthIndicator::getReportId).collect(Collectors.toSet());
-
-        LambdaQueryWrapper<HealthReport> wrapper = new LambdaQueryWrapper<HealthReport>()
-                .in(HealthReport::getFamilyMemberId, scope)
-                .and(w -> w.like(HealthReport::getTitle, kw)
-                        .or().like(HealthReport::getHospital, kw)
-                        .or().like(HealthReport::getSummary, kw)
-                        .or().in(!reportIds.isEmpty(), HealthReport::getId, reportIds))
-                .orderByDesc(HealthReport::getCheckupDate)
-                .last("LIMIT 50");
-        return reportMapper.selectList(wrapper).stream().map(r -> toVO(r, null)).toList();
+        return reportMapper.search(scope, kw, reportIds).stream().map(r -> toVO(r, null)).toList();
     }
 
     @Override
     public List<TrendPointVO> trends(Long memberId, Long familyMemberId, String itemName) {
         ownershipGuard.requireOwned(memberId, familyMemberId);
-        return indicatorMapper.selectList(
-                        new LambdaQueryWrapper<HealthIndicator>()
-                                .eq(HealthIndicator::getFamilyMemberId, familyMemberId)
-                                .eq(HealthIndicator::getItemName, itemName)
-                                .orderByAsc(HealthIndicator::getReportYear))
+        return indicatorMapper.selectTrend(familyMemberId, itemName)
                 .stream().map(this::toTrendVO).toList();
     }
 

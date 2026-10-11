@@ -1,6 +1,5 @@
 package com.xp.starsite.health.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.health.dto.PregnancyUpsertDTO;
 import com.xp.starsite.health.entity.PregnancyProfile;
@@ -56,21 +55,20 @@ public class PregnancyServiceImpl implements PregnancyService {
     @Override
     public PregnancyVO upsertPregnancy(Long memberId, PregnancyUpsertDTO dto) {
         ownershipGuard.requireOwned(memberId, dto.getFamilyMemberId());
-        PregnancyProfile profile = pregnancyMapper.selectOne(
-                new LambdaQueryWrapper<PregnancyProfile>()
-                        .eq(PregnancyProfile::getFamilyMemberId, dto.getFamilyMemberId()));
+        PregnancyProfile profile = pregnancyMapper.selectByFamilyMemberId(dto.getFamilyMemberId());
         if (profile == null) {
             profile = new PregnancyProfile();
             profile.setFamilyMemberId(dto.getFamilyMemberId());
             profile.setEnded(0);
-        }
-        profile.setLmpDate(dto.getLmpDate());
-        profile.setHeightCm(dto.getHeightCm());
-        profile.setPrePregnancyWeight(dto.getPrePregnancyWeight());
-        if (profile.getId() == null) {
+            profile.setLmpDate(dto.getLmpDate());
+            profile.setHeightCm(dto.getHeightCm());
+            profile.setPrePregnancyWeight(dto.getPrePregnancyWeight());
             pregnancyMapper.insert(profile);
         } else {
-            pregnancyMapper.updateById(profile);
+            profile.setLmpDate(dto.getLmpDate());
+            profile.setHeightCm(dto.getHeightCm());
+            profile.setPrePregnancyWeight(dto.getPrePregnancyWeight());
+            pregnancyMapper.update(profile);
         }
         // 里程碑注册提醒规则（幂等，已过窗口自动跳过）；
         // 提醒中心不可用只告警不阻断——孕周保存是主链路，提醒注册是增强链路
@@ -89,9 +87,7 @@ public class PregnancyServiceImpl implements PregnancyService {
     @Override
     public PregnancyVO getPregnancy(Long memberId, Long familyMemberId) {
         ownershipGuard.requireOwned(memberId, familyMemberId);
-        PregnancyProfile profile = pregnancyMapper.selectOne(
-                new LambdaQueryWrapper<PregnancyProfile>()
-                        .eq(PregnancyProfile::getFamilyMemberId, familyMemberId));
+        PregnancyProfile profile = pregnancyMapper.selectByFamilyMemberId(familyMemberId);
         return profile == null ? null : toVO(profile);
     }
 

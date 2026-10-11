@@ -10,9 +10,9 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>health-core-service</artifactId>
-    <name>health-core-service</name>
-    <description>健康域数据访问：mapper（BaseMapper 数据访问层）</description>
+    <artifactId>health-dal</artifactId>
+    <name>health-dal</name>
+    <description>健康域 DAL 数据访问层：MyBatis 官方 mapper + XML，屏蔽存储引擎（MySQL/Lindorm/TBase 可换）</description>
 
     <dependencies>
         <dependency>
@@ -20,9 +20,10 @@
             <artifactId>health-core-model</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- MyBatis 官方 starter（替代 MyBatis-Plus）：版本由根 pom 统一管理 -->
         <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

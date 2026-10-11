@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 报告指标 SQL（DAL）：无逻辑删，随报告重录物理清除 -->
+<mapper namespace="com.xp.starsite.health.mapper.HealthIndicatorMapper">
+
+    <sql id="cols">
+        id, report_id, family_member_id, report_year, item_name, item_group,
+        value_num, value_text, unit, ref_low, ref_high, abnormal_flag, sort_no, created_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO health_indicator
+            (report_id, family_member_id, report_year, item_name, item_group,
+             value_num, value_text, unit, ref_low, ref_high, abnormal_flag, sort_no)
+        VALUES
+            (#{reportId}, #{familyMemberId}, #{reportYear}, #{itemName}, #{itemGroup},
+             #{valueNum}, #{valueText}, #{unit}, #{refLow}, #{refHigh}, #{abnormalFlag}, #{sortNo})
+    </insert>
+
+    <delete id="deleteByReportId">
+        DELETE FROM health_indicator WHERE report_id = #{reportId}
+    </delete>
+
+    <select id="selectByReportId" resultType="com.xp.starsite.health.entity.HealthIndicator">
+        SELECT <include refid="cols"/> FROM health_indicator
+        WHERE report_id = #{reportId}
+        ORDER BY sort_no ASC, id ASC
+    </select>
+
+    <select id="selectTrend" resultType="com.xp.starsite.health.entity.HealthIndicator">
+        SELECT <include refid="cols"/> FROM health_indicator
+        WHERE family_member_id = #{familyMemberId} AND item_name = #{itemName}
+        ORDER BY report_year ASC
+    </select>
+
+    <select id="selectByKeywordLike" resultType="com.xp.starsite.health.entity.HealthIndicator">
+        SELECT id, report_id FROM health_indicator
+        WHERE item_name LIKE CONCAT('%', #{keyword}, '%')
+    </select>
+</mapper>

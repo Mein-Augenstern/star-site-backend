@@ -1,8 +1,5 @@
 package com.xp.starsite.common.async;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -11,12 +8,12 @@ import java.time.LocalDateTime;
  *
  * 落 async_command 表的一行即一条待执行命令：状态机 PENDING/RUNNING/SUCCESS/DEAD，
  * 由 AsyncCommandConfig 的调度器认领执行，业务方经 AsyncCommandService 提交。
+ * 纯 POJO——列映射在 AsyncCommandMapper 注解 SQL（map-underscore-to-camel-case）。
  *
  * @author xiaopu
  * @since 2026-10
  */
 @Data
-@TableName("async_command")
 public class AsyncCommand {
 
     public static final String PENDING = "PENDING";
@@ -24,7 +21,7 @@ public class AsyncCommand {
     public static final String SUCCESS = "SUCCESS";
     public static final String DEAD = "DEAD";
 
-    @TableId(type = IdType.AUTO)
+    /** 主键 */
     private Long id;
 
     /** 命令类型 = 执行器路由键 */

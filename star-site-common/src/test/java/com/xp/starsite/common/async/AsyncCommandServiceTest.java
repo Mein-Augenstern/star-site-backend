@@ -66,7 +66,7 @@ class AsyncCommandServiceTest {
     @Test
     void submitIdempotentSkipsWhenPendingExists() {
         AsyncCommandMapper mapper = mock(AsyncCommandMapper.class);
-        when(mapper.selectCount(ArgumentMatchers.any())).thenReturn(1L);
+        when(mapper.countUnfinished("AI_INTERPRET", "report:1")).thenReturn(1L);
         AsyncCommandService s = new AsyncCommandService(mapper);
         AsyncCommand r = s.submitIdempotent("AI_INTERPRET", "report:1", "{}");
         assertNull(r);

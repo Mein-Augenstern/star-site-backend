@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 就医记录 SQL（DAL）：逻辑删 -->
+<mapper namespace="com.xp.starsite.health.mapper.VisitRecordMapper">
+
+    <sql id="cols">
+        id, family_member_id, visit_date, hospital, department, diagnosis,
+        medication, cost, remark, deleted, created_at, updated_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO visit_record
+            (family_member_id, visit_date, hospital, department, diagnosis, medication, cost, remark)
+        VALUES
+            (#{familyMemberId}, #{visitDate}, #{hospital}, #{department}, #{diagnosis}, #{medication}, #{cost}, #{remark})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.health.entity.VisitRecord">
+        SELECT <include refid="cols"/> FROM visit_record
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <update id="markDeleted">
+        UPDATE visit_record SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <select id="selectPage" resultType="com.xp.starsite.health.entity.VisitRecord">
+        SELECT <include refid="cols"/> FROM visit_record
+        WHERE deleted = 0
+          AND family_member_id IN
+        <foreach collection="scopeIds" item="sid" open="(" separator="," close=")">#{sid}</foreach>
+        ORDER BY visit_date DESC, id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countByScope" resultType="long">
+        SELECT COUNT(*) FROM visit_record
+        WHERE deleted = 0
+          AND family_member_id IN
+        <foreach collection="scopeIds" item="sid" open="(" separator="," close=")">#{sid}</foreach>
+    </select>
+</mapper>

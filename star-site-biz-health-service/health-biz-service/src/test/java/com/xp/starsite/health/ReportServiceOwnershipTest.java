@@ -1,10 +1,8 @@
 package com.xp.starsite.health;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.health.dto.ReportCreateDTO;
-import com.xp.starsite.health.entity.HealthIndicator;
 import com.xp.starsite.health.entity.HealthReport;
 import com.xp.starsite.health.mapper.HealthIndicatorMapper;
 import com.xp.starsite.health.mapper.HealthReportMapper;
@@ -12,7 +10,6 @@ import com.xp.starsite.health.service.impl.ReportServiceImpl;
 import com.xp.starsite.health.vo.PageVO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -87,8 +84,7 @@ class ReportServiceOwnershipTest {
     void detailAllowsOwnReport() {
         when(reportMapper.selectById(7L)).thenReturn(report(7L, MY_FAMILY_MEMBER));
         when(ownershipGuard.requireOwned(ME, MY_FAMILY_MEMBER)).thenReturn(null);
-        when(indicatorMapper.selectList(ArgumentMatchers.<LambdaQueryWrapper<HealthIndicator>>any()))
-                .thenReturn(List.of());
+        when(indicatorMapper.selectByReportId(7L)).thenReturn(List.of());
 
         assertEquals(7L, newService().getDetail(ME, 7L).getId());
     }
