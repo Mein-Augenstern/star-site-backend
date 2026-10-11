@@ -1,0 +1,19 @@
+{{- if .Values.serviceMonitor.enabled }}
+{{- range .Values.services }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: star-{{ .name }}
+  labels:
+    release: kube-prometheus-stack   # Prometheus operator 按此 label 拾取
+spec:
+  selector:
+    matchLabels:
+      app: star-{{ .name }}
+  endpoints:
+    - port: "{{ .port }}"
+      path: /actuator/prometheus
+      interval: 30s
+{{- end }}
+{{- end }}

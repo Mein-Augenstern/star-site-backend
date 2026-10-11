@@ -1,0 +1,61 @@
+# star-site-platform values
+# 环境契约与 docker-compose x-app-env 等价；基础设施留在 Mac A（compose），Pod 经局域网 IP 访问
+
+infra:
+  host: 192.168.3.196      # Mac A 局域网 IP（路由器 DHCP 静态绑定后长期有效）
+  nacosPort: 8848
+  mysqlPort: 3307          # Mac A 宿主机 3306 被占用，MySQL 发布在 3307
+
+global:
+  jwtSecret: star-site-local-dev-secret-change-me-32bytes!
+  datasource:
+    username: root
+    password: root123
+
+imagePullPolicy: IfNotPresent
+namespace: star-site
+
+# P4 可观测：management 端点经环境变量打开（各 start 模块已带 micrometer-registry-prometheus）
+management:
+  endpoints: health,info,prometheus
+
+serviceMonitor:
+  enabled: false           # P4 装好 kube-prometheus-stack 后置 true
+
+services:
+  - name: gateway
+    image: star-site/platform-gateway
+    tag: latest
+    port: 8080
+    memLimit: 512Mi
+    extraEnv: {}
+  - name: member
+    image: star-site/platform-member
+    tag: latest
+    port: 8081
+    memLimit: 512Mi
+    extraEnv: {}
+  - name: file
+    image: star-site/file
+    tag: latest
+    port: 8083
+    memLimit: 512Mi
+    extraEnv:
+      FILE_STORAGE_DIR: /app/data/files
+    volume:
+      type: hostPath
+      path: /data/star-site/files
+  - name: reminder
+    image: star-site/reminder
+    tag: latest
+    port: 8086
+    memLimit: 512Mi
+    extraEnv: {}
+
+# Traefik（k3s 自带）入口：家域流量 iPhone/ECS-frpc → VM:80 → gateway
+ingress:
+  enabled: true
+  className: traefik
+  host: star.example.com   # 换成你的域名或局域网 hosts 映射
+  service: gateway
+  port: 8080

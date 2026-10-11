@@ -1,0 +1,62 @@
+# star-site-biz values（环境契约同 platform chart；两族分开装，便于按域升级）
+
+infra:
+  host: 192.168.3.196
+  nacosPort: 8848
+  mysqlPort: 3307
+
+global:
+  jwtSecret: star-site-local-dev-secret-change-me-32bytes!
+  datasource:
+    username: root
+    password: root123
+
+imagePullPolicy: IfNotPresent
+namespace: star-site
+
+management:
+  endpoints: health,info,prometheus
+
+serviceMonitor:
+  enabled: false
+
+services:
+  - name: family
+    image: star-site/biz-family
+    tag: latest
+    port: 8082
+    memLimit: 512Mi
+    extraEnv: {}
+  - name: health
+    image: star-site/biz-health
+    tag: latest
+    port: 8084
+    memLimit: 512Mi
+    extraEnv:
+      STAR_ASYNC_ENABLED: "true"
+      LLM_API_KEY: "***REMOVED-GLM-KEY***"
+      LLM_MODEL: glm-4.5-air
+  - name: insurance
+    image: star-site/biz-insurance
+    tag: latest
+    port: 8085
+    memLimit: 512Mi
+    extraEnv: {}
+  - name: archive
+    image: star-site/biz-archive
+    tag: latest
+    port: 8087
+    memLimit: 512Mi
+    extraEnv: {}
+  - name: finance
+    image: star-site/biz-finance
+    tag: latest
+    port: 8088
+    memLimit: 512Mi
+    extraEnv:
+      LLM_API_KEY: "***REMOVED-GLM-KEY***"
+      LLM_MODEL: glm-4.5-air
+
+# biz 族不需要 Ingress（统一经 platform 族 gateway 进）
+ingress:
+  enabled: false

@@ -1,0 +1,66 @@
+{{- range .Values.services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: star-{{ .name }}
+  labels:
+    app: star-{{ .name }}
+    family: platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: star-{{ .name }}
+  template:
+    metadata:
+      labels:
+        app: star-{{ .name }}
+        family: platform
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ .port }}"
+        prometheus.io/path: /actuator/prometheus
+    spec:
+      containers:
+        - name: {{ .name }}
+          image: "{{ .image }}:{{ .tag }}"
+          imagePullPolicy: {{ $.Values.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .port }}
+          env:
+            {{- include "star-site.env" $ | nindent 12 }}
+            {{- range $k, $v := .extraEnv }}
+            - name: {{ $k }}
+              value: "{{ $v }}"
+            {{- end }}
+          resources:
+            requests:
+              memory: 256Mi
+            limits:
+              memory: {{ .memLimit }}
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .port }}
+            initialDelaySeconds: 40
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: {{ .port }}
+            initialDelaySeconds: 90
+            periodSeconds: 20
+          {{- if .volume }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .extraEnv.FILE_STORAGE_DIR }}
+          {{- end }}
+      {{- if .volume }}
+      volumes:
+        - name: data
+          hostPath:
+            path: {{ .volume.path }}
+            type: DirectoryOrCreate
+      {{- end }}
+{{- end }}

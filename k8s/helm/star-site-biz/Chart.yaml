@@ -1,0 +1,6 @@
+apiVersion: v2
+name: star-site-biz
+description: star-site biz 族（family/health/insurance/archive/finance）Helm chart
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

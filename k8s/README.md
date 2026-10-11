@@ -1,33 +1,24 @@
-# star-site K8s 部署清单（凤凰架构"后微服务"形态）
+# star-site K8s 部署（Helm 为主，裸 manifests 已废弃留档）
 
-> 前提：集群内有 MySQL（star-mysql:3306）/ Nacos（star-nacos:8848）/ RocketMQ（star-rocketmq-namesrv:9876）
-> ——可以直接把 docker-compose 的基础设施 `network_mode` 换成 NodePort 暴露，或整体迁入集群。
-> 所有应用配置已环境变量化（云原生演进 #4），此处 ConfigMap/Secret 注入即可，Java 代码零改动。
+## 当前部署路径
 
-## 文件
-
-| 文件 | 内容 |
+| 路径 | 说明 |
 |---|---|
-| 00-namespace-config.yaml | namespace + ConfigMap（公共 env）+ Secret（JWT/DB 密码） |
-| 01-data-services.yaml | member/family/file/health 四个平台的 Deployment + Service |
-| 02-biz-services.yaml | insurance/reminder/archive/finance 四个业务域的 Deployment + Service |
-| 03-gateway.yaml | 网关 Deployment + NodePort Service（对外入口） |
+| `helm/star-site-platform/` | gateway/member/file/reminder（含 Traefik Ingress、ServiceMonitor 开关） |
+| `helm/star-site-biz/` | family/health/insurance/archive/finance（health/finance 带 LLM env） |
+| `scripts/install-k3s-macB.sh` | Mac B：multipass VM + k3s 安装 + kubeconfig 导出 |
+| `scripts/export-images.sh` / `import-images.sh` | 免镜像仓库的镜像离线搬运（Mac A → Mac B） |
+| `scripts/deploy.sh` | Helm 部署/升级两族 |
+| `RUNBOOK-macB.md` | **从零到切流完整手册（含 frpc 切换点与回退）** |
 
-## 部署
+环境契约与 compose `x-app-env` 等价，基础设施留在 Mac A（MySQL 3307 / Nacos 8848 / Redis 6379 / RocketMQ 9876），values.yaml `infra.host` 指向 Mac A 局网 IP。
 
-```bash
-# 1. 镜像就位（集群可拉取：本地构建后推仓库，或 k3s 使用本地 import）
-docker build -f docker/Dockerfile --build-arg MODULE=star-site-platform-gateway -t star-site/gateway:latest .
-# ... 其余 7 个服务同法
-k3s ctr images import ...   # 或 docker save | k3s ctr images import
+## 旧裸 manifests（已废弃）
 
-# 2. 应用清单
-kubectl apply -f k8s/
-```
+`00-namespace-config.yaml ~ 04-*.yaml` 为早期雏形，被 Helm charts 取代，仅留档参考，勿再更新。
 
-## 凤凰架构对齐说明
+## 云原生对齐说明
 
-- 服务发现仍用 Nacos（Spring Cloud 模式）；下一步可切 Spring Cloud Kubernetes Discovery，
-  用 K8s Service/DNS 替代 Nacos，届时删除 Nacos 依赖仅改 env（见 06-云原生演进方案 第四节）
-- readiness/liveness 探针用 `/actuator/health`（所有服务已具备）
-- 资源限额对齐小内存经验值（每服务 320-384Mi）
+- 服务发现仍用 Nacos（Spring Cloud 模式）；后续可切 Spring Cloud Kubernetes Discovery 用 K8s DNS 替代（见 star-site-docs/技术/09 可选项路线）
+- readiness/liveness 探针走 `/actuator/health`；`/actuator/prometheus` 供 P4 抓取（micrometer-registry-prometheus 已进各 start 模块）
+- 资源限额每服务 512Mi（Pod 内 JVM -Xmx256m）
