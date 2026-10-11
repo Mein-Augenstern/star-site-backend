@@ -33,9 +33,8 @@ import com.xp.starsite.common.template.WriteTemplate;
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class StarSiteLogConfig {
 
-    /** digest 行的 app 字段来源（spring.application.name） */
-    @jakarta.annotation.PostConstruct
-    void initAppName(Environment env) {
+    /** digest 行的 app 字段来源（spring.application.name）——构造注入（@PostConstruct 方法不可带参） */
+    public StarSiteLogConfig(Environment env) {
         DigestLoggers.APP_NAME = env.getProperty("spring.application.name", "unknown");
     }
 

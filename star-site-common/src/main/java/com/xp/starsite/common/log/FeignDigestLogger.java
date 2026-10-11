@@ -29,13 +29,14 @@ public class FeignDigestLogger extends feign.Logger {
     @Override
     protected Response logAndRebufferResponse(String configKey, Level logLevel,
                                               Response response, long elapsedTime) throws IOException {
-        // BASIC 级别下必须重缓冲响应体，保证调用方仍能读取响应
+        // BASIC 级别下必须重缓冲响应体，保证调用方仍能读取响应；elapsedTime 单位为微秒
+        long costMs = elapsedTime / 1000;
         if (response.body() != null) {
             byte[] bodyData = Util.toByteArray(response.body().asInputStream());
-            emit(response, System.currentTimeMillis() - elapsedTime);
+            emit(response, costMs);
             return response.toBuilder().body(bodyData).build();
         }
-        emit(response, elapsedTime);
+        emit(response, costMs);
         return response;
     }
 
@@ -44,7 +45,7 @@ public class FeignDigestLogger extends feign.Logger {
         DigestLoggers.emit(DigestLoggers.RPC_CLIENT, DigestLoggers.fields(
                 "span", "client", "configKey", configKey,
                 "status", "EXCEPTION", "error", ioe.getMessage(),
-                "costMs", elapsedTime));
+                "costMs", elapsedTime / 1000));
         return ioe;
     }
 
