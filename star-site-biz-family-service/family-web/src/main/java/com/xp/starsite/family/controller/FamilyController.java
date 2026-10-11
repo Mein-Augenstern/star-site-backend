@@ -42,61 +42,83 @@ public class FamilyController {
 
     /**
      * 创建家庭（一个顶梁柱一个家）
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param dto      家庭信息（名称/备注）
+     * @return 新建家庭视图
      */
     @PostMapping
     public R<FamilyVO> create(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                               @Valid @RequestBody FamilyCreateDTO dto) {
-        return R.ok(writeTemplate.execute("family.create",
-                () -> familyService.create(memberId, dto)));
+        return writeTemplate.write("family.create",
+                () -> familyService.create(memberId, dto));
     }
 
     /**
      * 我的家庭（未建返回 data=null）
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @return 家庭视图，未建为 null
      */
     @GetMapping("/mine")
     public R<FamilyVO> mine(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return R.ok(queryTemplate.execute("family.mine",
-                () -> familyService.mine(memberId)));
+        return queryTemplate.query("family.mine",
+                () -> familyService.mine(memberId));
     }
 
     /**
      * 新增家庭成员档案
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param dto      成员档案内容
+     * @return 新建成员视图
      */
     @PostMapping("/members")
     public R<FamilyMemberVO> addMember(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                        @Valid @RequestBody FamilyMemberDTO dto) {
-        return R.ok(writeTemplate.execute("family.member.add",
-                () -> familyService.addMember(memberId, dto)));
+        return writeTemplate.write("family.member.add",
+                () -> familyService.addMember(memberId, dto));
     }
 
     /**
      * 家庭成员档案列表
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @return 全部成员视图
      */
     @GetMapping("/members")
     public R<List<FamilyMemberVO>> listMembers(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return R.ok(queryTemplate.execute("family.member.list",
-                () -> familyService.listMembers(memberId)));
+        return queryTemplate.query("family.member.list",
+                () -> familyService.listMembers(memberId));
     }
 
     /**
      * 更新家庭成员档案
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param id       成员档案 id
+     * @param dto      成员档案内容
+     * @return 更新后的成员视图
      */
     @PutMapping("/members/{id}")
     public R<FamilyMemberVO> updateMember(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                           @PathVariable Long id,
                                           @Valid @RequestBody FamilyMemberDTO dto) {
-        return R.ok(writeTemplate.execute("family.member.update",
-                () -> familyService.updateMember(memberId, id, dto)));
+        return writeTemplate.write("family.member.update",
+                () -> familyService.updateMember(memberId, id, dto));
     }
 
     /**
      * 删除家庭成员档案（逻辑删）
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param id       成员档案 id
+     * @return 空
      */
     @DeleteMapping("/members/{id}")
     public R<Void> deleteMember(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                 @PathVariable Long id) {
-        writeTemplate.execute("family.member.delete",
+        return writeTemplate.write("family.member.delete",
                 () -> familyService.deleteMember(memberId, id));
-        return R.ok();
     }
 }

@@ -16,27 +16,70 @@ import java.util.List;
  */
 public interface ReportService {
 
-    /** 资产负债表：账户资产 + 档案资产估值 / 负债账户 / 净资产 */
+    /**
+     * 资产负债表：账户资产 + 档案资产估值 / 负债账户 / 净资产
+     *
+     * @param memberId 当前登录账号
+     * @return 资产负债表视图
+     */
     BalanceSheetVO balanceSheet(Long memberId);
 
-    /** 收支表：期间收入/支出/结余率（month 传 0 = 全年） */
+    /**
+     * 收支表：期间收入/支出/结余率
+     *
+     * @param memberId 当前登录账号
+     * @param year     年份
+     * @param month    月份，传 0 = 全年
+     * @return 收支表视图
+     */
     IncomeExpenseVO incomeExpense(Long memberId, int year, int month);
 
-    /** 现金流量表（V1 简化）：流动账户余额 + 可撑月数 */
+    /**
+     * 现金流量表（V1 简化）：流动账户余额 + 可撑月数
+     *
+     * @param memberId 当前登录账号
+     * @return 现金流量表视图
+     */
     CashFlowVO cashFlow(Long memberId);
 
-    /** 净资产曲线 */
+    /**
+     * 净资产曲线
+     *
+     * @param memberId 当前登录账号
+     * @return 净资产快照点列表（按日期升序）
+     */
     List<NetWorthPointVO> netWorthTrend(Long memberId);
 
-    /** 当月分类支出占比（饼图数据，降序） */
+    /**
+     * 当月分类支出占比（饼图数据，降序）
+     *
+     * @param memberId 当前登录账号
+     * @param year     年份
+     * @param month    月份
+     * @return 分类占比列表
+     */
     List<com.xp.starsite.finance.vo.CategoryShareVO> categoryShare(Long memberId, int year, int month);
 
-    /** 近 12 个月收支趋势（柱状图数据） */
+    /**
+     * 近 12 个月收支趋势（柱状图数据）
+     *
+     * @param memberId 当前登录账号
+     * @return 月度收支趋势列表（按月升序）
+     */
     List<com.xp.starsite.finance.vo.MonthlyTrendVO> monthlyTrend(Long memberId);
 
-    /** 立即落当日净资产快照（当前用户） */
+    /**
+     * 立即落当日净资产快照（当前用户）
+     *
+     * @param memberId 当前登录账号
+     * @return 新落的净资产快照点
+     */
     com.xp.starsite.finance.vo.NetWorthPointVO snapshotNow(Long memberId);
 
-    /** 落当日净资产快照（uk(owner,date) 幂等）；定时任务与手动触发共用 */
+    /**
+     * 落当日净资产快照（uk(owner,date) 幂等）；定时任务与手动触发共用
+     *
+     * @param memberId 当前登录账号
+     */
     void snapshotToday(Long memberId);
 }

@@ -23,10 +23,14 @@ public class ReminderInternalController {
     private final ReminderService reminderService;
     private final WriteTemplate writeTemplate;
 
-    /** 手动触发到期扫描（返回本次生成的提醒实例数） */
+    /**
+     * 手动触发到期扫描（与定时任务同一逻辑，幂等）
+     *
+     * @return 本次新投递的通知数
+     */
     @PostMapping("/scan")
     public R<Integer> scan() {
-        return R.ok(writeTemplate.execute("reminder.internal.scan",
-                () -> reminderService.scanAndNotify()));
+        return writeTemplate.write("reminder.internal.scan",
+                () -> reminderService.scanAndNotify());
     }
 }

@@ -38,21 +38,29 @@ public class PregnancyController {
     /**
      * 设置/更新孕期档案（一人一份，重复提交覆盖；
      * 保存后自动按里程碑窗口注册产检提醒，提醒中心不可用不阻断保存）
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param dto      孕期档案内容
+     * @return 保存后的孕期计算视图（孕周/预产期/里程碑/增重建议）
      */
     @PostMapping("/pregnancy")
     public R<PregnancyVO> upsertPregnancy(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                           @Valid @RequestBody PregnancyUpsertDTO dto) {
-        return R.ok(writeTemplate.execute("health.pregnancy.upsert",
-                () -> pregnancyService.upsertPregnancy(memberId, dto)));
+        return writeTemplate.write("health.pregnancy.upsert",
+                () -> pregnancyService.upsertPregnancy(memberId, dto));
     }
 
     /**
      * 孕期档案查询（无档案返回 data=null）
+     *
+     * @param memberId       当前登录账号（JWT 注入）
+     * @param familyMemberId 指定成员
+     * @return 孕期计算视图，无档案时为 null
      */
     @GetMapping("/pregnancy")
     public R<PregnancyVO> getPregnancy(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                        @RequestParam Long familyMemberId) {
-        return R.ok(queryTemplate.execute("health.pregnancy.get",
-                () -> pregnancyService.getPregnancy(memberId, familyMemberId)));
+        return queryTemplate.query("health.pregnancy.get",
+                () -> pregnancyService.getPregnancy(memberId, familyMemberId));
     }
 }

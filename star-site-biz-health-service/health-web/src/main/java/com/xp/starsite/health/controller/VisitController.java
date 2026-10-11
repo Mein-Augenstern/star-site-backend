@@ -39,34 +39,47 @@ public class VisitController {
 
     /**
      * 新建就医记录
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param dto      就医记录内容
+     * @return 新建就医记录视图
      */
     @PostMapping("/visits")
     public R<VisitVO> createVisit(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                   @Valid @RequestBody VisitCreateDTO dto) {
-        return R.ok(writeTemplate.execute("health.visit.create",
-                () -> visitService.createVisit(memberId, dto)));
+        return writeTemplate.write("health.visit.create",
+                () -> visitService.createVisit(memberId, dto));
     }
 
     /**
      * 就医记录分页列表（按就诊日期倒序；不传 familyMemberId 时限定全家成员范围）
+     *
+     * @param memberId       当前登录账号（JWT 注入）
+     * @param familyMemberId 可选，指定成员单查
+     * @param page           页码，从 1 起
+     * @param size           每页条数
+     * @return 就医记录分页
      */
     @GetMapping("/visits")
     public R<PageVO<VisitVO>> listVisits(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                          @RequestParam(required = false) Long familyMemberId,
                                          @RequestParam(defaultValue = "1") long page,
                                          @RequestParam(defaultValue = "10") long size) {
-        return R.ok(queryTemplate.execute("health.visit.page",
-                () -> visitService.listVisits(memberId, familyMemberId, page, size)));
+        return queryTemplate.query("health.visit.page",
+                () -> visitService.listVisits(memberId, familyMemberId, page, size));
     }
 
     /**
      * 删除就医记录（逻辑删）
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param id       就医记录 id
+     * @return 空
      */
     @DeleteMapping("/visits/{id}")
     public R<Void> deleteVisit(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                @PathVariable Long id) {
-        writeTemplate.execute("health.visit.delete",
+        return writeTemplate.write("health.visit.delete",
                 () -> visitService.deleteVisit(memberId, id));
-        return R.ok();
     }
 }

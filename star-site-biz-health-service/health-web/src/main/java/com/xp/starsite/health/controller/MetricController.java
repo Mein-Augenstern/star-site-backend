@@ -44,16 +44,27 @@ public class MetricController {
 
     /**
      * 批量录入日常指标（血压一次产生高压+低压两条）
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param dto      指标批量录入内容
+     * @return 新建指标视图列表
      */
     @PostMapping("/metrics")
     public R<List<MetricVO>> addMetrics(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                         @Valid @RequestBody MetricBatchDTO dto) {
-        return R.ok(writeTemplate.execute("health.metric.batchAdd",
-                () -> metricService.addMetrics(memberId, dto)));
+        return writeTemplate.write("health.metric.batchAdd",
+                () -> metricService.addMetrics(memberId, dto));
     }
 
     /**
      * 日常指标分页列表（按测量日期倒序；不传 familyMemberId 时限定全家成员范围）
+     *
+     * @param memberId       当前登录账号（JWT 注入）
+     * @param familyMemberId 可选，指定成员单查
+     * @param metricType     可选，按指标类型过滤
+     * @param page           页码，从 1 起
+     * @param size           每页条数
+     * @return 日常指标分页
      */
     @GetMapping("/metrics")
     public R<PageVO<MetricVO>> listMetrics(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
@@ -61,29 +72,37 @@ public class MetricController {
                                            @RequestParam(required = false) String metricType,
                                            @RequestParam(defaultValue = "1") long page,
                                            @RequestParam(defaultValue = "20") long size) {
-        return R.ok(queryTemplate.execute("health.metric.page",
-                () -> metricService.listMetrics(memberId, familyMemberId, metricType, page, size)));
+        return queryTemplate.query("health.metric.page",
+                () -> metricService.listMetrics(memberId, familyMemberId, metricType, page, size));
     }
 
     /**
      * 删除日常指标（逻辑删）
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param id       指标记录 id
+     * @return 空
      */
     @DeleteMapping("/metrics/{id}")
     public R<Void> deleteMetric(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                 @PathVariable Long id) {
-        writeTemplate.execute("health.metric.delete",
+        return writeTemplate.write("health.metric.delete",
                 () -> metricService.deleteMetric(memberId, id));
-        return R.ok();
     }
 
     /**
      * 日常指标趋势（按测量日期升序；孕期体重曲线等场景）
+     *
+     * @param memberId       当前登录账号（JWT 注入）
+     * @param familyMemberId 指定成员
+     * @param metricType     指标类型
+     * @return 趋势点列表（日期+数值，升序）
      */
     @GetMapping("/metrics/trends")
     public R<List<MetricTrendPoint>> metricTrends(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                                   @RequestParam Long familyMemberId,
                                                   @RequestParam String metricType) {
-        return R.ok(queryTemplate.execute("health.metric.trend",
-                () -> metricService.metricTrends(memberId, familyMemberId, metricType)));
+        return queryTemplate.query("health.metric.trend",
+                () -> metricService.metricTrends(memberId, familyMemberId, metricType));
     }
 }

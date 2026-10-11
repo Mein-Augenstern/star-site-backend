@@ -31,18 +31,29 @@ public class FamilyInternalController {
     private final FamilyService familyService;
     private final QueryTemplate queryTemplate;
 
-    /** 归属校验：归属返回成员快照；不归属/不存在返回 data=null */
+    /**
+     * 归属校验：归属返回成员快照；不归属/不存在返回 data=null
+     *
+     * @param memberId       户主账号 id
+     * @param familyMemberId 待校验的成员档案 id
+     * @return 成员快照，不归属/不存在为 null
+     */
     @GetMapping("/ownership")
     public R<FamilyMemberSnapshotDTO> checkOwnership(@RequestParam("memberId") Long memberId,
                                                      @RequestParam("familyMemberId") Long familyMemberId) {
-        return R.ok(queryTemplate.execute("family.internal.ownership",
-                () -> familyService.checkOwnership(memberId, familyMemberId)));
+        return queryTemplate.query("family.internal.ownership",
+                () -> familyService.checkOwnership(memberId, familyMemberId));
     }
 
-    /** 当前账号家庭的成员快照全集（无家庭返回空列表） */
+    /**
+     * 当前账号家庭的成员快照全集（无家庭返回空列表）
+     *
+     * @param memberId 户主账号 id
+     * @return 成员快照列表
+     */
     @GetMapping("/members")
     public R<List<FamilyMemberSnapshotDTO>> listMembers(@RequestParam("memberId") Long memberId) {
-        return R.ok(queryTemplate.execute("family.internal.members",
-                () -> familyService.listMemberSnapshots(memberId)));
+        return queryTemplate.query("family.internal.members",
+                () -> familyService.listMemberSnapshots(memberId));
     }
 }

@@ -5,6 +5,8 @@ import com.xp.starsite.common.async.mapper.AsyncCommandMapper;
 import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.R;
+import com.xp.starsite.common.template.QueryTemplate;
+import com.xp.starsite.common.template.WriteTemplate;
 import com.xp.starsite.member.mapper.AsyncCommandAdminMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +22,9 @@ import java.util.Map;
  * 鉴权：JWT 必过网关；可选 ADMIN_MEMBER_IDS 白名单（逗号分隔，留空=开发态放行所有登录用户）。
  * 管控查询/处置 SQL 收敛在 DAL（{@link AsyncCommandAdminMapper}）；
  * 执行链路仍走 common 的 {@link AsyncCommandMapper}（两处列语义对齐）。
+ * <p>
+ * 业务逻辑统一经模板包裹：模板包掉成功与失败的全部响应处理（成功 R.ok / 失败 R.fail），
+ * Controller 一行返回；动作命名规范 member.admin.async.*。
  *
  * @author xiaopu
  * @since 2026-10
@@ -30,6 +35,8 @@ import java.util.Map;
 public class AdminAsyncController {
 
     private final AsyncCommandAdminMapper mapper;
+    private final QueryTemplate queryTemplate;
+    private final WriteTemplate writeTemplate;
 
     @Value("${admin.member-ids:}")
     private String adminMemberIds;
@@ -47,91 +54,130 @@ public class AdminAsyncController {
         throw new BizException(403, "无管理员权限");
     }
 
-    /** 监控总览：各状态计数 + 积压 + 近期死信 */
+    /**
+     * 监控总览：各状态计数 + 积压 + 近期死信
+     *
+     * @param memberId 当前登录账号（JWT 注入，过管理员白名单校验）
+     * @return 各状态计数、积压数与近 500 条按类型分布
+     */
     @GetMapping("/summary")
     public R<Map<String, Object>> summary(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        requireAdmin(memberId);
-        Map<String, Object> out = new HashMap<>();
-        for (String st : List.of("PENDING", "RUNNING", "SUCCESS", "DEAD")) {
-            out.put(st.toLowerCase(), mapper.countByStatus(st));
-        }
-        out.put("backlogDue", mapper.countBacklogDue(LocalDateTime.now()));
-        // 按类型聚合（近 500 条内的分布，够运维肉眼判断）
-        Map<String, Long> byType = new HashMap<>();
-        for (AsyncCommand c : mapper.selectRecent(500)) {
-            byType.merge(c.getCmdType(), 1L, Long::sum);
-        }
-        out.put("byType", byType);
-        return R.ok(out);
+        return queryTemplate.query("member.admin.async.summary", () -> {
+            requireAdmin(memberId);
+            Map<String, Object> out = new HashMap<>();
+            for (String st : List.of("PENDING", "RUNNING", "SUCCESS", "DEAD")) {
+                out.put(st.toLowerCase(), mapper.countByStatus(st));
+            }
+            out.put("backlogDue", mapper.countBacklogDue(LocalDateTime.now()));
+            // 按类型聚合（近 500 条内的分布，够运维肉眼判断）
+            Map<String, Long> byType = new HashMap<>();
+            for (AsyncCommand c : mapper.selectRecent(500)) {
+                byType.merge(c.getCmdType(), 1L, Long::sum);
+            }
+            out.put("byType", byType);
+            return out;
+        });
     }
 
-    /** 分页列表（status/type 可选过滤） */
+    /**
+     * 分页列表（status/type 可选过滤）
+     *
+     * @param memberId 当前登录账号（JWT 注入，过管理员白名单校验）
+     * @param status   可选，按命令状态过滤
+     * @param cmdType  可选，按命令类型过滤
+     * @param page     页码（从 1 起，默认 1）
+     * @param size     每页条数（默认 20）
+     * @return 分页结果（records/total/page/size）
+     */
     @GetMapping("/list")
     public R<Map<String, Object>> list(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                        @RequestParam(required = false) String status,
                                        @RequestParam(required = false) String cmdType,
                                        @RequestParam(defaultValue = "1") long page,
                                        @RequestParam(defaultValue = "20") long size) {
-        requireAdmin(memberId);
-        // 分页 count 先行，空结果不打查询
-        long total = mapper.countPage(status, cmdType);
-        List<AsyncCommand> records = total == 0 ? List.of()
-                : mapper.selectPage(status, cmdType, (page - 1) * size, size);
-        Map<String, Object> out = new HashMap<>();
-        out.put("records", records);
-        out.put("total", total);
-        out.put("page", page);
-        out.put("size", size);
-        return R.ok(out);
+        return queryTemplate.query("member.admin.async.list", () -> {
+            requireAdmin(memberId);
+            // 分页 count 先行，空结果不打查询
+            long total = mapper.countPage(status, cmdType);
+            List<AsyncCommand> records = total == 0 ? List.of()
+                    : mapper.selectPage(status, cmdType, (page - 1) * size, size);
+            Map<String, Object> out = new HashMap<>();
+            out.put("records", records);
+            out.put("total", total);
+            out.put("page", page);
+            out.put("size", size);
+            return out;
+        });
     }
 
-    /** 手动重试：DEAD/PENDING 重置为待执行（清零重试计数，立即执行） */
+    /**
+     * 手动重试：DEAD/PENDING 重置为待执行（清零重试计数，立即执行）
+     *
+     * @param memberId 当前登录账号（JWT 注入，过管理员白名单校验）
+     * @param id       异步命令 id
+     * @return 重试受理（无业务数据）
+     */
     @PostMapping("/{id}/retry")
     public R<Void> retry(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId, @PathVariable Long id) {
-        requireAdmin(memberId);
-        AsyncCommand cmd = requireCmd(id);
-        if ("RUNNING".equals(cmd.getStatus())) {
-            throw new BizException(400, "任务执行中，请先用「重占」收回再重试");
-        }
-        if ("SUCCESS".equals(cmd.getStatus())) {
-            throw new BizException(400, "已成功任务，无需重试");
-        }
-        cmd.setStatus("PENDING");
-        cmd.setRetryCount(0);
-        cmd.setNextRunAt(LocalDateTime.now());
-        cmd.setClaimToken(null);
-        mapper.updateState(cmd);
-        return R.ok();
+        return writeTemplate.write("member.admin.async.retry", () -> {
+            requireAdmin(memberId);
+            AsyncCommand cmd = requireCmd(id);
+            if ("RUNNING".equals(cmd.getStatus())) {
+                throw new BizException(400, "任务执行中，请先用「重占」收回再重试");
+            }
+            if ("SUCCESS".equals(cmd.getStatus())) {
+                throw new BizException(400, "已成功任务，无需重试");
+            }
+            cmd.setStatus("PENDING");
+            cmd.setRetryCount(0);
+            cmd.setNextRunAt(LocalDateTime.now());
+            cmd.setClaimToken(null);
+            mapper.updateState(cmd);
+        });
     }
 
-    /** 重占：卡单处理——把卡死的 RUNNING 强制放回队列（先确认执行器已死再操作） */
+    /**
+     * 重占：卡单处理——把卡死的 RUNNING 强制放回队列（先确认执行器已死再操作）
+     *
+     * @param memberId 当前登录账号（JWT 注入，过管理员白名单校验）
+     * @param id       异步命令 id
+     * @return 重占受理（无业务数据）
+     */
     @PostMapping("/{id}/reclaim")
     public R<Void> reclaim(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId, @PathVariable Long id) {
-        requireAdmin(memberId);
-        AsyncCommand cmd = requireCmd(id);
-        if (!"RUNNING".equals(cmd.getStatus())) {
-            throw new BizException(400, "仅 RUNNING 状态可重占");
-        }
-        cmd.setStatus("PENDING");
-        cmd.setClaimToken(null);
-        cmd.setNextRunAt(LocalDateTime.now());
-        mapper.updateState(cmd);
-        return R.ok();
+        return writeTemplate.write("member.admin.async.reclaim", () -> {
+            requireAdmin(memberId);
+            AsyncCommand cmd = requireCmd(id);
+            if (!"RUNNING".equals(cmd.getStatus())) {
+                throw new BizException(400, "仅 RUNNING 状态可重占");
+            }
+            cmd.setStatus("PENDING");
+            cmd.setClaimToken(null);
+            cmd.setNextRunAt(LocalDateTime.now());
+            mapper.updateState(cmd);
+        });
     }
 
-    /** 终止：卡单或待执行任务直接置死信（不再重试） */
+    /**
+     * 终止：卡单或待执行任务直接置死信（不再重试）
+     *
+     * @param memberId 当前登录账号（JWT 注入，过管理员白名单校验）
+     * @param id       异步命令 id
+     * @return 终止受理（无业务数据）
+     */
     @PostMapping("/{id}/kill")
     public R<Void> kill(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId, @PathVariable Long id) {
-        requireAdmin(memberId);
-        AsyncCommand cmd = requireCmd(id);
-        if ("SUCCESS".equals(cmd.getStatus())) {
-            throw new BizException(400, "已成功任务不可终止");
-        }
-        cmd.setStatus("DEAD");
-        cmd.setClaimToken(null);
-        cmd.setLastError("MANUAL_KILL by member " + memberId);
-        mapper.updateState(cmd);
-        return R.ok();
+        return writeTemplate.write("member.admin.async.kill", () -> {
+            requireAdmin(memberId);
+            AsyncCommand cmd = requireCmd(id);
+            if ("SUCCESS".equals(cmd.getStatus())) {
+                throw new BizException(400, "已成功任务不可终止");
+            }
+            cmd.setStatus("DEAD");
+            cmd.setClaimToken(null);
+            cmd.setLastError("MANUAL_KILL by member " + memberId);
+            mapper.updateState(cmd);
+        });
     }
 
     private AsyncCommand requireCmd(Long id) {

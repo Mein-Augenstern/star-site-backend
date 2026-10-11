@@ -2,6 +2,8 @@ package com.xp.starsite.finance.controller;
 
 import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
+import com.xp.starsite.common.template.QueryTemplate;
+import com.xp.starsite.common.template.WriteTemplate;
 import com.xp.starsite.finance.dto.BudgetSaveDTO;
 import com.xp.starsite.finance.service.BudgetService;
 import com.xp.starsite.finance.vo.BudgetVO;
@@ -21,6 +23,9 @@ import java.util.List;
 
 /**
  * 月度预算接口（全部需 JWT）
+ * <p>
+ * 业务逻辑统一经模板包裹：模板包掉成功与失败的全部响应处理（成功 R.ok / 失败 R.fail），
+ * Controller 一行返回；动作命名规范 finance.budget.*。
  *
  * @author xiaopu
  * @since 2026-10
@@ -31,23 +36,48 @@ import java.util.List;
 public class BudgetController {
 
     private final BudgetService budgetService;
+    private final QueryTemplate queryTemplate;
+    private final WriteTemplate writeTemplate;
 
+    /**
+     * 保存预算（同账期同分类 upsert）
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param dto      预算内容（账期/分类/金额）
+     * @return 保存后的预算视图（含使用进度）
+     */
     @PostMapping
     public R<BudgetVO> save(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                             @Valid @RequestBody BudgetSaveDTO dto) {
-        return R.ok(budgetService.save(memberId, dto));
+        return writeTemplate.write("finance.budget.save",
+                () -> budgetService.save(memberId, dto));
     }
 
+    /**
+     * 账期预算列表（含各预算使用进度）
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param period   账期（如 2026-10）
+     * @return 预算视图列表
+     */
     @GetMapping
     public R<List<BudgetVO>> list(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                   @RequestParam String period) {
-        return R.ok(budgetService.list(memberId, period));
+        return queryTemplate.query("finance.budget.list",
+                () -> budgetService.list(memberId, period));
     }
 
+    /**
+     * 删除预算
+     *
+     * @param memberId 当前登录账号（JWT 注入，用于归属校验）
+     * @param id       预算 id
+     * @return 删除成功（无业务数据）
+     */
     @DeleteMapping("/{id}")
     public R<Void> delete(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                           @PathVariable Long id) {
-        budgetService.delete(memberId, id);
-        return R.ok();
+        return writeTemplate.write("finance.budget.delete",
+                () -> budgetService.delete(memberId, id));
     }
 }

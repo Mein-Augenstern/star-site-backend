@@ -39,15 +39,31 @@ public class InsuranceController {
     private final QueryTemplate queryTemplate;
     private final WriteTemplate writeTemplate;
 
-    /** 录入保单（同时注册缴费提醒规则） */
+    /**
+     * 录入保单（同时注册缴费提醒规则）
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param dto      保单内容
+     * @return 新建保单视图
+     */
     @PostMapping("/policies")
     public R<PolicyVO> create(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                               @Valid @RequestBody PolicySaveDTO dto) {
-        return R.ok(writeTemplate.execute("insurance.policy.create",
-                () -> insuranceService.create(memberId, dto)));
+        return writeTemplate.write("insurance.policy.create",
+                () -> insuranceService.create(memberId, dto));
     }
 
-    /** 保单分页（可按被保人/险种/状态过滤） */
+    /**
+     * 保单分页（可按被保人/险种/状态过滤）
+     *
+     * @param memberId        当前登录账号（JWT 注入）
+     * @param insuredMemberId 可选，按被保人过滤
+     * @param category        可选，按险种过滤
+     * @param status          可选，按状态过滤
+     * @param page            页码，从 1 起
+     * @param size            每页条数
+     * @return 保单分页
+     */
     @GetMapping("/policies")
     public R<PageVO<PolicyVO>> list(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                     @RequestParam(required = false) Long insuredMemberId,
@@ -55,40 +71,63 @@ public class InsuranceController {
                                     @RequestParam(required = false) Integer status,
                                     @RequestParam(defaultValue = "1") long page,
                                     @RequestParam(defaultValue = "10") long size) {
-        return R.ok(queryTemplate.execute("insurance.policy.page",
-                () -> insuranceService.list(memberId, insuredMemberId, category, status, page, size)));
+        return queryTemplate.query("insurance.policy.page",
+                () -> insuranceService.list(memberId, insuredMemberId, category, status, page, size));
     }
 
-    /** 保单详情 */
+    /**
+     * 保单详情
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param id       保单 id
+     * @return 保单视图
+     */
     @GetMapping("/policies/{id}")
     public R<PolicyVO> detail(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                               @PathVariable Long id) {
-        return R.ok(queryTemplate.execute("insurance.policy.detail",
-                () -> insuranceService.getDetail(memberId, id)));
+        return queryTemplate.query("insurance.policy.detail",
+                () -> insuranceService.getDetail(memberId, id));
     }
 
-    /** 更新保单 */
+    /**
+     * 更新保单
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param id       保单 id
+     * @param dto      保单内容
+     * @return 更新后的保单视图
+     */
     @PutMapping("/policies/{id}")
     public R<PolicyVO> update(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                               @PathVariable Long id,
                               @Valid @RequestBody PolicySaveDTO dto) {
-        return R.ok(writeTemplate.execute("insurance.policy.update",
-                () -> insuranceService.update(memberId, id, dto)));
+        return writeTemplate.write("insurance.policy.update",
+                () -> insuranceService.update(memberId, id, dto));
     }
 
-    /** 删除保单（逻辑删，同步撤销提醒规则） */
+    /**
+     * 删除保单（逻辑删，同步撤销提醒规则）
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param id       保单 id
+     * @return 空
+     */
     @DeleteMapping("/policies/{id}")
     public R<Void> delete(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                           @PathVariable Long id) {
-        writeTemplate.execute("insurance.policy.delete",
+        return writeTemplate.write("insurance.policy.delete",
                 () -> insuranceService.delete(memberId, id));
-        return R.ok();
     }
 
-    /** 保障地图（按家庭成员聚合的保障概览） */
+    /**
+     * 保障地图（按家庭成员聚合的保障概览）
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @return 保障地图视图
+     */
     @GetMapping("/coverage-map")
     public R<CoverageMapVO> coverageMap(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return R.ok(queryTemplate.execute("insurance.map",
-                () -> insuranceService.coverageMap(memberId)));
+        return queryTemplate.query("insurance.map",
+                () -> insuranceService.coverageMap(memberId));
     }
 }

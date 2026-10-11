@@ -36,38 +36,50 @@ public class ReportInsightController {
     /**
      * AI 解读报告（同步，结果落库缓存；force=true 强制重新解读）
      *
-     * @param force true 忽略已有解读缓存重新生成
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param id       报告 id
+     * @param force    true 忽略已有解读缓存重新生成
+     * @return 解读结果（结论/建议/指标异常摘要）
      */
     @PostMapping("/reports/{id}/interpretation")
     public R<ReportInterpretationService.InterpretationResult> interpret(
             @RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
             @PathVariable Long id,
             @RequestParam(defaultValue = "false") boolean force) {
-        return R.ok(writeTemplate.execute("health.insight.interpret",
-                () -> reportInsightService.interpret(memberId, id, force)));
+        return writeTemplate.write("health.insight.interpret",
+                () -> reportInsightService.interpret(memberId, id, force));
     }
 
     /**
      * AI 解读异步版：落幂等命令立即返回，后台执行，
      * 结果经报告详情（GET /reports/{id} 的 interpretation 字段）轮询获取。
      * 未配置 LLM_API_KEY 时返回 400。
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param id       报告 id
+     * @param force    true 忽略已有解读缓存重新生成
+     * @return true 表示命令受理成功
      */
     @PostMapping("/reports/{id}/interpret-async")
     public R<Boolean> interpretAsync(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                      @PathVariable Long id,
                                      @RequestParam(defaultValue = "false") boolean force) {
-        return R.ok(writeTemplate.execute("health.insight.interpretAsync",
-                () -> reportInsightService.interpretAsync(memberId, id, force)));
+        return writeTemplate.write("health.insight.interpretAsync",
+                () -> reportInsightService.interpretAsync(memberId, id, force));
     }
 
     /**
      * 拍照识别报告 → 结构化草稿（预填表单用；人工确认后另行提交落库，本端点不写库）
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param req      OCR 请求体（报告图片文件 id）
+     * @return 结构化草稿（报告元数据与指标候选列表）
      */
     @PostMapping("/reports/ocr")
     public R<ReportOcrService.OcrDraft> ocr(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                             @RequestBody OcrRequest req) {
-        return R.ok(queryTemplate.execute("health.insight.ocr",
-                () -> reportInsightService.ocr(memberId, req.fileId())));
+        return queryTemplate.query("health.insight.ocr",
+                () -> reportInsightService.ocr(memberId, req.fileId()));
     }
 
     /**

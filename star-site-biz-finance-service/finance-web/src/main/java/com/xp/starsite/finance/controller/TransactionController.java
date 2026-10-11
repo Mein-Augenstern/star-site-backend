@@ -2,6 +2,8 @@ package com.xp.starsite.finance.controller;
 
 import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
+import com.xp.starsite.common.template.QueryTemplate;
+import com.xp.starsite.common.template.WriteTemplate;
 import com.xp.starsite.finance.dto.TransactionSaveDTO;
 import com.xp.starsite.finance.service.TransactionService;
 import com.xp.starsite.finance.vo.PageVO;
@@ -20,6 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 记账流水接口（全部需 JWT；数据按当前账号隔离）
+ * <p>
+ * 业务逻辑统一经模板包裹：模板包掉成功与失败的全部响应处理（成功 R.ok / 失败 R.fail），
+ * Controller 一行返回；动作命名规范 finance.transaction.*。
  *
  * @author xiaopu
  * @since 2026-10
@@ -30,13 +35,35 @@ import org.springframework.web.bind.annotation.RestController;
 public class TransactionController {
 
     private final TransactionService transactionService;
+    private final QueryTemplate queryTemplate;
+    private final WriteTemplate writeTemplate;
 
+    /**
+     * 记一笔流水（收支/转账；联动账户余额）
+     *
+     * @param memberId 当前登录账号（JWT 注入）
+     * @param dto      流水内容（账户/方向/金额/分类等）
+     * @return 新建流水视图
+     */
     @PostMapping
     public R<TransactionVO> create(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                    @Valid @RequestBody TransactionSaveDTO dto) {
-        return R.ok(transactionService.create(memberId, dto));
+        return writeTemplate.write("finance.transaction.create",
+                () -> transactionService.create(memberId, dto));
     }
 
+    /**
+     * 流水分页（按账期倒序；year/month 缺省取当月）
+     *
+     * @param memberId  当前登录账号（JWT 注入）
+     * @param accountId 可选，按账户过滤
+     * @param direction 可选，按方向过滤（1 支出 / 2 收入）
+     * @param year      可选，年份（缺省当年）
+     * @param month     可选，月份（缺省当月）
+     * @param page      页码（从 1 起，默认 1）
+     * @param size      每页条数（默认 20）
+     * @return 流水分页
+     */
     @GetMapping
     public R<PageVO<TransactionVO>> list(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                          @RequestParam(required = false) Long accountId,
@@ -47,20 +74,35 @@ public class TransactionController {
                                          @RequestParam(defaultValue = "20") long size) {
         int y = year == null ? java.time.LocalDate.now().getYear() : year;
         int m = month == null ? java.time.LocalDate.now().getMonthValue() : month;
-        return R.ok(transactionService.list(memberId, accountId, direction, y, m, page, size));
+        return queryTemplate.query("finance.transaction.page",
+                () -> transactionService.list(memberId, accountId, direction, y, m, page, size));
     }
 
+    /**
+     * 流水详情
+     *
+     * @param memberId 当前登录账号（JWT 注入，用于归属校验）
+     * @param id       流水 id
+     * @return 流水视图
+     */
     @GetMapping("/{id}")
     public R<TransactionVO> detail(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                    @PathVariable Long id) {
-        return R.ok(transactionService.getDetail(memberId, id));
+        return queryTemplate.query("finance.transaction.detail",
+                () -> transactionService.getDetail(memberId, id));
     }
 
-    /** 删除流水并回滚余额（转账整组回滚） */
+    /**
+     * 删除流水并回滚余额（转账整组回滚）
+     *
+     * @param memberId 当前登录账号（JWT 注入，用于归属校验）
+     * @param id       流水 id
+     * @return 删除成功（无业务数据）
+     */
     @DeleteMapping("/{id}")
     public R<Void> delete(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                           @PathVariable Long id) {
-        transactionService.delete(memberId, id);
-        return R.ok();
+        return writeTemplate.write("finance.transaction.delete",
+                () -> transactionService.delete(memberId, id));
     }
 }

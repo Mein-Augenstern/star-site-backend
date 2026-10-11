@@ -26,7 +26,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 文件接口：上传/在线预览（全部需 JWT；前端预览用 axios blob 取流）。
- * 业务逻辑统一经模板包裹（动作名 file.*）。
+ * 业务逻辑统一经模板包裹（动作名 file.*）；
+ * 例外：view 返回 {@link ResponseEntity} 文件流而非 {@link R}，模板不能包它（见方法注释）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -41,41 +42,65 @@ public class FileController {
     private final QueryTemplate queryTemplate;
     private final WriteTemplate writeTemplate;
 
-    /** 上传文件（成功后发 FileUploadedEvent；bizType 决定下游是否消费） */
+    /**
+     * 上传文件（成功后发 FileUploadedEvent；bizType 决定下游是否消费）
+     *
+     * @param file     上传的文件（multipart 字段名 file）
+     * @param bizType  可选，业务类型（决定下游是否消费事件）
+     * @param metadata 全部表单参数随事件透传（如 accountId）
+     * @param memberId 当前登录账号（JWT 注入，作为上传者）
+     * @return 文件视图（含文件 id 与访问信息）
+     */
     @PostMapping("/upload")
     public R<FileVO> upload(@RequestParam("file") MultipartFile file,
                             @RequestParam(value = "bizType", required = false) String bizType,
                             @RequestParam java.util.Map<String, String> metadata, // 全部表单参数随事件透传（如 accountId）
                             @RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return R.ok(writeTemplate.execute("file.upload",
-                () -> fileService.upload(file, bizType, memberId, metadata)));
+        return writeTemplate.write("file.upload",
+                () -> fileService.upload(file, bizType, memberId, metadata));
     }
 
-    /** 在线预览文件流；越权防线：仅上传者本人可读（多人协作后升级为家庭范围校验） */
+    /**
+     * 在线预览文件流；越权防线：仅上传者本人可读（多人协作后升级为家庭范围校验）
+     * <p>不套模板：本方法返回 {@code ResponseEntity<InputStreamResource>} 文件流而非 {@link R}，
+     * 模板的响应封装（成功 R.ok / 失败 R.fail）不能包它；失败语义由全局异常处理器兜底
+     * （requireFile 不存在抛 BizException、越权抛 FORBIDDEN）。
+     *
+     * @param memberId 当前登录账号（JWT 注入，用于越权校验）
+     * @param id       文件 id
+     * @return 文件流响应（inline；Content-Type 取记录 contentType，缺省 octet-stream）
+     */
     @GetMapping("/{id}/view")
     public ResponseEntity<InputStreamResource> view(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                                     @PathVariable Long id) {
-        return queryTemplate.execute("file.view", () -> {
-            FileRecord record = fileService.requireFile(id);
-            if (!record.getUploaderMemberId().equals(memberId)) {
-                throw new BizException(ResultCode.FORBIDDEN);
+        FileRecord record = fileService.requireFile(id);
+        if (!record.getUploaderMemberId().equals(memberId)) {
+            throw new BizException(ResultCode.FORBIDDEN);
+        }
+        MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        if (record.getContentType() != null) {
+            try {
+                mediaType = MediaType.parseMediaType(record.getContentType());
+            } catch (Exception ignored) {
+                // 保底 octet-stream
             }
-            MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
-            if (record.getContentType() != null) {
-                try {
-                    mediaType = MediaType.parseMediaType(record.getContentType());
-                } catch (Exception ignored) {
-                    // 保底 octet-stream
-                }
-            }
-            return ResponseEntity.ok()
-                    .contentType(mediaType)
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + record.getFileName() + "\"")
-                    .body(new InputStreamResource(fileStorage.open(record.getStorageKey())));
-        });
+        }
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + record.getFileName() + "\"")
+                .body(new InputStreamResource(fileStorage.open(record.getStorageKey())));
     }
 }
 
+/**
+ * 文件服务间内部接口（Feign 提供方）。/internal/** 不经网关，外网 404。
+ * <p>
+ * 业务逻辑统一经查询模板包裹：模板包掉成功与失败的全部响应处理，
+ * Controller 一行返回；动作命名规范 file.internal.*。
+ *
+ * @author xiaopu
+ * @since 2026-10
+ */
 @RestController
 @RequestMapping("/internal/file")
 @RequiredArgsConstructor
@@ -85,13 +110,18 @@ class FileInternalController {
     private final FileStorage fileStorage;
     private final QueryTemplate queryTemplate;
 
-    /** 服务间取文件内容（如账单导入解析）；/internal/** 不经网关，外网 404 */
+    /**
+     * 服务间取文件内容（如账单导入解析）
+     *
+     * @param id 文件 id
+     * @return 文件字节内容
+     */
     @GetMapping("/{id}/content")
     public R<byte[]> content(@org.springframework.web.bind.annotation.PathVariable Long id) {
-        return queryTemplate.execute("file.internal.content", () -> {
+        return queryTemplate.query("file.internal.content", () -> {
             FileRecord record = fileService.requireFile(id);
             try {
-                return R.ok(fileStorage.open(record.getStorageKey()).readAllBytes());
+                return fileStorage.open(record.getStorageKey()).readAllBytes();
             } catch (java.io.IOException e) {
                 throw new BizException(ResultCode.SYSTEM_ERROR.getCode(), "文件读取失败");
             }
