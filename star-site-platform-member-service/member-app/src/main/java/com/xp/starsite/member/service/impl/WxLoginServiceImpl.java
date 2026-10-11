@@ -114,25 +114,7 @@ public class WxLoginServiceImpl implements WxLoginService {
         }
         WxSessionGateway.WxSession session = wxSessionGateway.fetch(code);
 
-        // 1) openid 已绑其他账号 → 拒绝重复绑定
-        MemberIdentity existing = identityMapper.selectOne(new LambdaQueryWrapper<MemberIdentity>()
-                .eq(MemberIdentity::getIdentityType, "WECHAT_MP")
-                .eq(MemberIdentity::getIdentifier, session.openid()));
-        if (existing != null && !existing.getMemberId().equals(loadByUsername(username).getId())) {
-            throw new BizException(400, "该微信已绑定其他账号，请先在原账号解绑");
-        }
-        if (existing != null && existing.getMemberId().equals(loadByUsername(username).getId())) {
-            // 已绑同一账号：幂等返回
-            Member m = loadByUsername(username);
-            String token = jwtUtil.generateToken(m.getId(), m.getUsername() != null ? m.getUsername() : "wx-bound");
-            return LoginVO.builder()
-                    .token(token)
-                    .expiresIn(jwtUtil.getExpireMinutes())
-                    .member(toVO(m))
-                    .build();
-        }
-
-        // 2) 账密校验目标账号
+        // 1) 账密校验目标账号（先取目标，避免下面的比较对不存在用户 NPE）
         Member target = loadByUsername(username);
         if (target == null || !passwordEncoder.matches(password, target.getPassword())) {
             throw new BizException(400, "账号或密码错误");
@@ -141,10 +123,25 @@ public class WxLoginServiceImpl implements WxLoginService {
             throw new BizException(403, "账号已被禁用");
         }
 
-        // 3) openid 挂到目标账号（已有 WECHAT_MP 身份则更新，否则新建）
-        MemberIdentity identity = identityMapper.selectOne(new LambdaQueryWrapper<MemberIdentity>()
+        // 2) openid 已绑其他账号 → 拒绝重复绑定；已绑同一账号 → 幂等返回
+        MemberIdentity existing = identityMapper.selectOne(new LambdaQueryWrapper<MemberIdentity>()
                 .eq(MemberIdentity::getIdentityType, "WECHAT_MP")
                 .eq(MemberIdentity::getIdentifier, session.openid()));
+        if (existing != null && !existing.getMemberId().equals(target.getId())) {
+            throw new BizException(400, "该微信已绑定其他账号，请先在原账号解绑");
+        }
+        if (existing != null && existing.getMemberId().equals(target.getId())) {
+            String token = jwtUtil.generateToken(target.getId(),
+                    target.getUsername() != null ? target.getUsername() : "wx-bound");
+            return LoginVO.builder()
+                    .token(token)
+                    .expiresIn(jwtUtil.getExpireMinutes())
+                    .member(toVO(target))
+                    .build();
+        }
+
+        // 3) openid 挂到目标账号（已有 WECHAT_MP 身份则更新，否则新建）
+        MemberIdentity identity = existing;
         if (identity == null) {
             identity = new MemberIdentity();
             identity.setIdentityType("WECHAT_MP");
