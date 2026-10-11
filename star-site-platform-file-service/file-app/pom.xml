@@ -25,9 +25,10 @@
             <artifactId>star-site-common</artifactId>
         </dependency>
         <!-- FileUploadedEvent 领域事件契约 -->
-        <dependency>
+                <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>star-site-api</artifactId>
+            <artifactId>file-facade</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

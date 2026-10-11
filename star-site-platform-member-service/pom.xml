@@ -16,6 +16,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>member-facade</module>
         <module>member-domain</module>
         <module>member-infrastructure</module>
         <module>member-app</module>

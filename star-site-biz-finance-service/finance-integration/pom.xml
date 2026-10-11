@@ -25,6 +25,12 @@
             <groupId>com.xp.starsite</groupId>
             <artifactId>star-site-common</artifactId>
         </dependency>
+        <!-- 消费 file 服务账单文件与上传完成事件（file-facade 契约） -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>file-facade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.rocketmq</groupId>
             <artifactId>rocketmq-spring-boot-starter</artifactId>

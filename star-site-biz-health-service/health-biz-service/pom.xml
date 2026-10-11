@@ -29,9 +29,15 @@
             <groupId>com.xp.starsite</groupId>
             <artifactId>star-site-common</artifactId>
         </dependency>
+                <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>family-facade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>star-site-api</artifactId>
+            <artifactId>file-facade</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

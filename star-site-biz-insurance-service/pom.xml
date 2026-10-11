@@ -15,7 +15,7 @@
     <description>保单微服务（SOFA 风格多模块聚合工程）：全家保单档案、保障地图、缴费提醒事件</description>
     <packaging>pom</packaging>
 
-    <!-- 缴费提醒经 star-site-api 契约直调，暂无独立 integration 代码；出现桥接类时按 health 蓝本补建 -->
+    <!-- 缴费提醒经 reminder-facade 契约直调，暂无独立 integration 代码；出现桥接类时按 health 蓝本补建 -->
     <modules>
         <module>insurance-core-model</module>
         <module>insurance-core-service</module>

@@ -25,9 +25,15 @@
             <artifactId>star-site-common</artifactId>
         </dependency>
         <!-- ReminderMqConfig 条件装配 + 消费领域事件类型 -->
+                <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>family-facade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>star-site-api</artifactId>
+            <artifactId>reminder-facade</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <!-- @RocketMQMessageListener 注解 -->
         <dependency>

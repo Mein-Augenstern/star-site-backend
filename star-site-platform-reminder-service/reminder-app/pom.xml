@@ -20,6 +20,18 @@
             <artifactId>reminder-infrastructure</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 本服务 facade：ReminderRuleDTO / 提醒领域事件（reminder-app 消费落规则） -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>reminder-facade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- 归属校验门卫与成员快照（family-facade 契约） -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>family-facade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>star-site-common</artifactId>

@@ -17,6 +17,7 @@
 
     <!-- 暂无对外集成代码，未建 integration 模块；出现对外调用时按 health 蓝本补建 -->
     <modules>
+        <module>family-facade</module>
         <module>family-core-model</module>
         <module>family-core-service</module>
         <module>family-biz-service</module>

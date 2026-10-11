@@ -6,42 +6,28 @@
 
     <parent>
         <groupId>com.xp.starsite</groupId>
-        <artifactId>star-site-parent</artifactId>
+        <artifactId>star-site-platform-file-service</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>star-site-api</artifactId>
-    <name>star-site-api</name>
-    <description>跨服务契约模块：Feign 内部接口 + 领域事件定义（纯定义，无实现）</description>
+    <artifactId>file-facade</artifactId>
+    <name>file-facade</name>
+    <description>file 服务对外契约（SOFA facade）：FileApi + 文件上传完成事件（TOPIC_FILE）。消费方只依赖本模块</description>
 
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>star-site-common</artifactId>
         </dependency>
-
-        <!-- Feign 契约注解：provided，调用方自带 spring-cloud-starter-openfeign -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-openfeign-core</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

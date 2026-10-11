@@ -13,7 +13,7 @@
 
     <modules>
         <module>star-site-common</module>
-        <module>star-site-api</module>
+
         <module>star-site-platform-gateway</module>
         <module>star-site-platform-member-service</module>
         <module>star-site-biz-family-service</module>
@@ -88,7 +88,27 @@
             </dependency>
             <dependency>
                 <groupId>com.xp.starsite</groupId>
-                <artifactId>star-site-api</artifactId>
+                <artifactId>family-facade</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.xp.starsite</groupId>
+                <artifactId>reminder-facade</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.xp.starsite</groupId>
+                <artifactId>file-facade</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.xp.starsite</groupId>
+                <artifactId>archive-facade</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.xp.starsite</groupId>
+                <artifactId>member-facade</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

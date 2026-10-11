@@ -25,9 +25,10 @@
             <artifactId>star-site-common</artifactId>
         </dependency>
         <!-- EmailChannel 取会员联系方式（MemberApi 出站） -->
-        <dependency>
+                <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>star-site-api</artifactId>
+            <artifactId>member-facade</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.baomidou</groupId>

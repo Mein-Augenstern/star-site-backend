@@ -15,8 +15,9 @@
     <description>家庭档案微服务（SOFA 风格多模块聚合工程）：证件夹、房产车辆台账、估值历史</description>
     <packaging>pom</packaging>
 
-    <!-- 暂无独立 integration 代码（归属校验经 star-site-api 契约直调）；出现桥接类时按 health 蓝本补建 -->
+    <!-- 暂无独立 integration 代码（归属校验经 family-facade 契约直调）；出现桥接类时按 health 蓝本补建 -->
     <modules>
+        <module>archive-facade</module>
         <module>archive-core-model</module>
         <module>archive-core-service</module>
         <module>archive-biz-service</module>

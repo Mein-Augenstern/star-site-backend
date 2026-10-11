@@ -15,9 +15,10 @@
     <description>健康域外部集成：提醒中心桥接（跨服务调用的唯一出口，领域内禁止直依赖 Feign）</description>
 
     <dependencies>
-        <dependency>
+                <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>star-site-api</artifactId>
+            <artifactId>reminder-facade</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>

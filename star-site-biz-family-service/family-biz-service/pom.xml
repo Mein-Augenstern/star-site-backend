@@ -25,9 +25,10 @@
             <artifactId>star-site-common</artifactId>
         </dependency>
         <!-- 对外契约：FamilyMemberSnapshotDTO（internal 接口返回） -->
-        <dependency>
+                <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>star-site-api</artifactId>
+            <artifactId>family-facade</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

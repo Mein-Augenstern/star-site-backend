@@ -25,9 +25,10 @@
             <artifactId>star-site-common</artifactId>
         </dependency>
         <!-- F2 资产负债表聚合：ArchiveApi；F3 账单导入事件契约 -->
-        <dependency>
+                <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>star-site-api</artifactId>
+            <artifactId>archive-facade</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

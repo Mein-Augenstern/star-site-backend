@@ -17,6 +17,7 @@
 
     <!-- COLA：adapter=触发器（REST/MQ 监听/定时扫描），app=用例编排，domain=模型，infrastructure=持久化+邮件网关 -->
     <modules>
+        <module>reminder-facade</module>
         <module>reminder-domain</module>
         <module>reminder-infrastructure</module>
         <module>reminder-app</module>
