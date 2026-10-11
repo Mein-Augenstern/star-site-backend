@@ -11,7 +11,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * 保单
+ * 保单（insurance_policy）：全家保单档案的主体表。
+ * 缴费提醒以 next_payment_date 为源（ANNUAL 重复），到期提醒以 maturity_date 为源。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 @TableName("insurance_policy")
@@ -27,13 +31,16 @@ public class InsurancePolicy {
     /** 持有账号 id（member 服务） */
     private Long ownerMemberId;
 
+    /** 保险公司 */
     private String company;
 
+    /** 产品名 */
     private String productName;
 
+    /** 保单号 */
     private String policyNo;
 
-    /** critical_illness/major_medical/accident/life/annuity/vehicle/property/other */
+    /** 险种：critical_illness/major_medical/accident/life/annuity/vehicle/property/other */
     private String category;
 
     /** 被保人（family 服务自然人档案） */
@@ -42,6 +49,7 @@ public class InsurancePolicy {
     /** 被保人姓名快照（免联表） */
     private String insuredMemberName;
 
+    /** 保障起始日 */
     private LocalDate startDate;
 
     /** 满期日，null = 终身 */
@@ -50,12 +58,13 @@ public class InsurancePolicy {
     /** 年保费（趸交为总保费） */
     private BigDecimal premium;
 
-    /** single/annual */
+    /** 缴费频率：single/annual */
     private String paymentFreq;
 
-    /** 下次缴费日（提醒源） */
+    /** 下次缴费日（缴费提醒源） */
     private LocalDate nextPaymentDate;
 
+    /** 保额 */
     private BigDecimal coverageAmount;
 
     /** 1有效 2缴费中断 3已满期 4已退保 */
@@ -64,12 +73,16 @@ public class InsurancePolicy {
     /** 电子保单附件（file 服务） */
     private Long fileId;
 
+    /** 备注 */
     private String remark;
 
+    /** 逻辑删标志（0 正常 1 已删） */
     @TableLogic
     private Integer deleted;
 
+    /** 创建时间（DB 维护） */
     private LocalDateTime createdAt;
 
+    /** 更新时间（DB 维护） */
     private LocalDateTime updatedAt;
 }

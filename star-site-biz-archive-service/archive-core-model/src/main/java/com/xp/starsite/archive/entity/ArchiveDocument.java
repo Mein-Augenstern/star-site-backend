@@ -10,7 +10,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * 家庭证件
+ * 家庭证件（archive_document）：证件夹主体表。
+ * 到期提醒以 expiry_date 为源（非长期证件），扫描件存 file 服务。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @Data
 @TableName("archive_document")
@@ -20,8 +24,10 @@ public class ArchiveDocument {
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
+    /** 家庭 id（多人协作预留冗余） */
     private Long familyId;
 
+    /** 归属账号 id（member 服务） */
     private Long ownerMemberId;
 
     /** 证件持有人（family 服务自然人档案） */
@@ -30,25 +36,31 @@ public class ArchiveDocument {
     /** 持有人姓名快照 */
     private String holderMemberName;
 
-    /** id_card/hukou/property_cert/vehicle_license/diploma/marriage/birth/passport/contract/other */
+    /** 证件类型：id_card/hukou/property_cert/vehicle_license/diploma/marriage/birth/passport/contract/other */
     private String docType;
 
+    /** 证件号码 */
     private String docNo;
 
+    /** 签发日期 */
     private LocalDate issueDate;
 
-    /** 有效期至，null = 长期（提醒源） */
+    /** 有效期至，null = 长期（到期提醒源） */
     private LocalDate expiryDate;
 
     /** 扫描件附件（file 服务） */
     private Long fileId;
 
+    /** 备注 */
     private String remark;
 
+    /** 逻辑删标志（0 正常 1 已删） */
     @TableLogic
     private Integer deleted;
 
+    /** 创建时间（DB 维护） */
     private LocalDateTime createdAt;
 
+    /** 更新时间（DB 维护） */
     private LocalDateTime updatedAt;
 }
