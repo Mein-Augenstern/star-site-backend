@@ -33,6 +33,12 @@ import com.xp.starsite.common.template.WriteTemplate;
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class StarSiteLogConfig {
 
+    /** digest 行的 app 字段来源（spring.application.name） */
+    @jakarta.annotation.PostConstruct
+    void initAppName(Environment env) {
+        DigestLoggers.APP_NAME = env.getProperty("spring.application.name", "unknown");
+    }
+
     @Bean
     public FilterRegistrationBean<RpcServerDigestFilter> rpcServerDigestFilter() {
         FilterRegistrationBean<RpcServerDigestFilter> reg = new FilterRegistrationBean<>(new RpcServerDigestFilter());

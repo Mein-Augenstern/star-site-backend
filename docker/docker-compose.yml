@@ -14,11 +14,7 @@ x-app-env: &app-env
   SPRING_DATASOURCE_USERNAME: root
   SPRING_DATASOURCE_PASSWORD: root123
   JWT_SECRET: star-site-local-dev-secret-change-me-32bytes!
-  # Feign 超时配置化（服务端间调用统一基线；特殊服务可在各自 env 覆盖）
-  SPRING_CLOUD_OPENFEIGN_CLIENT_CONFIG_DEFAULT_CONNECT-TIMEOUT: 3000
-  SPRING_CLOUD_OPENFEIGN_CLIENT_CONFIG_DEFAULT_READ-TIMEOUT: 10000
-  # BASIC 级别激活 feign.Logger 回调（rpc-client-digest 出站留痕依赖）
-  SPRING_CLOUD_OPENFEIGN_CLIENT_CONFIG_DEFAULT_LOGGER-LEVEL: basic
+  # Feign 超时与 BASIC 级别由 common StarSiteFeignLogConfig 程序化兜底（yml/env 可覆盖）
   # P4 可观测：management 端点（micrometer-registry-prometheus 已在各 start 模块）
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,prometheus
 x-app-build: &app-build
