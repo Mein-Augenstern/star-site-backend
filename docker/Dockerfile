@@ -26,7 +26,7 @@ ENV TZ=Asia/Shanghai \
 #   JAVA_OPTS=-javaagent:/agent/opentelemetry-javaagent.jar（无需改镜像逻辑）
 ARG MODULE
 # SOFA 多模块服务 jar 位于 <MODULE>/<start模块>/target/（如 health-start）；
-# 单模块服务不传 JAR_SUB，仍取 <MODULE>/target/
-ARG JAR_SUB=target
+# 单模块服务（gateway）不传 JAR_SUB（空 → <MODULE>//target 自动折叠）
+ARG JAR_SUB=
 COPY --from=build /build/${MODULE}/${JAR_SUB}/target/*.jar app.jar
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]
