@@ -190,7 +190,7 @@ services:
     pull_policy: never
     build:
       <<: *app-build
-      args: { MODULE: star-site-biz-health-service }
+      args: { MODULE: star-site-biz-health-service, JAR_SUB: health-start }
     container_name: star-health
     environment:
       <<: *app-env
