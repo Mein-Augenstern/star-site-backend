@@ -156,7 +156,7 @@ services:
     pull_policy: never
     build:
       <<: *app-build
-      args: { MODULE: star-site-biz-family-service }
+      args: { MODULE: star-site-biz-family-service, JAR_SUB: family-start }
     container_name: star-family
     environment:
       <<: *app-env
@@ -210,7 +210,7 @@ services:
     pull_policy: never
     build:
       <<: *app-build
-      args: { MODULE: star-site-biz-insurance-service }
+      args: { MODULE: star-site-biz-insurance-service, JAR_SUB: insurance-start }
     container_name: star-insurance
     environment:
       <<: *app-env
@@ -243,7 +243,7 @@ services:
     pull_policy: never
     build:
       <<: *app-build
-      args: { MODULE: star-site-biz-archive-service }
+      args: { MODULE: star-site-biz-archive-service, JAR_SUB: archive-start }
     container_name: star-archive
     environment:
       <<: *app-env
@@ -257,7 +257,7 @@ services:
     pull_policy: never
     build:
       <<: *app-build
-      args: { MODULE: star-site-biz-finance-service }
+      args: { MODULE: star-site-biz-finance-service, JAR_SUB: finance-start }
     container_name: star-finance
     environment:
       <<: *app-env
