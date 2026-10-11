@@ -61,12 +61,30 @@ remotePort = 9090
 重启隧道：`docker compose restart frpc`，然后 iPhone 走公网回归（登录/报告/孕期）。
 **回退**：localIP 改回 `127.0.0.1`、localPort 改回 `8080`，`docker compose restart frpc`，30 秒内恢复。
 
-## 5. 常态运维
+## 5. P4 可观测栈安装（Mac B）
+
+values：`k8s/helm/observability-values.yaml`（家用单节点资源调优：Prometheus 3 天滚动、Grafana NodePort 30300、Loki 72h）。
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+helm upgrade --install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+  -n observability --create-namespace -f k8s/helm/observability-values.yaml
+
+helm upgrade --install loki grafana/loki-stack -n observability -f k8s/helm/observability-values.yaml
+```
+
+然后打开服务侧抓取：两族 values `serviceMonitor.enabled: true` → 重跑 `deploy.sh`。
+验收：`kubectl -n star-site get servicemonitors` 有 9 个；Grafana（http://<VM-IP>:30300，admin / star-site-grafana）导入 JVM(Micrometer) 看板、Explore 里查 Loki 日志。
+
+## 6. 常态运维
 
 - 升级服务：Mac A 改代码 → 本地 `mvn package` → `docker build` 新 tag → `export-images.sh` → Mac B `import` → 改 values tag → `deploy.sh`（helm 原地滚动）。接入 ACR 后可省搬运步骤（见技术文档 09 可选项）。
 - Mac B 重启后：`multipass start star-k3s` 即可（k3s 随 VM 自启）。
 - 磁盘：VM 40G 起，镜像重复导入注意 `k3s ctr images prune`（或 `crictl rmi --prune`）。
 
-## 6. 与旧 k8s/*.yaml 的关系
+## 7. 与旧 k8s/*.yaml 的关系
 
 `00-04` 裸 manifests 是早期雏形，已被 Helm charts 取代，仅留档参考；后续只维护 `k8s/helm/`。

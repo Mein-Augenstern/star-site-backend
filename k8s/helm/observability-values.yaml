@@ -1,0 +1,52 @@
+# P4 可观测栈 values：为家用单节点 k3s 调小资源（kube-prometheus-stack + Loki 全家桶约 1.5-2G）
+# 用法见 scripts/install-observability.sh
+
+# --- kube-prometheus-stack（Prometheus Operator + Grafana + Alertmanager）---
+grafana:
+  adminPassword: star-site-grafana
+  service:
+    type: NodePort        # 局域网直接访问；VM IP:NodePort
+    nodePort: 30300
+  sidecar:
+    dashboards:
+      enabled: true       # 自动加载 ConfigMap 里的 dashboard JSON
+  defaultDashboardsEnabled: true
+
+prometheus:
+  prometheusSpec:
+    retention: 3d                         # 家用磁盘有限，3 天滚动
+    resources:
+      requests: { cpu: 100m, memory: 400Mi }
+      limits: { memory: 800Mi }
+    serviceMonitorSelectorNilUsesHelmValues: false   # 拾取所有 ServiceMonitor（含 star-site 的）
+    podMonitorSelectorNilUsesHelmValues: false
+
+alertmanager:
+  enabled: false          # 家用阶段先不开告警，P5 可选项再启用
+
+kube-state-metrics:
+  resources:
+    requests: { memory: 64Mi }
+
+prometheus-node-exporter:
+  resources:
+    requests: { memory: 32Mi }
+
+# --- Loki + Promtail（日志）---
+loki:
+  enabled: true
+  isDefault: true
+  persistence:
+    enabled: true
+    size: 5Gi
+  resources:
+    requests: { memory: 128Mi }
+    limits: { memory: 512Mi }
+  config:
+    limits_config:
+      retention_period: 72h               # 3 天滚动
+
+promtail:
+  enabled: true
+  resources:
+    requests: { memory: 64Mi }
