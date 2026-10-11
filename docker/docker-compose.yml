@@ -137,7 +137,7 @@ services:
     pull_policy: never
     build:
       <<: *app-build
-      args: { MODULE: star-site-platform-member-service }
+      args: { MODULE: star-site-platform-member-service, JAR_SUB: member-start }
     container_name: star-platform-member
     environment:
       <<: *app-env
@@ -172,7 +172,7 @@ services:
     pull_policy: never
     build:
       <<: *app-build
-      args: { MODULE: star-site-platform-file-service }
+      args: { MODULE: star-site-platform-file-service, JAR_SUB: file-start }
     container_name: star-platform-file
     environment:
       <<: *app-env
@@ -225,7 +225,7 @@ services:
     pull_policy: never
     build:
       <<: *app-build
-      args: { MODULE: star-site-platform-reminder-service }
+      args: { MODULE: star-site-platform-reminder-service, JAR_SUB: reminder-start }
     container_name: star-platform-reminder
     environment:
       <<: *app-env
