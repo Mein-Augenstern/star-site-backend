@@ -12,13 +12,14 @@
 
     <artifactId>file-domain</artifactId>
     <name>file-domain</name>
-    <description>文件域领域模型：FileRecord + FileStorage 存储端口（六边形出站端口，纯接口）</description>
+    <description>文件域领域模型：FileRecord + FileStorage 存储端口（六边形出站端口，纯接口，纯 POJO 无框架依赖）</description>
 
     <dependencies>
+        <!-- entity 上的 @Data -->
         <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-annotation</artifactId>
-            <version>${mybatis-plus.version}</version>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

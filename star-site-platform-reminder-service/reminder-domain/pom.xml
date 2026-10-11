@@ -14,11 +14,5 @@
     <name>reminder-domain</name>
     <description>提醒域领域模型：ReminderRule/ReminderOccurrence/Notification（不依赖应用层）</description>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-annotation</artifactId>
-            <version>${mybatis-plus.version}</version>
-        </dependency>
-    </dependencies>
+    <!-- entity 纯 POJO：lombok 由父 pom 注入（provided），表结构映射在 reminder-dal 的 mapper XML -->
 </project>

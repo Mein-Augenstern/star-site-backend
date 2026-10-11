@@ -1,11 +1,11 @@
 package com.xp.starsite.member.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xp.starsite.common.async.AsyncCommand;
 import com.xp.starsite.common.async.mapper.AsyncCommandMapper;
 import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.R;
+import com.xp.starsite.member.mapper.AsyncCommandAdminMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +18,8 @@ import java.util.Map;
 /**
  * star-async 异步命令管控端（管理员运维：卡单/重试/监控）。
  * 鉴权：JWT 必过网关；可选 ADMIN_MEMBER_IDS 白名单（逗号分隔，留空=开发态放行所有登录用户）。
+ * 管控查询/处置 SQL 收敛在 DAL（{@link AsyncCommandAdminMapper}）；
+ * 执行链路仍走 common 的 {@link AsyncCommandMapper}（两处列语义对齐）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -27,7 +29,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AdminAsyncController {
 
-    private final AsyncCommandMapper mapper;
+    private final AsyncCommandAdminMapper mapper;
 
     @Value("${admin.member-ids:}")
     private String adminMemberIds;
@@ -51,16 +53,12 @@ public class AdminAsyncController {
         requireAdmin(memberId);
         Map<String, Object> out = new HashMap<>();
         for (String st : List.of("PENDING", "RUNNING", "SUCCESS", "DEAD")) {
-            out.put(st.toLowerCase(), mapper.selectCount(
-                    new LambdaQueryWrapper<AsyncCommand>().eq(AsyncCommand::getStatus, st)));
+            out.put(st.toLowerCase(), mapper.countByStatus(st));
         }
-        out.put("backlogDue", mapper.selectCount(new LambdaQueryWrapper<AsyncCommand>()
-                .eq(AsyncCommand::getStatus, "PENDING")
-                .le(AsyncCommand::getNextRunAt, LocalDateTime.now())));
+        out.put("backlogDue", mapper.countBacklogDue(LocalDateTime.now()));
         // 按类型聚合（近 500 条内的分布，够运维肉眼判断）
         Map<String, Long> byType = new HashMap<>();
-        for (AsyncCommand c : mapper.selectList(new LambdaQueryWrapper<AsyncCommand>()
-                .orderByDesc(AsyncCommand::getId).last("LIMIT 500"))) {
+        for (AsyncCommand c : mapper.selectRecent(500)) {
             byType.merge(c.getCmdType(), 1L, Long::sum);
         }
         out.put("byType", byType);
@@ -75,12 +73,10 @@ public class AdminAsyncController {
                                        @RequestParam(defaultValue = "1") long page,
                                        @RequestParam(defaultValue = "20") long size) {
         requireAdmin(memberId);
-        LambdaQueryWrapper<AsyncCommand> w = new LambdaQueryWrapper<AsyncCommand>()
-                .eq(status != null && !status.isBlank(), AsyncCommand::getStatus, status)
-                .eq(cmdType != null && !cmdType.isBlank(), AsyncCommand::getCmdType, cmdType)
-                .orderByDesc(AsyncCommand::getId);
-        long total = mapper.selectCount(w);
-        List<AsyncCommand> records = mapper.selectList(w.last("LIMIT " + ((page - 1) * size) + "," + size));
+        // 分页 count 先行，空结果不打查询
+        long total = mapper.countPage(status, cmdType);
+        List<AsyncCommand> records = total == 0 ? List.of()
+                : mapper.selectPage(status, cmdType, (page - 1) * size, size);
         Map<String, Object> out = new HashMap<>();
         out.put("records", records);
         out.put("total", total);
@@ -98,13 +94,13 @@ public class AdminAsyncController {
             throw new BizException(400, "任务执行中，请先用「重占」收回再重试");
         }
         if ("SUCCESS".equals(cmd.getStatus())) {
-            throw new BizException(400, "任务已成功，无需重试");
+            throw new BizException(400, "已成功任务，无需重试");
         }
         cmd.setStatus("PENDING");
         cmd.setRetryCount(0);
         cmd.setNextRunAt(LocalDateTime.now());
         cmd.setClaimToken(null);
-        mapper.updateById(cmd);
+        mapper.updateState(cmd);
         return R.ok();
     }
 
@@ -119,7 +115,7 @@ public class AdminAsyncController {
         cmd.setStatus("PENDING");
         cmd.setClaimToken(null);
         cmd.setNextRunAt(LocalDateTime.now());
-        mapper.updateById(cmd);
+        mapper.updateState(cmd);
         return R.ok();
     }
 
@@ -134,7 +130,7 @@ public class AdminAsyncController {
         cmd.setStatus("DEAD");
         cmd.setClaimToken(null);
         cmd.setLastError("MANUAL_KILL by member " + memberId);
-        mapper.updateById(cmd);
+        mapper.updateState(cmd);
         return R.ok();
     }
 

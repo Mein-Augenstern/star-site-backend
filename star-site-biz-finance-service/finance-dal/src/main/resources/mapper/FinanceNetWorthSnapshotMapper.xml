@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 净资产快照 SQL（DAL）：自增主键，无逻辑删；uk_owner_date 幂等（并发插入由 DuplicateKeyException 兜底） -->
+<mapper namespace="com.xp.starsite.finance.mapper.FinanceNetWorthSnapshotMapper">
+
+    <sql id="cols">
+        id, family_id, owner_member_id, snap_date, total_asset, total_liability, net_worth, created_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO finance_net_worth_snapshot
+            (family_id, owner_member_id, snap_date, total_asset, total_liability, net_worth)
+        VALUES
+            (#{familyId}, #{ownerMemberId}, #{snapDate}, #{totalAsset}, #{totalLiability}, #{netWorth})
+    </insert>
+
+    <select id="selectByOwnerAndDate" resultType="com.xp.starsite.finance.entity.FinanceNetWorthSnapshot">
+        SELECT <include refid="cols"/> FROM finance_net_worth_snapshot
+        WHERE owner_member_id = #{ownerMemberId} AND snap_date = #{snapDate}
+        LIMIT 1
+    </select>
+
+    <update id="update">
+        UPDATE finance_net_worth_snapshot
+        SET total_asset = #{totalAsset}, total_liability = #{totalLiability}, net_worth = #{netWorth}
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectByOwner" resultType="com.xp.starsite.finance.entity.FinanceNetWorthSnapshot">
+        SELECT <include refid="cols"/> FROM finance_net_worth_snapshot
+        WHERE owner_member_id = #{ownerMemberId}
+        ORDER BY snap_date ASC
+    </select>
+</mapper>

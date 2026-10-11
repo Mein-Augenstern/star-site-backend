@@ -1,8 +1,5 @@
 package com.xp.starsite.finance.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -15,13 +12,12 @@ import java.time.LocalDateTime;
  *
  * @author xiaopu
  * @since 2026-10
+ * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  */
 @Data
-@TableName("finance_net_worth_snapshot")
 public class FinanceNetWorthSnapshot {
 
     /** 主键 */
-    @TableId(type = IdType.AUTO)
     private Long id;
 
     /** 家庭 id（多人协作预留冗余） */

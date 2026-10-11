@@ -1,6 +1,5 @@
 package com.xp.starsite.finance.ai;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xp.starsite.api.client.ArchiveApi;
 import com.xp.starsite.common.llm.LlmClient;
 import com.xp.starsite.finance.entity.FinanceAccount;
@@ -59,9 +58,7 @@ public class FinanceDiagnosisService {
                 LocalDateTime.now().minusMonths(1).getYear(),
                 LocalDateTime.now().minusMonths(1).getMonthValue());
         CashFlowVO cash = reportService.cashFlow(memberId);
-        List<FinanceAccount> accounts = accountMapper.selectList(
-                new LambdaQueryWrapper<FinanceAccount>()
-                        .eq(FinanceAccount::getOwnerMemberId, memberId));
+        List<FinanceAccount> accounts = accountMapper.selectByOwner(memberId);
 
         StringBuilder user = new StringBuilder("家庭财务数据：\n");
         user.append("- 总资产：").append(sheet.getTotalAsset()).append("（其中档案资产估值 ")

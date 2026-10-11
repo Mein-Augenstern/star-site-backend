@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -70,7 +71,7 @@ class ReportServiceTest {
 
     @Test
     void balanceSheetAggregatesAccountsAndArchive() {
-        when(accountMapper.selectList(any())).thenReturn(List.of(
+        when(accountMapper.selectByOwner(ME)).thenReturn(List.of(
                 account(1, "wechat", "5000"),
                 account(2, "bank", "100000"),
                 account(3, "credit", "8000")));
@@ -89,7 +90,7 @@ class ReportServiceTest {
 
     @Test
     void balanceSheetFailsOpenWhenArchiveDown() {
-        when(accountMapper.selectList(any())).thenReturn(List.of(account(1, "wechat", "5000")));
+        when(accountMapper.selectByOwner(ME)).thenReturn(List.of(account(1, "wechat", "5000")));
         when(archiveApi.assetSummary(ME)).thenThrow(new BizException(500, "archive 不可用"));
 
         BalanceSheetVO vo = service().balanceSheet(ME);
@@ -102,8 +103,9 @@ class ReportServiceTest {
 
     @Test
     void incomeExpenseOnlyCountsDirection12() {
-        when(transactionMapper.selectList(any()))
-                .thenReturn(List.of(tx(1, "10000"), tx(1, "2000")))
+        when(transactionMapper.selectByDirectionAndPeriod(eq(ME), eq(1), any(), any(), any()))
+                .thenReturn(List.of(tx(1, "10000"), tx(1, "2000")));
+        when(transactionMapper.selectByDirectionAndPeriod(eq(ME), eq(2), any(), any(), any()))
                 .thenReturn(List.of(tx(2, "3000"), tx(2, "1000")));
 
         IncomeExpenseVO vo = service().incomeExpense(ME, 2026, 10);
@@ -117,9 +119,9 @@ class ReportServiceTest {
 
     @Test
     void snapshotIsIdempotentPerDay() {
-        when(accountMapper.selectList(any())).thenReturn(List.of(account(1, "wechat", "5000")));
+        when(accountMapper.selectByOwner(ME)).thenReturn(List.of(account(1, "wechat", "5000")));
         when(archiveApi.assetSummary(ME)).thenReturn(R.ok(new AssetSummaryDTO(BigDecimal.ZERO)));
-        when(snapshotMapper.selectOne(any())).thenReturn(null);
+        when(snapshotMapper.selectByOwnerAndDate(eq(ME), any())).thenReturn(null);
 
         service().snapshotToday(ME);
 
@@ -132,18 +134,18 @@ class ReportServiceTest {
 
     @Test
     void snapshotDuplicateDaySkipsInsert() {
-        when(accountMapper.selectList(any())).thenReturn(List.of(account(1, "wechat", "5000")));
+        when(accountMapper.selectByOwner(ME)).thenReturn(List.of(account(1, "wechat", "5000")));
         when(archiveApi.assetSummary(ME)).thenReturn(R.ok(new AssetSummaryDTO(BigDecimal.ZERO)));
         // 当日快照已存在
         FinanceNetWorthSnapshot exist = new FinanceNetWorthSnapshot();
         exist.setOwnerMemberId(ME);
         exist.setSnapDate(LocalDate.now());
-        when(snapshotMapper.selectOne(any())).thenReturn(exist);
+        when(snapshotMapper.selectByOwnerAndDate(eq(ME), any())).thenReturn(exist);
 
         service().snapshotToday(ME);
 
         // 已有则 update 而非 insert
-        verify(snapshotMapper).updateById(any(FinanceNetWorthSnapshot.class));
+        verify(snapshotMapper).update(any(FinanceNetWorthSnapshot.class));
         verify(snapshotMapper, never()).insert(any(FinanceNetWorthSnapshot.class));
     }
 
@@ -162,7 +164,8 @@ class ReportServiceTest {
         List<FinanceTransaction> rows = List.of(tx(2, "60"), tx(2, "40"), tx(2, "20"));
         rows.get(2).setCategory("CAR");
         rows.get(2).setCategoryName("用车");
-        when(transactionMapper.selectList(any())).thenReturn(rows);
+        when(transactionMapper.selectByDirectionAndPeriod(eq(ME), eq(2), any(), any(), any()))
+                .thenReturn(rows);
 
         var shares = service().categoryShare(ME, 2026, 10);
 
@@ -175,7 +178,7 @@ class ReportServiceTest {
 
     @Test
     void monthlyTrendFillsEmptyMonths() {
-        when(transactionMapper.selectList(any()))
+        when(transactionMapper.selectIncomeExpensePeriod(eq(ME), any(), any()))
                 .thenReturn(List.of(tx(1, "10000"), tx(2, "3000")));
 
         var trend = service().monthlyTrend(ME);
@@ -190,16 +193,16 @@ class ReportServiceTest {
 
     @Test
     void snapshotNowPersistsAndReturns() {
-        when(accountMapper.selectList(any())).thenReturn(List.of(account(1, "wechat", "5000")));
+        when(accountMapper.selectByOwner(ME)).thenReturn(List.of(account(1, "wechat", "5000")));
         when(archiveApi.assetSummary(ME)).thenReturn(R.ok(new AssetSummaryDTO(BigDecimal.ZERO)));
-        // selectOne 首次（snapshotToday 内）无快照，insert 后（返回值查询）有
+        // 首次查询（snapshotToday 内）无快照，insert 后（返回值查询）有
         java.util.concurrent.atomic.AtomicReference<FinanceNetWorthSnapshot> inserted =
                 new java.util.concurrent.atomic.AtomicReference<>();
         when(snapshotMapper.insert(any(FinanceNetWorthSnapshot.class))).thenAnswer(inv -> {
             inserted.set(inv.getArgument(0));
             return 1;
         });
-        when(snapshotMapper.selectOne(any())).thenAnswer(inv -> inserted.get());
+        when(snapshotMapper.selectByOwnerAndDate(eq(ME), any())).thenAnswer(inv -> inserted.get());
 
         var point = service().snapshotNow(ME);
 

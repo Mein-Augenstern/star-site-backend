@@ -60,6 +60,10 @@ class ArchiveServiceTest {
     @Mock
     private EventPublisher eventPublisher;
 
+    /** 雪花 id 生成器（真实实例，单机 worker-id=1；业务层显式赋 id 的统一来源） */
+    private final com.xp.starsite.common.util.IdGenerator idGenerator =
+            new com.xp.starsite.common.util.IdGenerator(1);
+
     private FamilyMemberSnapshotDTO snapshot(long id) {
         FamilyMemberSnapshotDTO s = new FamilyMemberSnapshotDTO();
         s.setId(id);
@@ -99,7 +103,7 @@ class ArchiveServiceTest {
                 .thenThrow(new BizException(403, "无权限访问该家庭成员的数据"));
 
         BizException e = assertThrows(BizException.class,
-                () -> new DocumentServiceImpl(documentMapper, ownershipGuard, eventPublisher)
+                () -> new DocumentServiceImpl(documentMapper, ownershipGuard, eventPublisher, idGenerator)
                         .create(ME, docDto(FOREIGN_MEMBER)));
         assertEquals(403, e.getCode());
         verify(documentMapper, never()).insert(any(ArchiveDocument.class));
@@ -110,7 +114,7 @@ class ArchiveServiceTest {
         when(ownershipGuard.requireOwned(ME, MY_MEMBER)).thenReturn(snapshot(MY_MEMBER));
         mockTxAndReadback();
 
-        new DocumentServiceImpl(documentMapper, ownershipGuard, eventPublisher).create(ME, docDto(MY_MEMBER));
+        new DocumentServiceImpl(documentMapper, ownershipGuard, eventPublisher, idGenerator).create(ME, docDto(MY_MEMBER));
 
         ArgumentCaptor<Object> payload = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher).publishTransactional(
@@ -151,7 +155,7 @@ class ArchiveServiceTest {
         });
         when(assetMapper.selectById(anyLong())).thenAnswer(inv -> inserted.get());
 
-        new AssetServiceImpl(assetMapper, valuationMapper, ownershipGuard, eventPublisher)
+        new AssetServiceImpl(assetMapper, valuationMapper, ownershipGuard, eventPublisher, idGenerator)
                 .create(ME, assetDto("vehicle", LocalDate.of(2027, 3, 10)));
 
         ArgumentCaptor<Object> payload = ArgumentCaptor.forClass(Object.class);
@@ -181,7 +185,7 @@ class ArchiveServiceTest {
             return a;
         });
 
-        new AssetServiceImpl(assetMapper, valuationMapper, ownershipGuard, eventPublisher)
+        new AssetServiceImpl(assetMapper, valuationMapper, ownershipGuard, eventPublisher, idGenerator)
                 .create(ME, assetDto("deposit", null));
 
         verify(eventPublisher, never()).publishTransactional(any(), any(), any(), any(), any(), any());
@@ -199,10 +203,10 @@ class ArchiveServiceTest {
         existing.setValuedAt(LocalDate.of(2026, 1, 1).atStartOfDay());
         when(assetMapper.selectById(5L)).thenReturn(existing);
 
-        new AssetServiceImpl(assetMapper, valuationMapper, ownershipGuard, eventPublisher)
+        new AssetServiceImpl(assetMapper, valuationMapper, ownershipGuard, eventPublisher, idGenerator)
                 .update(ME, 5L, assetDto("real_estate", null));
 
-        verify(assetMapper).updateById(any(ArchiveAsset.class));
+        verify(assetMapper).update(any(ArchiveAsset.class));
         // 估值变更 → 追加一条历史
         verify(valuationMapper, times(1)).insert(any(AssetValuation.class));
     }
@@ -215,7 +219,7 @@ class ArchiveServiceTest {
         when(assetMapper.selectById(6L)).thenReturn(foreign);
 
         BizException e = assertThrows(BizException.class,
-                () -> new AssetServiceImpl(assetMapper, valuationMapper, ownershipGuard, eventPublisher)
+                () -> new AssetServiceImpl(assetMapper, valuationMapper, ownershipGuard, eventPublisher, idGenerator)
                         .getDetail(ME, 6L));
         assertEquals(403, e.getCode());
     }

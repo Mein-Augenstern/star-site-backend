@@ -1,9 +1,5 @@
 package com.xp.starsite.family.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -13,16 +9,15 @@ import java.time.LocalDateTime;
  * 家庭成员（family_member）：自然人档案，≠ 登录账号（member）。
  * 老人小孩可以没有账号；有账号的经 linked_member_id 关联。
  * 归属校验（FamilyOwnershipGuard）即以本表的 family_id → owner 关系为准。
+ * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
  * @author xiaopu
  * @since 2026-10
  */
 @Data
-@TableName("family_member")
 public class FamilyMember {
 
     /** 主键 */
-    @TableId(type = IdType.AUTO)
     private Long id;
 
     /** 所属家庭 id */
@@ -53,7 +48,6 @@ public class FamilyMember {
     private String remark;
 
     /** 逻辑删标志（0 正常 1 已删） */
-    @TableLogic
     private Integer deleted;
 
     /** 创建时间（DB 维护） */

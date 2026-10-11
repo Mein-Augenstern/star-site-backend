@@ -1,9 +1,5 @@
 package com.xp.starsite.archive.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -13,16 +9,15 @@ import java.time.LocalDateTime;
 /**
  * 家庭资产（archive_asset）：房产/车辆/存款理财台账。
  * 车辆以 next_inspect_date 为源发年检提醒（ANNUAL 重复）；current_value 汇入净资产曲线。
+ * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
  * @author xiaopu
  * @since 2026-10
  */
 @Data
-@TableName("archive_asset")
 public class ArchiveAsset {
 
     /** 雪花 id（应用侧赋值）：年检提醒事务消息需在 insert 前拿到 id 填进事件载荷 */
-    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /** 家庭 id（多人协作预留冗余） */
@@ -59,7 +54,6 @@ public class ArchiveAsset {
     private String remark;
 
     /** 逻辑删标志（0 正常 1 已删） */
-    @TableLogic
     private Integer deleted;
 
     /** 创建时间（DB 维护） */

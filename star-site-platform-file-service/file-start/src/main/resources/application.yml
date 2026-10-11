@@ -28,15 +28,11 @@ spring:
       max-file-size: 20MB
       max-request-size: 25MB
 
-mybatis-plus:
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-  global-config:
-    db-config:
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
 
 file:
   # 存储实现：local=本地磁盘（默认，仅单机） | oss=阿里云OSS（集群必须）

@@ -1,8 +1,8 @@
 package com.xp.starsite.finance.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
+import com.xp.starsite.common.util.IdGenerator;
 import com.xp.starsite.finance.FinanceCategories;
 import com.xp.starsite.finance.dto.BudgetSaveDTO;
 import com.xp.starsite.finance.entity.FinanceBudget;
@@ -34,6 +34,7 @@ public class BudgetServiceImpl implements BudgetService {
 
     private final FinanceBudgetMapper budgetMapper;
     private final FinanceTransactionMapper transactionMapper;
+    private final IdGenerator idGenerator;
 
     @Override
     public BudgetVO save(Long memberId, BudgetSaveDTO dto) {
@@ -45,13 +46,11 @@ public class BudgetServiceImpl implements BudgetService {
         }
         YearMonth.parse(dto.getPeriod()); // 格式校验（非法抛 DateTimeParseException → 500 兜底）
 
-        FinanceBudget budget = budgetMapper.selectOne(new LambdaQueryWrapper<FinanceBudget>()
-                .eq(FinanceBudget::getOwnerMemberId, memberId)
-                .eq(FinanceBudget::getCategory, dto.getCategory())
-                .eq(FinanceBudget::getPeriod, dto.getPeriod()));
+        FinanceBudget budget = budgetMapper.selectByOwnerCategoryPeriod(
+                memberId, dto.getCategory(), dto.getPeriod());
         if (budget == null) {
             budget = new FinanceBudget();
-            budget.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getId());
+            budget.setId(idGenerator.nextId());
             budget.setOwnerMemberId(memberId);
             budget.setFamilyId(0L);
             budget.setCategory(dto.getCategory());
@@ -61,18 +60,14 @@ public class BudgetServiceImpl implements BudgetService {
         if (budget.getCreatedAt() == null) {
             budgetMapper.insert(budget);
         } else {
-            budgetMapper.updateById(budget);
+            budgetMapper.update(budget);
         }
         return toVO(budget, spentOf(memberId, dto.getCategory(), dto.getPeriod()));
     }
 
     @Override
     public List<BudgetVO> list(Long memberId, String period) {
-        return budgetMapper.selectList(new LambdaQueryWrapper<FinanceBudget>()
-                .eq(FinanceBudget::getOwnerMemberId, memberId)
-                .eq(FinanceBudget::getPeriod, period)
-                .orderByDesc(FinanceBudget::getAmount))
-                .stream()
+        return budgetMapper.selectByOwnerPeriod(memberId, period).stream()
                 .map(b -> toVO(b, spentOf(memberId, b.getCategory(), period)))
                 .toList();
     }
@@ -83,7 +78,7 @@ public class BudgetServiceImpl implements BudgetService {
         if (budget == null || !budget.getOwnerMemberId().equals(memberId)) {
             throw new BizException(ResultCode.FORBIDDEN);
         }
-        budgetMapper.deleteById(id);
+        budgetMapper.markDeleted(id);
     }
 
     /** 当月某分类支出合计（支出流水按月聚合） */
@@ -91,13 +86,8 @@ public class BudgetServiceImpl implements BudgetService {
         YearMonth ym = YearMonth.parse(period);
         LocalDateTime start = ym.atDay(1).atStartOfDay();
         LocalDateTime end = ym.plusMonths(1).atDay(1).atStartOfDay();
-        return transactionMapper.selectList(new LambdaQueryWrapper<FinanceTransaction>()
-                .eq(FinanceTransaction::getOwnerMemberId, memberId)
-                .eq(FinanceTransaction::getDirection, 2)
-                .eq(FinanceTransaction::getCategory, category)
-                .ge(FinanceTransaction::getTransTime, start)
-                .lt(FinanceTransaction::getTransTime, end))
-                .stream().map(FinanceTransaction::getAmount)
+        return transactionMapper.selectByDirectionAndPeriod(memberId, 2, start, end, category).stream()
+                .map(FinanceTransaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 

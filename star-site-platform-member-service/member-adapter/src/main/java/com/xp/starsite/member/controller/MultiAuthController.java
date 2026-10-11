@@ -12,7 +12,6 @@ import com.xp.starsite.member.service.MemberService;
 import com.xp.starsite.member.service.WxLoginService;
 import com.xp.starsite.member.vo.LoginVO;
 import com.xp.starsite.member.vo.MemberVO;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +24,7 @@ import java.util.Map;
  *
  * <p>会员域多登录方式入口：微信静默登录/注册、账密绑定微信、登录方式列表与解绑
  * （至少保留一种防自锁）、资料完善、邮箱验证码绑定（开发态验证码走内存+日志）。
+ * 数据访问经 DAL 业务语义方法（SQL 在 mapper XML）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -55,9 +55,7 @@ public class MultiAuthController {
     /** 我的登录方式列表 */
     @GetMapping("/identities")
     public R<List<IdentityVO>> identities(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        List<IdentityVO> list = identityMapper.selectList(new LambdaQueryWrapper<MemberIdentity>()
-                        .eq(MemberIdentity::getMemberId, memberId)
-                        .orderByAsc(MemberIdentity::getId))
+        List<IdentityVO> list = identityMapper.selectByMemberId(memberId)
                 .stream().map(i -> new IdentityVO(i.getId(), i.getIdentityType(),
                         mask(i.getIdentityType(), i.getIdentifier()), i.getCreatedAt() == null ? null : i.getCreatedAt().toString()))
                 .toList();
@@ -72,12 +70,10 @@ public class MultiAuthController {
         if (identity == null || !identity.getMemberId().equals(memberId)) {
             throw new BizException(404, "绑定关系不存在");
         }
-        Long count = identityMapper.selectCount(new LambdaQueryWrapper<MemberIdentity>()
-                .eq(MemberIdentity::getMemberId, memberId));
-        if (count <= 1) {
+        if (identityMapper.countByMemberId(memberId) <= 1) {
             throw new BizException(400, "至少保留一种登录方式，无法解绑");
         }
-        identityMapper.deleteById(id);
+        identityMapper.markDeleted(id);
         return R.ok();
     }
 
@@ -95,7 +91,7 @@ public class MultiAuthController {
         if (dto.getAvatar() != null) {
             member.setAvatar(dto.getAvatar());
         }
-        memberMapper.updateById(member);
+        memberMapper.updateProfile(member);
         return R.ok(memberService.getById(memberId));
     }
 
@@ -107,10 +103,7 @@ public class MultiAuthController {
         if (email == null || !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
             throw new BizException(400, "邮箱格式不正确");
         }
-        Long exists = identityMapper.selectCount(new LambdaQueryWrapper<MemberIdentity>()
-                .eq(MemberIdentity::getIdentityType, "EMAIL")
-                .eq(MemberIdentity::getIdentifier, email));
-        if (exists > 0) {
+        if (identityMapper.countByIdentity("EMAIL", email) > 0) {
             throw new BizException(400, "该邮箱已被其他账号绑定");
         }
         String code = String.valueOf(100000 + new java.security.SecureRandom().nextInt(900000));
@@ -132,10 +125,7 @@ public class MultiAuthController {
         if (saved == null || !saved.equals(email + ":" + code)) {
             throw new BizException(400, "验证码错误或已过期");
         }
-        Long exists = identityMapper.selectCount(new LambdaQueryWrapper<MemberIdentity>()
-                .eq(MemberIdentity::getIdentityType, "EMAIL")
-                .eq(MemberIdentity::getIdentifier, email));
-        if (exists > 0) {
+        if (identityMapper.countByIdentity("EMAIL", email) > 0) {
             throw new BizException(400, "该邮箱已被其他账号绑定");
         }
         MemberIdentity identity = new MemberIdentity();
@@ -146,7 +136,7 @@ public class MultiAuthController {
         Member member = memberMapper.selectById(memberId);
         if (member != null && member.getEmail() == null) {
             member.setEmail(email);
-            memberMapper.updateById(member);
+            memberMapper.updateProfile(member);
         }
         CodeStore.remove("EMAIL:" + memberId);
         return R.ok();

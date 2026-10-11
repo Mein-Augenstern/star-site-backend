@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 家庭 SQL（DAL）：全部参数绑定 #{}，逻辑删查询统一 deleted=0 -->
+<mapper namespace="com.xp.starsite.family.mapper.FamilyMapper">
+
+    <sql id="cols">
+        id, name, owner_member_id, remark, deleted, created_at, updated_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO family
+            (name, owner_member_id, remark)
+        VALUES
+            (#{name}, #{ownerMemberId}, #{remark})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.family.entity.Family">
+        SELECT <include refid="cols"/> FROM family
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <select id="selectByOwner" resultType="com.xp.starsite.family.entity.Family">
+        SELECT <include refid="cols"/> FROM family
+        WHERE owner_member_id = #{ownerMemberId} AND deleted = 0
+        ORDER BY id ASC
+        LIMIT 1
+    </select>
+
+    <select id="countByOwner" resultType="long">
+        SELECT COUNT(*) FROM family
+        WHERE owner_member_id = #{ownerMemberId} AND deleted = 0
+    </select>
+</mapper>

@@ -1,6 +1,5 @@
 package com.xp.starsite.family.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xp.starsite.api.dto.FamilyMemberSnapshotDTO;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
@@ -21,7 +20,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 家庭档案服务实现
+ * 家庭档案服务实现。数据访问全部经 DAL（{@link FamilyMapper}/{@link FamilyMemberMapper}），
+ * 条件与 SQL 下沉到 mapper XML，业务层零拼装。
+ * 越权防线：所有成员读写先经 requireFamily/requireMember 收口在「本人家庭」内
+ * （/internal/family 的归属校验是全平台越权防线，语义保持逐行等价）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -36,9 +38,7 @@ public class FamilyServiceImpl implements FamilyService {
 
     @Override
     public FamilyVO create(Long ownerMemberId, FamilyCreateDTO dto) {
-        Long count = familyMapper.selectCount(
-                new LambdaQueryWrapper<Family>().eq(Family::getOwnerMemberId, ownerMemberId));
-        if (count > 0) {
+        if (familyMapper.countByOwner(ownerMemberId) > 0) {
             throw new BizException(4005, "已有家庭，无需重复创建");
         }
         Family family = new Family();
@@ -52,8 +52,7 @@ public class FamilyServiceImpl implements FamilyService {
 
     @Override
     public FamilyVO mine(Long ownerMemberId) {
-        Family family = familyMapper.selectOne(
-                new LambdaQueryWrapper<Family>().eq(Family::getOwnerMemberId, ownerMemberId));
+        Family family = familyMapper.selectByOwner(ownerMemberId);
         return family == null ? null : toFamilyVO(family);
     }
 
@@ -70,10 +69,7 @@ public class FamilyServiceImpl implements FamilyService {
     @Override
     public List<FamilyMemberVO> listMembers(Long ownerMemberId) {
         Family family = requireFamily(ownerMemberId);
-        return familyMemberMapper.selectList(
-                        new LambdaQueryWrapper<FamilyMember>()
-                                .eq(FamilyMember::getFamilyId, family.getId())
-                                .orderByAsc(FamilyMember::getId))
+        return familyMemberMapper.selectByFamilyId(family.getId())
                 .stream().map(this::toVO).toList();
     }
 
@@ -82,7 +78,8 @@ public class FamilyServiceImpl implements FamilyService {
         Family family = requireFamily(ownerMemberId);
         FamilyMember member = requireMember(family.getId(), memberId);
         applyDto(member, dto);
-        familyMemberMapper.updateById(member);
+        // 非空字段才更新（动态 SQL 语义同原 MyBatis-Plus updateById）
+        familyMemberMapper.update(member);
         return toVO(familyMemberMapper.selectById(memberId));
     }
 
@@ -90,13 +87,12 @@ public class FamilyServiceImpl implements FamilyService {
     public void deleteMember(Long ownerMemberId, Long memberId) {
         Family family = requireFamily(ownerMemberId);
         FamilyMember member = requireMember(family.getId(), memberId);
-        familyMemberMapper.deleteById(member.getId());
+        familyMemberMapper.markDeleted(member.getId());
     }
 
     @Override
     public FamilyMemberSnapshotDTO checkOwnership(Long ownerMemberId, Long familyMemberId) {
-        Family family = familyMapper.selectOne(
-                new LambdaQueryWrapper<Family>().eq(Family::getOwnerMemberId, ownerMemberId));
+        Family family = familyMapper.selectByOwner(ownerMemberId);
         if (family == null) {
             return null;
         }
@@ -107,20 +103,17 @@ public class FamilyServiceImpl implements FamilyService {
 
     @Override
     public List<FamilyMemberSnapshotDTO> listMemberSnapshots(Long ownerMemberId) {
-        Family family = familyMapper.selectOne(
-                new LambdaQueryWrapper<Family>().eq(Family::getOwnerMemberId, ownerMemberId));
+        Family family = familyMapper.selectByOwner(ownerMemberId);
         if (family == null) {
             return List.of();
         }
-        return familyMemberMapper.selectList(
-                        new LambdaQueryWrapper<FamilyMember>().eq(FamilyMember::getFamilyId, family.getId()))
+        return familyMemberMapper.selectByFamilyId(family.getId())
                 .stream().map(this::toSnapshot).toList();
     }
 
     /** 前置：取当前账号的家庭，不存在报错提示先创建 */
     private Family requireFamily(Long ownerMemberId) {
-        Family family = familyMapper.selectOne(
-                new LambdaQueryWrapper<Family>().eq(Family::getOwnerMemberId, ownerMemberId));
+        Family family = familyMapper.selectByOwner(ownerMemberId);
         if (family == null) {
             throw new BizException(4006, "请先创建家庭");
         }

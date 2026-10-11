@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>reminder-infrastructure</artifactId>
+            <artifactId>reminder-dal</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!-- 本服务 facade：ReminderRuleDTO / 提醒领域事件（reminder-app 消费落规则） -->

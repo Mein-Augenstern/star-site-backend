@@ -14,11 +14,5 @@
     <name>archive-core-model</name>
     <description>档案域领域模型：entity、枚举、值对象（保持 POJO，不依赖框架）</description>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-annotation</artifactId>
-            <version>${mybatis-plus.version}</version>
-        </dependency>
-    </dependencies>
+    <!-- entity 纯 POJO：lombok 由父 pom 注入（provided），表结构映射在 archive-dal 的 mapper XML -->
 </project>

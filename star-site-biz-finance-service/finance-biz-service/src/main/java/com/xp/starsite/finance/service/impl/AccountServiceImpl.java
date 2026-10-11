@@ -1,8 +1,8 @@
 package com.xp.starsite.finance.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
+import com.xp.starsite.common.util.IdGenerator;
 import com.xp.starsite.finance.FinanceCategories;
 import com.xp.starsite.finance.dto.AccountSaveDTO;
 import com.xp.starsite.finance.entity.FinanceAccount;
@@ -43,13 +43,14 @@ public class AccountServiceImpl implements AccountService {
 
     private final FinanceAccountMapper accountMapper;
     private final FinanceTransactionMapper transactionMapper;
+    private final IdGenerator idGenerator;
 
     @Override
     @Transactional
     public AccountVO create(Long memberId, AccountSaveDTO dto) {
         validateType(dto.getAccountType());
         FinanceAccount account = new FinanceAccount();
-        account.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getId());
+        account.setId(idGenerator.nextId());
         account.setName(dto.getName());
         account.setAccountType(dto.getAccountType());
         account.setInitialBalance(dto.getInitialBalance() == null ? BigDecimal.ZERO : dto.getInitialBalance());
@@ -72,10 +73,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public List<AccountVO> list(Long memberId) {
-        return accountMapper.selectList(new LambdaQueryWrapper<FinanceAccount>()
-                        .eq(FinanceAccount::getOwnerMemberId, memberId)
-                        .orderByAsc(FinanceAccount::getId))
-                .stream().map(this::toVO).toList();
+        return accountMapper.selectByOwner(memberId).stream().map(this::toVO).toList();
     }
 
     @Override
@@ -91,7 +89,7 @@ public class AccountServiceImpl implements AccountService {
         account.setAccountType(dto.getAccountType());
         account.setInstitution(dto.getInstitution());
         account.setRemark(dto.getRemark());
-        accountMapper.updateById(account);
+        accountMapper.update(account);
         return toVO(account);
     }
 
@@ -102,7 +100,7 @@ public class AccountServiceImpl implements AccountService {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(),
                     "账户余额不为 0（当前 " + account.getBalance() + "），请先转账或调整至 0 再注销");
         }
-        accountMapper.deleteById(id);
+        accountMapper.markDeleted(id);
         log.info("注销账户: id={}", id);
     }
 
@@ -126,7 +124,7 @@ public class AccountServiceImpl implements AccountService {
     /** 供 TransactionService 回写余额与记调整流水（同域内共享，不走接口） */
     void insertAdjustTransaction(FinanceAccount account, BigDecimal delta, String reason) {
         FinanceTransaction t = new FinanceTransaction();
-        t.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getId());
+        t.setId(idGenerator.nextId());
         t.setFamilyId(account.getFamilyId());
         t.setOwnerMemberId(account.getOwnerMemberId());
         t.setAccountId(account.getId());

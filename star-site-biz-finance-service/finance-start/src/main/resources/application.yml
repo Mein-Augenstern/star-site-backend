@@ -24,15 +24,13 @@ spring:
     username: root
     password: root123
 
-mybatis-plus:
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-  global-config:
-    db-config:
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
+
+# 逻辑删为显式 SQL 约定：查询一律 AND deleted=0，删除=UPDATE SET deleted=1（见 dal mapper XML）
 
 # 健康聚焦阶段 MQ 停用：账单导入走同步接口，EventPublisher 降级为 Noop
 # 启用事件消费：取消注释并启动 rocketmq 容器（FinanceMqConfig 条件装配消费者）

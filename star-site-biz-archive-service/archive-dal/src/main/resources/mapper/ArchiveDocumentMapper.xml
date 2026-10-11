@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 家庭证件 SQL（DAL）：全部参数绑定 #{}；逻辑删查询统一 deleted=0，删除为 UPDATE 置位；
+     主键为应用侧雪花 id，INSERT 显式含 id 列 -->
+<mapper namespace="com.xp.starsite.archive.mapper.ArchiveDocumentMapper">
+
+    <sql id="cols">
+        id, family_id, owner_member_id, holder_member_id, holder_member_name,
+        doc_type, doc_no, issue_date, expiry_date, file_id, remark,
+        deleted, created_at, updated_at
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO archive_document
+            (id, family_id, owner_member_id, holder_member_id, holder_member_name,
+             doc_type, doc_no, issue_date, expiry_date, file_id, remark)
+        VALUES
+            (#{id}, #{familyId}, #{ownerMemberId}, #{holderMemberId}, #{holderMemberName},
+             #{docType}, #{docNo}, #{issueDate}, #{expiryDate}, #{fileId}, #{remark})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.archive.entity.ArchiveDocument">
+        SELECT <include refid="cols"/> FROM archive_document
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <update id="update">
+        UPDATE archive_document
+        SET holder_member_id   = #{holderMemberId},
+            holder_member_name = #{holderMemberName},
+            doc_type           = #{docType},
+            doc_no             = #{docNo},
+            issue_date         = #{issueDate},
+            expiry_date        = #{expiryDate},
+            file_id            = #{fileId},
+            remark             = #{remark}
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="markDeleted">
+        UPDATE archive_document SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <select id="countByOwner" resultType="long">
+        SELECT COUNT(*) FROM archive_document
+        WHERE deleted = 0
+          AND owner_member_id = #{ownerMemberId}
+        <if test="holderMemberId != null">AND holder_member_id = #{holderMemberId}</if>
+        <if test="docType != null and docType != ''">AND doc_type = #{docType}</if>
+    </select>
+
+    <select id="selectPage" resultType="com.xp.starsite.archive.entity.ArchiveDocument">
+        SELECT <include refid="cols"/> FROM archive_document
+        WHERE deleted = 0
+          AND owner_member_id = #{ownerMemberId}
+        <if test="holderMemberId != null">AND holder_member_id = #{holderMemberId}</if>
+        <if test="docType != null and docType != ''">AND doc_type = #{docType}</if>
+        ORDER BY expiry_date ASC, id ASC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+</mapper>

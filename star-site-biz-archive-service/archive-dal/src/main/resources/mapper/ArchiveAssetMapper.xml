@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 家庭资产 SQL（DAL）：全部参数绑定 #{}；逻辑删查询统一 deleted=0，删除为 UPDATE 置位；
+     主键为应用侧雪花 id，INSERT 显式含 id 列 -->
+<mapper namespace="com.xp.starsite.archive.mapper.ArchiveAssetMapper">
+
+    <sql id="cols">
+        id, family_id, owner_member_id, name, asset_type, holder_member_id,
+        holder_member_name, acquire_date, current_value, valued_at,
+        next_inspect_date, remark, deleted, created_at, updated_at
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO archive_asset
+            (id, family_id, owner_member_id, name, asset_type, holder_member_id,
+             holder_member_name, acquire_date, current_value, valued_at,
+             next_inspect_date, remark)
+        VALUES
+            (#{id}, #{familyId}, #{ownerMemberId}, #{name}, #{assetType}, #{holderMemberId},
+             #{holderMemberName}, #{acquireDate}, #{currentValue}, #{valuedAt},
+             #{nextInspectDate}, #{remark})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.archive.entity.ArchiveAsset">
+        SELECT <include refid="cols"/> FROM archive_asset
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <update id="update">
+        UPDATE archive_asset
+        SET name               = #{name},
+            asset_type         = #{assetType},
+            holder_member_id   = #{holderMemberId},
+            holder_member_name = #{holderMemberName},
+            acquire_date       = #{acquireDate},
+            current_value      = #{currentValue},
+            valued_at          = #{valuedAt},
+            next_inspect_date  = #{nextInspectDate},
+            remark             = #{remark}
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="markDeleted">
+        UPDATE archive_asset SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <select id="countByOwner" resultType="long">
+        SELECT COUNT(*) FROM archive_asset
+        WHERE deleted = 0
+          AND owner_member_id = #{ownerMemberId}
+        <if test="assetType != null and assetType != ''">AND asset_type = #{assetType}</if>
+    </select>
+
+    <select id="selectPage" resultType="com.xp.starsite.archive.entity.ArchiveAsset">
+        SELECT <include refid="cols"/> FROM archive_asset
+        WHERE deleted = 0
+          AND owner_member_id = #{ownerMemberId}
+        <if test="assetType != null and assetType != ''">AND asset_type = #{assetType}</if>
+        ORDER BY id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectTotalValue" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(COALESCE(current_value, 0)), 0) FROM archive_asset
+        WHERE deleted = 0
+          AND owner_member_id = #{ownerMemberId}
+    </select>
+
+    <select id="selectTypeSummaries" resultType="com.xp.starsite.archive.projection.AssetTypeSummary">
+        SELECT asset_type                            AS assetType,
+               COALESCE(SUM(COALESCE(current_value, 0)), 0) AS totalValue,
+               COUNT(*)                             AS count
+        FROM archive_asset
+        WHERE deleted = 0
+          AND owner_member_id = #{ownerMemberId}
+        GROUP BY asset_type
+    </select>
+</mapper>

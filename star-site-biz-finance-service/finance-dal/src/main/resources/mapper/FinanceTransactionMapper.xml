@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 记账流水 SQL（DAL）：全部参数绑定 #{}，逻辑删查询统一 deleted=0；
+     幂等依赖 uk_owner_source_ext(owner,source,external_id) 唯一键，重复行由 DuplicateKeyException 承载 -->
+<mapper namespace="com.xp.starsite.finance.mapper.FinanceTransactionMapper">
+
+    <sql id="cols">
+        id, family_id, owner_member_id, account_id, account_name, direction, amount,
+        category, category_name, trans_time, counterparty, transfer_group_id,
+        balance_after, source, external_id, file_id, remark, deleted, created_at, updated_at
+    </sql>
+
+    <!-- 雪花 id 应用侧赋值，显式插入 id 列 -->
+    <insert id="insert">
+        INSERT INTO finance_transaction
+            (id, family_id, owner_member_id, account_id, account_name, direction, amount,
+             category, category_name, trans_time, counterparty, transfer_group_id,
+             balance_after, source, external_id, file_id, remark)
+        VALUES
+            (#{id}, #{familyId}, #{ownerMemberId}, #{accountId}, #{accountName}, #{direction}, #{amount},
+             #{category}, #{categoryName}, #{transTime}, #{counterparty}, #{transferGroupId},
+             #{balanceAfter}, #{source}, #{externalId}, #{fileId}, #{remark})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.finance.entity.FinanceTransaction">
+        SELECT <include refid="cols"/> FROM finance_transaction
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <update id="markDeleted">
+        UPDATE finance_transaction SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <select id="selectByTransferGroupId" resultType="com.xp.starsite.finance.entity.FinanceTransaction">
+        SELECT <include refid="cols"/> FROM finance_transaction
+        WHERE transfer_group_id = #{transferGroupId} AND deleted = 0
+        ORDER BY id ASC
+    </select>
+
+    <sql id="pageWhere">
+        WHERE deleted = 0
+          AND owner_member_id = #{ownerMemberId}
+        <if test="accountId != null">AND account_id = #{accountId}</if>
+        <if test="direction != null">AND direction = #{direction}</if>
+        <if test="startTime != null">AND trans_time &gt;= #{startTime}</if>
+        <if test="endTime != null">AND trans_time &lt; #{endTime}</if>
+    </sql>
+
+    <select id="selectPage" resultType="com.xp.starsite.finance.entity.FinanceTransaction">
+        SELECT <include refid="cols"/> FROM finance_transaction
+        <include refid="pageWhere"/>
+        ORDER BY trans_time DESC, id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countByCondition" resultType="long">
+        SELECT COUNT(*) FROM finance_transaction
+        <include refid="pageWhere"/>
+    </select>
+
+    <select id="selectByDirectionAndPeriod" resultType="com.xp.starsite.finance.entity.FinanceTransaction">
+        SELECT <include refid="cols"/> FROM finance_transaction
+        WHERE deleted = 0
+          AND owner_member_id = #{ownerMemberId}
+          AND direction = #{direction}
+          AND trans_time &gt;= #{startTime}
+        <if test="endTime != null">AND trans_time &lt; #{endTime}</if>
+        <if test="category != null and category != ''">AND category = #{category}</if>
+    </select>
+
+    <select id="selectIncomeExpensePeriod" resultType="com.xp.starsite.finance.entity.FinanceTransaction">
+        SELECT <include refid="cols"/> FROM finance_transaction
+        WHERE deleted = 0
+          AND owner_member_id = #{ownerMemberId}
+          AND direction IN (1, 2)
+          AND trans_time &gt;= #{startTime}
+          AND trans_time &lt; #{endTime}
+    </select>
+</mapper>

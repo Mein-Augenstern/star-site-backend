@@ -15,11 +15,11 @@
     <description>提醒中心微服务（COLA 风格多模块聚合工程）：领域事件消费落规则、每日扫描生成实例、站内/邮件通知</description>
     <packaging>pom</packaging>
 
-    <!-- COLA：adapter=触发器（REST/MQ 监听/定时扫描），app=用例编排，domain=模型，infrastructure=持久化+邮件网关 -->
+    <!-- COLA：adapter=触发器（REST/MQ 监听/定时扫描），app=用例编排，domain=模型，dal=数据访问（mapper XML）+邮件网关 -->
     <modules>
         <module>reminder-facade</module>
         <module>reminder-domain</module>
-        <module>reminder-infrastructure</module>
+        <module>reminder-dal</module>
         <module>reminder-app</module>
         <module>reminder-adapter</module>
         <module>reminder-start</module>

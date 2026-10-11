@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 月度预算 SQL（DAL）：逻辑删；「账号×分类×月份」一条（uk_owner_cat_period） -->
+<mapper namespace="com.xp.starsite.finance.mapper.FinanceBudgetMapper">
+
+    <sql id="cols">
+        id, family_id, owner_member_id, category, period, amount, deleted, created_at, updated_at
+    </sql>
+
+    <!-- 雪花 id 应用侧赋值，显式插入 id 列 -->
+    <insert id="insert">
+        INSERT INTO finance_budget
+            (id, family_id, owner_member_id, category, period, amount)
+        VALUES
+            (#{id}, #{familyId}, #{ownerMemberId}, #{category}, #{period}, #{amount})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.finance.entity.FinanceBudget">
+        SELECT <include refid="cols"/> FROM finance_budget
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <select id="selectByOwnerCategoryPeriod" resultType="com.xp.starsite.finance.entity.FinanceBudget">
+        SELECT <include refid="cols"/> FROM finance_budget
+        WHERE deleted = 0
+          AND owner_member_id = #{ownerMemberId}
+          AND category = #{category}
+          AND period = #{period}
+        LIMIT 1
+    </select>
+
+    <!-- 保存语义只变更金额 -->
+    <update id="update">
+        UPDATE finance_budget SET amount = #{amount}
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="markDeleted">
+        UPDATE finance_budget SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <select id="selectByOwnerPeriod" resultType="com.xp.starsite.finance.entity.FinanceBudget">
+        SELECT <include refid="cols"/> FROM finance_budget
+        WHERE deleted = 0 AND owner_member_id = #{ownerMemberId} AND period = #{period}
+        ORDER BY amount DESC
+    </select>
+</mapper>

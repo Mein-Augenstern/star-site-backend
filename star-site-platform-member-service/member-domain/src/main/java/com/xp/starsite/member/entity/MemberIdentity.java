@@ -1,25 +1,23 @@
 package com.xp.starsite.member.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
-/** 登录身份（一个账号 N 种登录方式；多端归一）
+/**
+ * 登录身份（member_identity，一个账号 N 种登录方式；多端归一）。
+ * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
  * @author xiaopu
  * @since 2026-10
  */
 @Data
-@TableName("member_identity")
 public class MemberIdentity {
 
-    @TableId(type = IdType.AUTO)
+    /** 主键 */
     private Long id;
 
+    /** 所属账号 id */
     private Long memberId;
 
     /** WECHAT_MP / ALIPAY_MP / PASSWORD / PHONE / EMAIL */
@@ -34,10 +32,12 @@ public class MemberIdentity {
     /** 微信系跨端归一键 */
     private String unionid;
 
-    @TableLogic
+    /** 逻辑删除：1已删 0未删 */
     private Integer deleted;
 
+    /** 创建时间（DB 维护） */
     private LocalDateTime createdAt;
 
+    /** 更新时间（DB 维护） */
     private LocalDateTime updatedAt;
 }

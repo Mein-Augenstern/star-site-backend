@@ -12,7 +12,7 @@
 
     <artifactId>finance-web</artifactId>
     <name>finance-web</name>
-    <description>财务域 Web 层：controller（V 层，禁止直依赖 mapper/core-service）</description>
+    <description>财务域 Web 层：controller（V 层，禁止直依赖 mapper/dal）</description>
 
     <dependencies>
         <dependency>

@@ -19,7 +19,7 @@
     <modules>
         <module>family-facade</module>
         <module>family-core-model</module>
-        <module>family-core-service</module>
+        <module>family-dal</module>
         <module>family-biz-service</module>
         <module>family-web</module>
         <module>family-start</module>

@@ -1,7 +1,5 @@
 package com.xp.starsite.insurance.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.api.dto.FamilyMemberSnapshotDTO;
 import com.xp.starsite.common.exception.BizException;
@@ -9,6 +7,7 @@ import com.xp.starsite.common.mq.EventPublisher;
 import com.xp.starsite.common.mq.event.EventTypes;
 import com.xp.starsite.common.mq.event.Topics;
 import com.xp.starsite.common.result.ResultCode;
+import com.xp.starsite.common.util.IdGenerator;
 import com.xp.starsite.insurance.dto.PolicySaveDTO;
 import com.xp.starsite.insurance.entity.InsurancePolicy;
 import com.xp.starsite.insurance.mapper.InsurancePolicyMapper;
@@ -38,6 +37,7 @@ import java.util.stream.Collectors;
  * - 缴费提醒（主提醒）走事务消息，「落库成功 ⇔ 事件一定发出」；
  * - 到期提醒 / 删除撤销走普通发送，丢失只少一条提醒、不产生脏数据，不值得为它扩事务范围。
  * 消费端（reminder-service，Step 2）以 (source, bizType, bizId) 幂等。
+ * 数据访问全部经 DAL（{@link InsurancePolicyMapper}），SQL 收敛在 mapper XML。
  *
  * @author xiaopu
  * @since 2026-10
@@ -59,13 +59,14 @@ public class InsuranceServiceImpl implements InsuranceService {
     private final InsurancePolicyMapper policyMapper;
     private final FamilyOwnershipGuard ownershipGuard;
     private final EventPublisher eventPublisher;
+    private final IdGenerator idGenerator;
 
     @Override
     public PolicyVO create(Long memberId, PolicySaveDTO dto) {
         FamilyMemberSnapshotDTO insured = ownershipGuard.requireOwned(memberId, dto.getInsuredMemberId());
         InsurancePolicy policy = new InsurancePolicy();
         // 雪花 id 应用侧先赋值：半消息的载荷里就要带 bizId，insert 发生在事务回调里
-        policy.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getId());
+        policy.setId(idGenerator.nextId());
         applyDto(policy, dto);
         policy.setFamilyId(insured.getFamilyId());
         policy.setOwnerMemberId(memberId);
@@ -84,15 +85,15 @@ public class InsuranceServiceImpl implements InsuranceService {
         if (insuredMemberId != null) {
             ownershipGuard.requireOwned(memberId, insuredMemberId);
         }
-        LambdaQueryWrapper<InsurancePolicy> wrapper = new LambdaQueryWrapper<InsurancePolicy>()
-                .eq(InsurancePolicy::getOwnerMemberId, memberId)
-                .eq(insuredMemberId != null, InsurancePolicy::getInsuredMemberId, insuredMemberId)
-                .eq(StringUtils.hasText(category), InsurancePolicy::getCategory, category)
-                .eq(status != null, InsurancePolicy::getStatus, status)
-                .orderByDesc(InsurancePolicy::getId);
-        Page<InsurancePolicy> result = policyMapper.selectPage(Page.of(page, size), wrapper);
-        return PageVO.of(result.getRecords().stream().map(this::toVO).toList(),
-                result.getTotal(), result.getCurrent(), result.getSize());
+        long total = policyMapper.countByOwner(memberId, insuredMemberId, category, status);
+        if (total == 0) {
+            return PageVO.of(List.of(), 0, page, size);
+        }
+        long offset = (page - 1) * size;
+        List<PolicyVO> vos = policyMapper
+                .selectPage(memberId, insuredMemberId, category, status, offset, (int) size)
+                .stream().map(this::toVO).toList();
+        return PageVO.of(vos, total, page, size);
     }
 
     @Override
@@ -106,7 +107,7 @@ public class InsuranceServiceImpl implements InsuranceService {
         FamilyMemberSnapshotDTO insured = ownershipGuard.requireOwned(memberId, dto.getInsuredMemberId());
         applyDto(policy, dto);
         policy.setInsuredMemberName(insured.getName());
-        policyMapper.updateById(policy);
+        policyMapper.update(policy);
         // Register 是 upsert 语义：被保人/日期改了，重发覆盖规则
         eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_REGISTER,
                 "policy", policy.getId(), paymentReminderOf(policy));
@@ -117,7 +118,7 @@ public class InsuranceServiceImpl implements InsuranceService {
     @Override
     public void delete(Long memberId, Long id) {
         InsurancePolicy policy = requireOwnedPolicy(memberId, id);
-        policyMapper.deleteById(id);
+        policyMapper.markDeleted(id);
         eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_CANCEL, "policy", id,
                 cancelReminderOf(policy, "policy_payment"));
         eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_CANCEL, "policy", id,
@@ -128,10 +129,7 @@ public class InsuranceServiceImpl implements InsuranceService {
     @Override
     public CoverageMapVO coverageMap(Long memberId) {
         List<FamilyMemberSnapshotDTO> members = ownershipGuard.listOwnedMembers(memberId);
-        List<InsurancePolicy> activePolicies = policyMapper.selectList(
-                new LambdaQueryWrapper<InsurancePolicy>()
-                        .eq(InsurancePolicy::getOwnerMemberId, memberId)
-                        .eq(InsurancePolicy::getStatus, 1));
+        List<InsurancePolicy> activePolicies = policyMapper.selectActiveByOwner(memberId);
 
         Map<Long, List<String>> covered = activePolicies.stream().collect(
                 Collectors.groupingBy(InsurancePolicy::getInsuredMemberId,

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 家庭目标 SQL（DAL）：逻辑删 -->
+<mapper namespace="com.xp.starsite.finance.mapper.FinanceGoalMapper">
+
+    <sql id="cols">
+        id, family_id, owner_member_id, name, target_amount, current_amount,
+        deadline, remark, deleted, created_at, updated_at
+    </sql>
+
+    <!-- 雪花 id 应用侧赋值，显式插入 id 列 -->
+    <insert id="insert">
+        INSERT INTO finance_goal
+            (id, family_id, owner_member_id, name, target_amount, current_amount, deadline, remark)
+        VALUES
+            (#{id}, #{familyId}, #{ownerMemberId}, #{name}, #{targetAmount}, #{currentAmount},
+             #{deadline}, #{remark})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.finance.entity.FinanceGoal">
+        SELECT <include refid="cols"/> FROM finance_goal
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <update id="update">
+        UPDATE finance_goal
+        SET name = #{name}, target_amount = #{targetAmount}, current_amount = #{currentAmount},
+            deadline = #{deadline}, remark = #{remark}
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="markDeleted">
+        UPDATE finance_goal SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <select id="selectByOwner" resultType="com.xp.starsite.finance.entity.FinanceGoal">
+        SELECT <include refid="cols"/> FROM finance_goal
+        WHERE deleted = 0 AND owner_member_id = #{ownerMemberId}
+        ORDER BY deadline ASC, id ASC
+    </select>
+</mapper>

@@ -17,11 +17,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.lenient;
@@ -29,7 +31,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 提醒中心单元测试：规则 upsert/撤销、重复日期推算、扫描投递（mock 全部依赖）
+ * 提醒中心单元测试：规则 upsert/撤销、重复日期推算、扫描投递（mock 全部依赖）。
+ * DAL 已换 MyBatis 官方 mapper：mock 的是业务语义方法（selectByIdempotentKey/
+ * selectEnabled/selectDuePendingUpTo/markNotified 等）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -74,7 +78,7 @@ class ReminderServiceTest {
 
     @Test
     void upsertInsertsNewRule() {
-        when(ruleMapper.selectOne(any())).thenReturn(null);
+        when(ruleMapper.selectByIdempotentKey("star-site-insurance", "policy_payment", 7L)).thenReturn(null);
 
         newService().upsertRule(registerEvent());
 
@@ -90,19 +94,19 @@ class ReminderServiceTest {
         existing.setSource("star-site-insurance");
         existing.setBizType("policy_payment");
         existing.setBizId(7L);
-        when(ruleMapper.selectOne(any())).thenReturn(existing);
+        when(ruleMapper.selectByIdempotentKey("star-site-insurance", "policy_payment", 7L)).thenReturn(existing);
 
         newService().upsertRule(registerEvent());
 
         verify(ruleMapper, never()).insert(any(ReminderRule.class));
-        verify(ruleMapper).updateById(any(ReminderRule.class));
+        verify(ruleMapper).update(any(ReminderRule.class));
     }
 
     @Test
     void cancelDeletesRuleAndPendingOccurrences() {
         ReminderRule rule = new ReminderRule();
         rule.setId(3L);
-        when(ruleMapper.selectOne(any())).thenReturn(rule);
+        when(ruleMapper.selectByIdempotentKey("star-site-insurance", "policy_payment", 7L)).thenReturn(rule);
 
         ReminderCancelEvent e = new ReminderCancelEvent();
         e.setSource("star-site-insurance");
@@ -111,7 +115,7 @@ class ReminderServiceTest {
 
         newService().cancelRule(e);
 
-        verify(occurrenceMapper).delete(any());
+        verify(occurrenceMapper).deleteActiveByRuleId(3L);
         verify(ruleMapper).deleteById(3L);
     }
 
@@ -132,8 +136,8 @@ class ReminderServiceTest {
         rule.setRepeatUntil(LocalDate.now().plusMonths(10));
         rule.setAdvanceDays(7);
         rule.setStatus(1);
-        when(ruleMapper.selectOne(any())).thenReturn(null);
-        when(occurrenceMapper.selectCount(any())).thenReturn(0L);
+        when(ruleMapper.selectByIdempotentKey("star-site-insurance", "policy_payment", 7L)).thenReturn(null);
+        when(occurrenceMapper.countByRuleAndDueDate(any(), any())).thenReturn(0);
 
         newService().upsertRule(registerEvent());
 
@@ -146,14 +150,14 @@ class ReminderServiceTest {
 
     @Test
     void scanNotifiesDueOccurrences() {
-        when(ruleMapper.selectList(any())).thenReturn(List.of());
+        when(ruleMapper.selectEnabled()).thenReturn(List.of());
 
         ReminderOccurrence due = new ReminderOccurrence();
         due.setId(55L);
         due.setOwnerMemberId(OWNER);
         due.setTitle("平安福重疾 缴费");
         due.setStatus(1);
-        when(occurrenceMapper.selectList(any())).thenReturn(List.of(due));
+        when(occurrenceMapper.selectDuePendingUpTo(LocalDate.now())).thenReturn(List.of(due));
 
         int notified = newService().scanAndNotify();
 
@@ -164,13 +168,13 @@ class ReminderServiceTest {
         assertEquals(0, n.getValue().getReadFlag());
         // 实例被置为已通知
         assertEquals(2, due.getStatus());
-        verify(occurrenceMapper).updateById(due);
+        verify(occurrenceMapper).markNotified(eq(55L), any(LocalDateTime.class));
     }
 
     @Test
     void scanWithNothingDueWritesNothing() {
-        when(ruleMapper.selectList(any())).thenReturn(List.of());
-        when(occurrenceMapper.selectList(any())).thenReturn(List.of());
+        when(ruleMapper.selectEnabled()).thenReturn(List.of());
+        when(occurrenceMapper.selectDuePendingUpTo(LocalDate.now())).thenReturn(List.of());
 
         assertTrue(newService().scanAndNotify() == 0);
         verify(notificationMapper, never()).insert(any(Notification.class));
@@ -192,9 +196,9 @@ class ReminderServiceTest {
         rule.setRepeatUntil(LocalDate.now().plusYears(20));
         rule.setAdvanceDays(7);
         rule.setStatus(1);
-        when(ruleMapper.selectList(any())).thenReturn(List.of(rule));
-        when(occurrenceMapper.selectCount(any())).thenReturn(0L);
-        when(occurrenceMapper.selectList(any())).thenReturn(List.of());
+        when(ruleMapper.selectEnabled()).thenReturn(List.of(rule));
+        when(occurrenceMapper.countByRuleAndDueDate(any(), any())).thenReturn(0);
+        when(occurrenceMapper.selectDuePendingUpTo(LocalDate.now())).thenReturn(List.of());
 
         newService().scanAndNotify();
 

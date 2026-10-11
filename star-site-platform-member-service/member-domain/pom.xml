@@ -12,13 +12,14 @@
 
     <artifactId>member-domain</artifactId>
     <name>member-domain</name>
-    <description>会员域领域模型：Member/MemberIdentity（不依赖 Web/应用层，框架依赖仅 MP 注解）</description>
+    <description>会员域领域模型：Member/MemberIdentity（不依赖 Web/应用层，保持纯 POJO 无框架依赖）</description>
 
     <dependencies>
+        <!-- entity 上的 @Data -->
         <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-annotation</artifactId>
-            <version>${mybatis-plus.version}</version>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

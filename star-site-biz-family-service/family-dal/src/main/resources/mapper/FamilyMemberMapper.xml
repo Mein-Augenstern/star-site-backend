@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 家庭成员 SQL（DAL）：全部参数绑定 #{}，逻辑删查询统一 deleted=0 -->
+<mapper namespace="com.xp.starsite.family.mapper.FamilyMemberMapper">
+
+    <sql id="cols">
+        id, family_id, name, relation, gender, birth_date, phone,
+        avatar_file_id, linked_member_id, remark, deleted, created_at, updated_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO family_member
+            (family_id, name, relation, gender, birth_date, phone, avatar_file_id, linked_member_id, remark)
+        VALUES
+            (#{familyId}, #{name}, #{relation}, #{gender}, #{birthDate}, #{phone}, #{avatarFileId}, #{linkedMemberId}, #{remark})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.family.entity.FamilyMember">
+        SELECT <include refid="cols"/> FROM family_member
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <select id="selectByFamilyId" resultType="com.xp.starsite.family.entity.FamilyMember">
+        SELECT <include refid="cols"/> FROM family_member
+        WHERE family_id = #{familyId} AND deleted = 0
+        ORDER BY id ASC
+    </select>
+
+    <!-- 档案编辑：动态列，仅非空字段更新（原 MP updateById 的 null 不更新语义） -->
+    <update id="update">
+        UPDATE family_member
+        <set>
+            <if test="name != null">name = #{name},</if>
+            <if test="relation != null">relation = #{relation},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="birthDate != null">birth_date = #{birthDate},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="avatarFileId != null">avatar_file_id = #{avatarFileId},</if>
+            <if test="linkedMemberId != null">linked_member_id = #{linkedMemberId},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="markDeleted">
+        UPDATE family_member SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+</mapper>

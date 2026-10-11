@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 资产估值历史 SQL（DAL）：全部参数绑定 #{}；只追加不删改，无 deleted 列 -->
+<mapper namespace="com.xp.starsite.archive.mapper.AssetValuationMapper">
+
+    <sql id="cols">
+        id, asset_id, value, valued_at, created_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO archive_asset_valuation
+            (asset_id, value, valued_at)
+        VALUES
+            (#{assetId}, #{value}, #{valuedAt})
+    </insert>
+
+    <select id="selectByAssetId" resultType="com.xp.starsite.archive.entity.AssetValuation">
+        SELECT <include refid="cols"/> FROM archive_asset_valuation
+        WHERE asset_id = #{assetId}
+        ORDER BY valued_at ASC, id ASC
+    </select>
+</mapper>

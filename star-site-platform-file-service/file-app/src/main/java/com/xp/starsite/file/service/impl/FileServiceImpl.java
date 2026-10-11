@@ -23,6 +23,7 @@ import java.util.Set;
 /**
  * 文件服务实现：校验类型/大小 → 存储落盘（本地或 OSS）→ 建记录 → 发布上传完成事件。
  * 账单导入场景额外放行 CSV；存储实现按 file.storage-type 自动切换。
+ * 数据访问经 DAL（{@link FileRecordMapper}，SQL 在 mapper XML）。
  *
  * @author xiaopu
  * @since 2026-10

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 登录身份 SQL（DAL）：全部参数绑定 #{}，逻辑删查询统一 deleted=0，credential 列存 session_key/密码密文（敏感不下发） -->
+<mapper namespace="com.xp.starsite.member.mapper.MemberIdentityMapper">
+
+    <sql id="cols">
+        id, member_id, identity_type, identifier, credential, unionid,
+        deleted, created_at, updated_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO member_identity
+            (member_id, identity_type, identifier, credential, unionid)
+        VALUES
+            (#{memberId}, #{identityType}, #{identifier}, #{credential}, #{unionid})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.member.entity.MemberIdentity">
+        SELECT <include refid="cols"/> FROM member_identity
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <!-- (identity_type, identifier) 唯一键精确命中；id 升序仅作确定性兜底 -->
+    <select id="selectByIdentity" resultType="com.xp.starsite.member.entity.MemberIdentity">
+        SELECT <include refid="cols"/> FROM member_identity
+        WHERE identity_type = #{identityType} AND identifier = #{identifier} AND deleted = 0
+        ORDER BY id ASC
+        LIMIT 1
+    </select>
+
+    <!-- unionid 跨端归一：同主体其他端已注册 → 认回同一账号 -->
+    <select id="selectByUnionid" resultType="com.xp.starsite.member.entity.MemberIdentity">
+        SELECT <include refid="cols"/> FROM member_identity
+        WHERE identity_type = #{identityType} AND unionid = #{unionid} AND deleted = 0
+        ORDER BY id ASC
+        LIMIT 1
+    </select>
+
+    <select id="countByIdentity" resultType="long">
+        SELECT COUNT(*) FROM member_identity
+        WHERE identity_type = #{identityType} AND identifier = #{identifier} AND deleted = 0
+    </select>
+
+    <select id="selectByMemberId" resultType="com.xp.starsite.member.entity.MemberIdentity">
+        SELECT <include refid="cols"/> FROM member_identity
+        WHERE member_id = #{memberId} AND deleted = 0
+        ORDER BY id ASC
+    </select>
+
+    <select id="countByMemberId" resultType="long">
+        SELECT COUNT(*) FROM member_identity
+        WHERE member_id = #{memberId} AND deleted = 0
+    </select>
+
+    <!-- 刷新/改绑：仅非空字段更新（session_key 刷新落 credential；unionid 只补不覆盖） -->
+    <update id="update">
+        UPDATE member_identity
+        <set>
+            <if test="memberId != null">member_id = #{memberId},</if>
+            <if test="credential != null">credential = #{credential},</if>
+            <if test="unionid != null">unionid = #{unionid},</if>
+        </set>
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="markDeleted">
+        UPDATE member_identity SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+</mapper>

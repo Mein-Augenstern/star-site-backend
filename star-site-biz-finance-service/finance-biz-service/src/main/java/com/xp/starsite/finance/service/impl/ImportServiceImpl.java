@@ -1,8 +1,8 @@
 package com.xp.starsite.finance.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
+import com.xp.starsite.common.util.IdGenerator;
 import com.xp.starsite.finance.entity.FinanceAccount;
 import com.xp.starsite.finance.entity.FinanceTransaction;
 import com.xp.starsite.finance.importer.BillParseResult;
@@ -40,6 +40,7 @@ public class ImportServiceImpl implements ImportService {
     private final FinanceAccountMapper accountMapper;
     private final com.xp.starsite.finance.mapper.FinanceImportLogMapper importLogMapper;
     private final FinanceTransactionMapper transactionMapper;
+    private final IdGenerator idGenerator;
 
     @Override
     @Transactional
@@ -69,6 +70,7 @@ public class ImportServiceImpl implements ImportService {
             t.setAccountName(account.getName());
             t.setBalanceAfter(null);
             t.setRemark(t.getRemark() == null ? "" : t.getRemark());
+            t.setId(idGenerator.nextId());
             try {
                 transactionMapper.insert(t);
                 imported++;
@@ -79,8 +81,7 @@ public class ImportServiceImpl implements ImportService {
             }
         }
         if (delta.signum() != 0) {
-            account.setBalance(account.getBalance().add(delta));
-            accountMapper.updateById(account);
+            accountMapper.updateBalance(account.getId(), account.getBalance().add(delta));
         }
         log.info("账单导入: channel={}, parsed={}, imported={}, dup={}, skipped={}, delta={}",
                 parsed.getChannel(), parsed.getTransactions().size(), imported, duplicates,
@@ -91,10 +92,7 @@ public class ImportServiceImpl implements ImportService {
 
     @Override
     public java.util.List<com.xp.starsite.finance.entity.FinanceImportLog> logs(Long memberId, Long fileId) {
-        return importLogMapper.selectList(new LambdaQueryWrapper<com.xp.starsite.finance.entity.FinanceImportLog>()
-                .eq(com.xp.starsite.finance.entity.FinanceImportLog::getOwnerMemberId, memberId)
-                .eq(fileId != null, com.xp.starsite.finance.entity.FinanceImportLog::getFileId, fileId)
-                .orderByDesc(com.xp.starsite.finance.entity.FinanceImportLog::getId));
+        return importLogMapper.selectByOwner(memberId, fileId);
     }
 
     private FinanceAccount requireOwnedAccount(Long memberId, Long accountId) {

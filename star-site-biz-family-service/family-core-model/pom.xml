@@ -15,10 +15,11 @@
     <description>家庭域领域模型：entity、枚举、值对象（保持 POJO，不依赖框架）</description>
 
     <dependencies>
+        <!-- entity 上的 @Data -->
         <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-annotation</artifactId>
-            <version>${mybatis-plus.version}</version>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

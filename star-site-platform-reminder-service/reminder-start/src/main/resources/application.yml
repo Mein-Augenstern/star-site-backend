@@ -33,15 +33,11 @@ spring:
     username: root
     password: root123
 
-mybatis-plus:
+# MyBatis 官方（替代 MyBatis-Plus）：mapper XML 在 reminder-dal，驼峰自动映射
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-  global-config:
-    db-config:
-      logic-delete-field: deleted
-      logic-delete-value: 1
-      logic-not-delete-value: 0
 
 # 健康聚焦阶段 MQ 停用：降级为纯 @Scheduled 扫描（架构 D6 降级开关）
 # 启用事件消费：取消注释并启动 rocketmq 容器

@@ -1,7 +1,5 @@
 package com.xp.starsite.archive.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.api.dto.FamilyMemberSnapshotDTO;
 import com.xp.starsite.api.event.reminder.ReminderCancelEvent;
@@ -12,6 +10,7 @@ import com.xp.starsite.archive.entity.ArchiveAsset;
 import com.xp.starsite.archive.entity.AssetValuation;
 import com.xp.starsite.archive.mapper.ArchiveAssetMapper;
 import com.xp.starsite.archive.mapper.AssetValuationMapper;
+import com.xp.starsite.archive.projection.AssetTypeSummary;
 import com.xp.starsite.archive.service.AssetService;
 import com.xp.starsite.archive.vo.AssetSummaryVO;
 import com.xp.starsite.archive.vo.AssetVO;
@@ -22,6 +21,7 @@ import com.xp.starsite.common.mq.EventPublisher;
 import com.xp.starsite.common.mq.event.EventTypes;
 import com.xp.starsite.common.mq.event.Topics;
 import com.xp.starsite.common.result.ResultCode;
+import com.xp.starsite.common.util.IdGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -35,11 +35,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * 家庭资产实现。估值手动更新（季度节奏），每次变更自动追加历史留痕。
  * 车辆年检是资产域唯一提醒联动：年检日期非空 → ANNUAL 提醒（事务消息）。
+ * <p>
+ * 数据访问全部经 DAL（{@link ArchiveAssetMapper}/{@link AssetValuationMapper}）：
+ * SQL 收敛在 mapper XML，业务层零 SQL 拼装；逻辑删（deleted=0 过滤 / UPDATE 置位）。
+ * 主键为应用侧雪花 id（{@link IdGenerator}）——半消息载荷需在 insert 前拿到 id，
+ * 该语义保持不变。
  *
  * @author xiaopu
  * @since 2026-10
@@ -60,13 +66,15 @@ public class AssetServiceImpl implements AssetService {
     private final AssetValuationMapper valuationMapper;
     private final FamilyOwnershipGuard ownershipGuard;
     private final EventPublisher eventPublisher;
+    /** 雪花 id（替代 MyBatis-Plus ASSIGN_ID）：事务消息载荷需 insert 前拿到 id */
+    private final IdGenerator idGenerator;
 
     @Override
     public AssetVO create(Long memberId, AssetSaveDTO dto) {
         FamilyMemberSnapshotDTO holder = resolveHolder(memberId, dto.getHolderMemberId());
         ArchiveAsset asset = new ArchiveAsset();
         // 雪花 id 应用侧先赋值：年检提醒半消息载荷需要 bizId
-        asset.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getId());
+        asset.setId(idGenerator.nextId());
         applyDto(asset, dto);
         asset.setFamilyId(holder != null ? holder.getFamilyId() : requireFamilyId(memberId));
         asset.setOwnerMemberId(memberId);
@@ -89,13 +97,16 @@ public class AssetServiceImpl implements AssetService {
 
     @Override
     public PageVO<AssetVO> list(Long memberId, String assetType, long page, long size) {
-        Page<ArchiveAsset> result = assetMapper.selectPage(Page.of(page, size),
-                new LambdaQueryWrapper<ArchiveAsset>()
-                        .eq(ArchiveAsset::getOwnerMemberId, memberId)
-                        .eq(StringUtils.hasText(assetType), ArchiveAsset::getAssetType, assetType)
-                        .orderByDesc(ArchiveAsset::getId));
-        return PageVO.of(result.getRecords().stream().map(this::toVO).toList(),
-                result.getTotal(), result.getCurrent(), result.getSize());
+        // 分页 count 先行：0 直接短路，不再取页
+        long total = assetMapper.countByOwner(memberId, StringUtils.hasText(assetType) ? assetType : null);
+        if (total == 0) {
+            return PageVO.of(List.of(), 0, page, size);
+        }
+        long offset = (page - 1) * size;
+        List<AssetVO> vos = assetMapper
+                .selectPage(memberId, StringUtils.hasText(assetType) ? assetType : null, offset, (int) size)
+                .stream().map(this::toVO).toList();
+        return PageVO.of(vos, total, page, size);
     }
 
     @Override
@@ -115,7 +126,7 @@ public class AssetServiceImpl implements AssetService {
         if (dto.getCurrentValue() != null && (oldValue == null || dto.getCurrentValue().compareTo(oldValue) != 0)) {
             asset.setValuedAt(LocalDateTime.now());
         }
-        assetMapper.updateById(asset);
+        assetMapper.update(asset);
         if (asset.getValuedAt() != null && (oldValue == null
                 || (asset.getCurrentValue() != null && asset.getCurrentValue().compareTo(oldValue) != 0))) {
             insertValuation(asset);
@@ -133,7 +144,7 @@ public class AssetServiceImpl implements AssetService {
     @Override
     public void delete(Long memberId, Long id) {
         ArchiveAsset asset = requireOwnedAsset(memberId, id);
-        assetMapper.deleteById(id);
+        assetMapper.markDeleted(id);
         publishCancel(asset);
         log.info("删除资产: id={}", id);
     }
@@ -141,34 +152,27 @@ public class AssetServiceImpl implements AssetService {
     @Override
     public List<ValuationPointVO> valuations(Long memberId, Long assetId) {
         requireOwnedAsset(memberId, assetId);
-        return valuationMapper.selectList(new LambdaQueryWrapper<AssetValuation>()
-                        .eq(AssetValuation::getAssetId, assetId)
-                        .orderByAsc(AssetValuation::getValuedAt))
+        return valuationMapper.selectByAssetId(assetId)
                 .stream().map(v -> new ValuationPointVO(v.getValue(), v.getValuedAt())).toList();
     }
 
     @Override
     public AssetSummaryVO summary(Long memberId) {
-        List<ArchiveAsset> assets = assetMapper.selectList(new LambdaQueryWrapper<ArchiveAsset>()
-                .eq(ArchiveAsset::getOwnerMemberId, memberId));
+        // 总估值与类型分组都在 DAL 聚合（SUM/GROUP BY），业务层只做类型排序
         AssetSummaryVO vo = new AssetSummaryVO();
-        vo.setTotalValue(assets.stream()
-                .map(a -> a.getCurrentValue() == null ? BigDecimal.ZERO : a.getCurrentValue())
-                .reduce(BigDecimal.ZERO, BigDecimal::add));
-        Map<String, List<ArchiveAsset>> byType = assets.stream()
-                .collect(Collectors.groupingBy(ArchiveAsset::getAssetType));
+        vo.setTotalValue(assetMapper.selectTotalValue(memberId));
+        Map<String, AssetTypeSummary> byType = assetMapper.selectTypeSummaries(memberId)
+                .stream().collect(Collectors.toMap(AssetTypeSummary::getAssetType, Function.identity()));
         List<AssetSummaryVO.TypeSlice> slices = new ArrayList<>();
         for (String type : TYPE_ORDER) {
-            List<ArchiveAsset> group = byType.get(type);
-            if (group == null || group.isEmpty()) {
+            AssetTypeSummary row = byType.get(type);
+            if (row == null || row.getCount() == null || row.getCount() == 0) {
                 continue;
             }
             AssetSummaryVO.TypeSlice slice = new AssetSummaryVO.TypeSlice();
-            slice.setAssetType(type);
-            slice.setTotalValue(group.stream()
-                    .map(a -> a.getCurrentValue() == null ? BigDecimal.ZERO : a.getCurrentValue())
-                    .reduce(BigDecimal.ZERO, BigDecimal::add));
-            slice.setCount(group.size());
+            slice.setAssetType(row.getAssetType());
+            slice.setTotalValue(row.getTotalValue());
+            slice.setCount(row.getCount().intValue());
             slices.add(slice);
         }
         vo.setSlices(slices);

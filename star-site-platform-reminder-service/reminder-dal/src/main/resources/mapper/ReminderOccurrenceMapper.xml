@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 提醒实例 SQL（DAL）：全部参数绑定 #{}；无 deleted 列，未完成实例随规则撤销物理删 -->
+<mapper namespace="com.xp.starsite.reminder.mapper.ReminderOccurrenceMapper">
+
+    <sql id="cols">
+        id, rule_id, family_id, owner_member_id, title, source, biz_type, biz_id,
+        due_date, status, notified_at, created_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO reminder_occurrence
+            (rule_id, family_id, owner_member_id, title, source, biz_type, biz_id,
+             due_date, status)
+        VALUES
+            (#{ruleId}, #{familyId}, #{ownerMemberId}, #{title}, #{source}, #{bizType}, #{bizId},
+             #{dueDate}, #{status})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.reminder.entity.ReminderOccurrence">
+        SELECT <include refid="cols"/> FROM reminder_occurrence
+        WHERE id = #{id}
+    </select>
+
+    <select id="countByRuleAndDueDate" resultType="int">
+        SELECT COUNT(*) FROM reminder_occurrence
+        WHERE rule_id = #{ruleId} AND due_date = #{dueDate}
+    </select>
+
+    <select id="countActiveByRuleId" resultType="long">
+        SELECT COUNT(*) FROM reminder_occurrence
+        WHERE rule_id = #{ruleId} AND status IN (1, 2)
+    </select>
+
+    <!-- 1待提醒 2已通知为未完成；已完成/已忽略保留 -->
+    <delete id="deleteActiveByRuleId">
+        DELETE FROM reminder_occurrence
+        WHERE rule_id = #{ruleId} AND status IN (1, 2)
+    </delete>
+
+    <select id="selectDuePendingUpTo" resultType="com.xp.starsite.reminder.entity.ReminderOccurrence">
+        SELECT <include refid="cols"/> FROM reminder_occurrence
+        WHERE status = 1
+          AND due_date &lt;= #{dueDate}
+        ORDER BY due_date ASC, id ASC
+    </select>
+
+    <select id="selectUpcomingByOwner" resultType="com.xp.starsite.reminder.entity.ReminderOccurrence">
+        SELECT <include refid="cols"/> FROM reminder_occurrence
+        WHERE owner_member_id = #{ownerMemberId}
+          AND due_date &lt;= #{dueBefore}
+          AND status IN (1, 2)
+        ORDER BY due_date ASC, id ASC
+    </select>
+
+    <update id="markNotified">
+        UPDATE reminder_occurrence SET status = 2, notified_at = #{notifiedAt}
+        WHERE id = #{id} AND status = 1
+    </update>
+
+    <update id="updateStatus">
+        UPDATE reminder_occurrence SET status = #{status}
+        WHERE id = #{id}
+    </update>
+</mapper>

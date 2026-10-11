@@ -1,9 +1,8 @@
 package com.xp.starsite.finance.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
+import com.xp.starsite.common.util.IdGenerator;
 import com.xp.starsite.finance.dto.TransactionSaveDTO;
 import com.xp.starsite.finance.entity.FinanceAccount;
 import com.xp.starsite.finance.entity.FinanceTransaction;
@@ -26,6 +25,7 @@ import java.util.List;
 /**
  * 记账流水实现。不变式：流水与账户余额在同一数据库事务内变更，任何一笔流水
  * 都能由 balance_after 快照对账。删除回滚余额；转账整组回滚。
+ * 余额维护走 DAL 显式 updateBalance（不整行 update）；雪花 id 应用侧 insert 前赋值。
  *
  * @author xiaopu
  * @since 2026-10
@@ -42,6 +42,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     private final FinanceAccountMapper accountMapper;
     private final FinanceTransactionMapper transactionMapper;
+    private final IdGenerator idGenerator;
 
     @Override
     @Transactional
@@ -62,17 +63,15 @@ public class TransactionServiceImpl implements TransactionService {
         YearMonth ym = YearMonth.of(year, month);
         LocalDateTime start = ym.atDay(1).atStartOfDay();
         LocalDateTime end = ym.plusMonths(1).atDay(1).atStartOfDay();
-        Page<FinanceTransaction> result = transactionMapper.selectPage(Page.of(page, size),
-                new LambdaQueryWrapper<FinanceTransaction>()
-                        .eq(FinanceTransaction::getOwnerMemberId, memberId)
-                        .eq(accountId != null, FinanceTransaction::getAccountId, accountId)
-                        .eq(direction != null, FinanceTransaction::getDirection, direction)
-                        .ge(FinanceTransaction::getTransTime, start)
-                        .lt(FinanceTransaction::getTransTime, end)
-                        .orderByDesc(FinanceTransaction::getTransTime)
-                        .orderByDesc(FinanceTransaction::getId));
-        return PageVO.of(result.getRecords().stream().map(this::toVO).toList(),
-                result.getTotal(), result.getCurrent(), result.getSize());
+        long total = transactionMapper.countByCondition(memberId, accountId, direction, start, end);
+        if (total == 0) {
+            return PageVO.of(List.of(), 0, page, size);
+        }
+        long offset = (page - 1) * size;
+        List<TransactionVO> vos = transactionMapper
+                .selectPage(memberId, accountId, direction, start, end, offset, (int) size)
+                .stream().map(this::toVO).toList();
+        return PageVO.of(vos, total, page, size);
     }
 
     @Override
@@ -86,18 +85,16 @@ public class TransactionServiceImpl implements TransactionService {
         FinanceTransaction t = requireOwnedTransaction(memberId, id);
         if (t.getDirection() == DIR_TRANSFER) {
             // 转账整组回滚（防删一半导致两账户账实失衡）
-            List<FinanceTransaction> group = transactionMapper.selectList(
-                    new LambdaQueryWrapper<FinanceTransaction>()
-                            .eq(FinanceTransaction::getTransferGroupId, t.getTransferGroupId()));
+            List<FinanceTransaction> group = transactionMapper.selectByTransferGroupId(t.getTransferGroupId());
             for (FinanceTransaction leg : group) {
                 rollbackOne(leg);
-                transactionMapper.deleteById(leg.getId());
+                transactionMapper.markDeleted(leg.getId());
             }
             log.info("删除转账组: group={}, legs={}", t.getTransferGroupId(), group.size());
             return;
         }
         rollbackOne(t);
-        transactionMapper.deleteById(id);
+        transactionMapper.markDeleted(id);
         log.info("删除流水: id={}, direction={}", id, t.getDirection());
     }
 
@@ -108,8 +105,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "金额必须大于 0");
         }
         BigDecimal delta = direction == DIR_INCOME ? amount : amount.negate();
-        account.setBalance(account.getBalance().add(delta));
-        accountMapper.updateById(account);
+        applyBalance(account, account.getBalance().add(delta));
 
         FinanceTransaction t = baseTransaction(memberId, account, dto, direction, amount);
         t.setBalanceAfter(account.getBalance());
@@ -122,8 +118,7 @@ public class TransactionServiceImpl implements TransactionService {
         if (dto.getAmount().signum() == 0) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "调整差额不能为 0");
         }
-        account.setBalance(account.getBalance().add(dto.getAmount()));
-        accountMapper.updateById(account);
+        applyBalance(account, account.getBalance().add(dto.getAmount()));
 
         FinanceTransaction t = baseTransaction(memberId, account, dto, DIR_ADJUST, dto.getAmount());
         t.setBalanceAfter(account.getBalance());
@@ -146,11 +141,10 @@ public class TransactionServiceImpl implements TransactionService {
         }
         FinanceAccount to = requireOwnedAccount(memberId, dto.getToAccountId());
 
-        long groupId = com.baomidou.mybatisplus.core.toolkit.IdWorker.getId();
-        from.setBalance(from.getBalance().subtract(dto.getAmount()));
-        to.setBalance(to.getBalance().add(dto.getAmount()));
-        accountMapper.updateById(from);
-        accountMapper.updateById(to);
+        // 转账组 id 也是雪花（两腿共享，成对查询用）
+        long groupId = idGenerator.nextId();
+        applyBalance(from, from.getBalance().subtract(dto.getAmount()));
+        applyBalance(to, to.getBalance().add(dto.getAmount()));
 
         FinanceTransaction out = baseTransaction(memberId, from, dto, DIR_TRANSFER, dto.getAmount().negate());
         out.setTransferGroupId(groupId);
@@ -179,14 +173,19 @@ public class TransactionServiceImpl implements TransactionService {
         BigDecimal delta = t.getDirection() == DIR_EXPENSE
                 ? t.getAmount()
                 : t.getAmount().negate();
-        account.setBalance(account.getBalance().add(delta));
-        accountMapper.updateById(account);
+        applyBalance(account, account.getBalance().add(delta));
+    }
+
+    /** 余额增量维护：显式 updateBalance SQL + 内存同步（供 balanceAfter 快照与测试断言） */
+    private void applyBalance(FinanceAccount account, BigDecimal newBalance) {
+        account.setBalance(newBalance);
+        accountMapper.updateBalance(account.getId(), newBalance);
     }
 
     private FinanceTransaction baseTransaction(Long memberId, FinanceAccount account,
                                                TransactionSaveDTO dto, int direction, BigDecimal amount) {
         FinanceTransaction t = new FinanceTransaction();
-        t.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getId());
+        t.setId(idGenerator.nextId());
         t.setFamilyId(account.getFamilyId());
         t.setOwnerMemberId(memberId);
         t.setAccountId(account.getId());

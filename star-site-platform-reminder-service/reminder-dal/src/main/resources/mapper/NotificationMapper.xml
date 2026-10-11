@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 站内通知 SQL（DAL）：全部参数绑定 #{}；投递历史不删，无 deleted 列 -->
+<mapper namespace="com.xp.starsite.reminder.mapper.NotificationMapper">
+
+    <sql id="cols">
+        id, occurrence_id, owner_member_id, title, read_flag, created_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO notification
+            (occurrence_id, owner_member_id, title, read_flag)
+        VALUES
+            (#{occurrenceId}, #{ownerMemberId}, #{title}, #{readFlag})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.reminder.entity.Notification">
+        SELECT <include refid="cols"/> FROM notification
+        WHERE id = #{id}
+    </select>
+
+    <select id="countUnread" resultType="long">
+        SELECT COUNT(*) FROM notification
+        WHERE owner_member_id = #{ownerMemberId} AND read_flag = 0
+    </select>
+
+    <select id="countByOwner" resultType="long">
+        SELECT COUNT(*) FROM notification
+        WHERE owner_member_id = #{ownerMemberId}
+    </select>
+
+    <select id="selectPageByOwner" resultType="com.xp.starsite.reminder.entity.Notification">
+        SELECT <include refid="cols"/> FROM notification
+        WHERE owner_member_id = #{ownerMemberId}
+        ORDER BY id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <update id="markRead">
+        UPDATE notification SET read_flag = 1
+        WHERE id = #{id} AND owner_member_id = #{ownerMemberId}
+    </update>
+</mapper>

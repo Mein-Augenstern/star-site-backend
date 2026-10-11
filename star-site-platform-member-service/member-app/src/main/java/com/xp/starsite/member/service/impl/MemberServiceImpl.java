@@ -1,6 +1,5 @@
 package com.xp.starsite.member.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
 import com.xp.starsite.common.util.JwtUtil;
@@ -23,7 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 /**
- * 会员服务实现
+ * 会员服务实现。数据访问全部经 DAL（{@link MemberMapper}），
+ * 条件与 SQL 下沉到 mapper XML；分页不存在（会员主表无列表场景）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -39,9 +39,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public void register(RegisterDTO dto) {
-        Long count = memberMapper.selectCount(
-                new LambdaQueryWrapper<Member>().eq(Member::getUsername, dto.getUsername()));
-        if (count > 0) {
+        if (memberMapper.countByUsername(dto.getUsername()) > 0) {
             throw new BizException(ResultCode.USERNAME_EXISTS);
         }
         Member member = new Member();
@@ -56,8 +54,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public LoginVO login(LoginDTO dto) {
-        Member member = memberMapper.selectOne(
-                new LambdaQueryWrapper<Member>().eq(Member::getUsername, dto.getUsername()));
+        Member member = memberMapper.selectByUsername(dto.getUsername());
         if (member == null || !passwordEncoder.matches(dto.getPassword(), member.getPassword())) {
             throw new BizException(ResultCode.USERNAME_OR_PASSWORD_ERROR);
         }
@@ -98,7 +95,8 @@ public class MemberServiceImpl implements MemberService {
         if (dto.getBio() != null) {
             member.setBio(dto.getBio());
         }
-        memberMapper.updateById(member);
+        // 非空字段才更新（动态 SQL 语义同原 MyBatis-Plus updateById）
+        memberMapper.updateProfile(member);
         // 回读，拿到数据库维护的 updated_at
         return toVO(requireMember(id));
     }
@@ -109,8 +107,7 @@ public class MemberServiceImpl implements MemberService {
         if (!passwordEncoder.matches(dto.getOldPassword(), member.getPassword())) {
             throw new BizException(ResultCode.OLD_PASSWORD_ERROR);
         }
-        member.setPassword(passwordEncoder.encode(dto.getNewPassword()));
-        memberMapper.updateById(member);
+        memberMapper.updatePassword(id, passwordEncoder.encode(dto.getNewPassword()));
     }
 
     private Member requireMember(Long id) {

@@ -1,8 +1,8 @@
 package com.xp.starsite.finance.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
+import com.xp.starsite.common.util.IdGenerator;
 import com.xp.starsite.finance.dto.GoalSaveDTO;
 import com.xp.starsite.finance.entity.FinanceGoal;
 import com.xp.starsite.finance.mapper.FinanceGoalMapper;
@@ -28,11 +28,12 @@ import java.util.List;
 public class GoalServiceImpl implements GoalService {
 
     private final FinanceGoalMapper goalMapper;
+    private final IdGenerator idGenerator;
 
     @Override
     public GoalVO create(Long memberId, GoalSaveDTO dto) {
         FinanceGoal goal = new FinanceGoal();
-        goal.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getId());
+        goal.setId(idGenerator.nextId());
         goal.setOwnerMemberId(memberId);
         goal.setFamilyId(0L);
         applyDto(goal, dto);
@@ -43,24 +44,21 @@ public class GoalServiceImpl implements GoalService {
 
     @Override
     public List<GoalVO> list(Long memberId) {
-        return goalMapper.selectList(new LambdaQueryWrapper<FinanceGoal>()
-                .eq(FinanceGoal::getOwnerMemberId, memberId)
-                .orderByAsc(FinanceGoal::getDeadline))
-                .stream().map(this::toVO).toList();
+        return goalMapper.selectByOwner(memberId).stream().map(this::toVO).toList();
     }
 
     @Override
     public GoalVO update(Long memberId, Long id, GoalSaveDTO dto) {
         FinanceGoal goal = requireOwnedGoal(memberId, id);
         applyDto(goal, dto);
-        goalMapper.updateById(goal);
+        goalMapper.update(goal);
         return toVO(goal);
     }
 
     @Override
     public void delete(Long memberId, Long id) {
         requireOwnedGoal(memberId, id);
-        goalMapper.deleteById(id);
+        goalMapper.markDeleted(id);
     }
 
     private FinanceGoal requireOwnedGoal(Long memberId, Long id) {

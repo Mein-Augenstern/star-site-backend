@@ -1,6 +1,5 @@
 package com.xp.starsite.finance.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xp.starsite.api.client.ArchiveApi;
 import com.xp.starsite.api.dto.AssetSummaryDTO;
 import com.xp.starsite.finance.entity.FinanceAccount;
@@ -39,6 +38,7 @@ import java.util.Set;
  *   archive 不可用时 fail-open（archiveAsset=null + archiveAvailable=false），与归属校验的 fail-closed 区分。
  * - 收支：仅 direction 1/2 计入；转账/调整不计。
  * - 快照：每日 02:30 落一行（uk(owner,date) 幂等），曲线由此出。
+ * 数据访问全部经 DAL，SQL 收敛在 mapper XML。
  *
  * @author xiaopu
  * @since 2026-10
@@ -96,18 +96,10 @@ public class ReportServiceImpl implements ReportService {
             start = LocalDate.of(year, 1, 1).atStartOfDay();
             end = LocalDate.of(year + 1, 1, 1).atStartOfDay();
         }
-        List<FinanceTransaction> txs = transactionMapper.selectList(
-                new LambdaQueryWrapper<FinanceTransaction>()
-                        .eq(FinanceTransaction::getOwnerMemberId, memberId)
-                        .eq(FinanceTransaction::getDirection, DIR_INCOME)
-                        .ge(FinanceTransaction::getTransTime, start)
-                        .lt(FinanceTransaction::getTransTime, end));
-        List<FinanceTransaction> expenses = transactionMapper.selectList(
-                new LambdaQueryWrapper<FinanceTransaction>()
-                        .eq(FinanceTransaction::getOwnerMemberId, memberId)
-                        .eq(FinanceTransaction::getDirection, DIR_EXPENSE)
-                        .ge(FinanceTransaction::getTransTime, start)
-                        .lt(FinanceTransaction::getTransTime, end));
+        List<FinanceTransaction> txs = transactionMapper.selectByDirectionAndPeriod(
+                memberId, DIR_INCOME, start, end, null);
+        List<FinanceTransaction> expenses = transactionMapper.selectByDirectionAndPeriod(
+                memberId, DIR_EXPENSE, start, end, null);
 
         BigDecimal income = txs.stream().map(FinanceTransaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -132,14 +124,11 @@ public class ReportServiceImpl implements ReportService {
                 .map(FinanceAccount::getBalance)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // 近 12 个月月均支出
+        // 近 12 个月月均支出（不设时间上界）
         LocalDateTime start = LocalDate.now().minusMonths(12).withDayOfMonth(1).atStartOfDay();
-        BigDecimal yearExpense = transactionMapper.selectList(
-                        new LambdaQueryWrapper<FinanceTransaction>()
-                                .eq(FinanceTransaction::getOwnerMemberId, memberId)
-                                .eq(FinanceTransaction::getDirection, DIR_EXPENSE)
-                                .ge(FinanceTransaction::getTransTime, start))
-                .stream().map(FinanceTransaction::getAmount)
+        BigDecimal yearExpense = transactionMapper.selectByDirectionAndPeriod(
+                        memberId, DIR_EXPENSE, start, null, null).stream()
+                .map(FinanceTransaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         CashFlowVO vo = new CashFlowVO();
@@ -154,25 +143,19 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<NetWorthPointVO> netWorthTrend(Long memberId) {
-        return snapshotMapper.selectList(new LambdaQueryWrapper<FinanceNetWorthSnapshot>()
-                        .eq(FinanceNetWorthSnapshot::getOwnerMemberId, memberId)
-                        .orderByAsc(FinanceNetWorthSnapshot::getSnapDate))
-                .stream().map(s -> {
-                    NetWorthPointVO p = new NetWorthPointVO();
-                    p.setDate(s.getSnapDate());
-                    p.setNetWorth(s.getNetWorth());
-                    return p;
-                }).toList();
+        return snapshotMapper.selectByOwner(memberId).stream().map(s -> {
+            NetWorthPointVO p = new NetWorthPointVO();
+            p.setDate(s.getSnapDate());
+            p.setNetWorth(s.getNetWorth());
+            return p;
+        }).toList();
     }
 
     @Override
     public void snapshotToday(Long memberId) {
         BalanceSheetVO sheet = balanceSheet(memberId);
         LocalDate today = LocalDate.now();
-        FinanceNetWorthSnapshot exist = snapshotMapper.selectOne(
-                new LambdaQueryWrapper<FinanceNetWorthSnapshot>()
-                        .eq(FinanceNetWorthSnapshot::getOwnerMemberId, memberId)
-                        .eq(FinanceNetWorthSnapshot::getSnapDate, today));
+        FinanceNetWorthSnapshot exist = snapshotMapper.selectByOwnerAndDate(memberId, today);
         FinanceNetWorthSnapshot s = exist == null ? new FinanceNetWorthSnapshot() : exist;
         if (exist == null) {
             s.setOwnerMemberId(memberId);
@@ -186,7 +169,7 @@ public class ReportServiceImpl implements ReportService {
             if (exist == null) {
                 snapshotMapper.insert(s);
             } else {
-                snapshotMapper.updateById(s);
+                snapshotMapper.update(s);
             }
         } catch (DuplicateKeyException e) {
             log.debug("快照已存在，跳过: owner={}, date={}", memberId, today);
@@ -198,13 +181,8 @@ public class ReportServiceImpl implements ReportService {
         YearMonth ym = YearMonth.of(year, month);
         LocalDateTime start = ym.atDay(1).atStartOfDay();
         LocalDateTime end = ym.plusMonths(1).atDay(1).atStartOfDay();
-        Map<String, BigDecimal> byCategory = transactionMapper.selectList(
-                        new LambdaQueryWrapper<FinanceTransaction>()
-                                .eq(FinanceTransaction::getOwnerMemberId, memberId)
-                                .eq(FinanceTransaction::getDirection, DIR_EXPENSE)
-                                .ge(FinanceTransaction::getTransTime, start)
-                                .lt(FinanceTransaction::getTransTime, end))
-                .stream()
+        Map<String, BigDecimal> byCategory = transactionMapper
+                .selectByDirectionAndPeriod(memberId, DIR_EXPENSE, start, end, null).stream()
                 .filter(t -> t.getCategory() != null)
                 .collect(java.util.stream.Collectors.groupingBy(
                         FinanceTransaction::getCategory,
@@ -222,12 +200,7 @@ public class ReportServiceImpl implements ReportService {
         LocalDate startMonth = LocalDate.now().minusMonths(11).withDayOfMonth(1);
         LocalDateTime start = startMonth.atStartOfDay();
         LocalDateTime end = LocalDate.now().plusMonths(1).withDayOfMonth(1).atStartOfDay();
-        List<FinanceTransaction> txs = transactionMapper.selectList(
-                new LambdaQueryWrapper<FinanceTransaction>()
-                        .eq(FinanceTransaction::getOwnerMemberId, memberId)
-                        .in(FinanceTransaction::getDirection, DIR_INCOME, DIR_EXPENSE)
-                        .ge(FinanceTransaction::getTransTime, start)
-                        .lt(FinanceTransaction::getTransTime, end));
+        List<FinanceTransaction> txs = transactionMapper.selectIncomeExpensePeriod(memberId, start, end);
         // YYYY-MM -> [income, expense]
         Map<String, BigDecimal[]> byMonth = new java.util.LinkedHashMap<>();
         for (FinanceTransaction t : txs) {
@@ -249,10 +222,7 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public NetWorthPointVO snapshotNow(Long memberId) {
         snapshotToday(memberId);
-        FinanceNetWorthSnapshot s = snapshotMapper.selectOne(
-                new LambdaQueryWrapper<FinanceNetWorthSnapshot>()
-                        .eq(FinanceNetWorthSnapshot::getOwnerMemberId, memberId)
-                        .eq(FinanceNetWorthSnapshot::getSnapDate, LocalDate.now()));
+        FinanceNetWorthSnapshot s = snapshotMapper.selectByOwnerAndDate(memberId, LocalDate.now());
         NetWorthPointVO vo = new NetWorthPointVO();
         vo.setDate(LocalDate.now());
         vo.setNetWorth(s.getNetWorth());
@@ -262,9 +232,7 @@ public class ReportServiceImpl implements ReportService {
     /** 每日快照：对全部有账户的 owner 各落一行（当前单实例 @Scheduled，多实例时再引锁——技术雷达后置项） */
     @Scheduled(cron = "${finance.snapshot-cron:0 30 2 * * ?}")
     public void dailySnapshot() {
-        List<Long> owners = accountMapper.selectList(
-                        new LambdaQueryWrapper<FinanceAccount>().select(FinanceAccount::getOwnerMemberId))
-                .stream().map(FinanceAccount::getOwnerMemberId).distinct().toList();
+        List<Long> owners = accountMapper.selectDistinctOwnerIds();
         for (Long owner : owners) {
             try {
                 snapshotToday(owner);
@@ -277,8 +245,7 @@ public class ReportServiceImpl implements ReportService {
     }
 
     private List<FinanceAccount> accountsOf(Long memberId) {
-        return accountMapper.selectList(new LambdaQueryWrapper<FinanceAccount>()
-                .eq(FinanceAccount::getOwnerMemberId, memberId));
+        return accountMapper.selectByOwner(memberId);
     }
 
     private BigDecimal sumNonLiability(List<FinanceAccount> accounts) {

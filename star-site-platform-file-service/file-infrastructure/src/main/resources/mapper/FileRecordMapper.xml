@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 文件记录 SQL（DAL）：全部参数绑定 #{}；表无 deleted 列，不过滤逻辑删 -->
+<mapper namespace="com.xp.starsite.file.mapper.FileRecordMapper">
+
+    <sql id="cols">
+        id, file_name, storage_key, content_type, size_bytes, biz_type,
+        uploader_member_id, created_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO file
+            (file_name, storage_key, content_type, size_bytes, biz_type, uploader_member_id)
+        VALUES
+            (#{fileName}, #{storageKey}, #{contentType}, #{sizeBytes}, #{bizType}, #{uploaderMemberId})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.file.entity.FileRecord">
+        SELECT <include refid="cols"/> FROM file
+        WHERE id = #{id}
+    </select>
+</mapper>

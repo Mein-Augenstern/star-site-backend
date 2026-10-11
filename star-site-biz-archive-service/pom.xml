@@ -19,7 +19,7 @@
     <modules>
         <module>archive-facade</module>
         <module>archive-core-model</module>
-        <module>archive-core-service</module>
+        <module>archive-dal</module>
         <module>archive-biz-service</module>
         <module>archive-web</module>
         <module>archive-start</module>

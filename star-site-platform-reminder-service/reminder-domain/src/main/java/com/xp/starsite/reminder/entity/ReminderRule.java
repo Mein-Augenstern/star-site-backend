@@ -1,24 +1,22 @@
 package com.xp.starsite.reminder.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * 提醒规则（事件消费端 upsert，撤销物理删——衍生物无历史价值，唯一键才干净）
+ * 提醒规则（事件消费端 upsert，幂等键 (source,bizType,bizId) 唯一；撤销物理删——
+ * 衍生物无历史价值，唯一键才干净，故本表无 deleted 列）。
+ * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
  * @author xiaopu
  * @since 2026-10
  */
 @Data
-@TableName("reminder_rule")
 public class ReminderRule {
 
-    @TableId(type = IdType.AUTO)
+    /** 主键（DB 自增） */
     private Long id;
 
     private Long familyId;

@@ -1,8 +1,5 @@
 package com.xp.starsite.finance.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -13,13 +10,12 @@ import java.time.LocalDateTime;
  *
  * @author xiaopu
  * @since 2026-10
+ * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  */
 @Data
-@TableName("finance_import_log")
 public class FinanceImportLog {
 
     /** 主键 */
-    @TableId(type = IdType.AUTO)
     private Long id;
 
     /** 发起导入的账号 id（member 服务） */

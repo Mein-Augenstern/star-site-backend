@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 资金账户 SQL（DAL）：逻辑删；余额由流水增量维护，更新走显式 updateBalance -->
+<mapper namespace="com.xp.starsite.finance.mapper.FinanceAccountMapper">
+
+    <sql id="cols">
+        id, family_id, owner_member_id, name, account_type, balance, initial_balance,
+        liability_flag, institution, remark, deleted, created_at, updated_at
+    </sql>
+
+    <!-- 雪花 id 应用侧赋值，显式插入 id 列；余额=期初余额由业务层算好传入 -->
+    <insert id="insert">
+        INSERT INTO finance_account
+            (id, family_id, owner_member_id, name, account_type, balance, initial_balance,
+             liability_flag, institution, remark)
+        VALUES
+            (#{id}, #{familyId}, #{ownerMemberId}, #{name}, #{accountType}, #{balance}, #{initialBalance},
+             #{liabilityFlag}, #{institution}, #{remark})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.finance.entity.FinanceAccount">
+        SELECT <include refid="cols"/> FROM finance_account
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <!-- 编辑资料：只更新业务变更列，不动余额（余额只能经流水变更） -->
+    <update id="update">
+        UPDATE finance_account
+        SET name = #{name}, account_type = #{accountType},
+            institution = #{institution}, remark = #{remark}
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <!-- 余额增量维护：业务层在事务内算好新余额写入 -->
+    <update id="updateBalance">
+        UPDATE finance_account SET balance = #{balance}
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="markDeleted">
+        UPDATE finance_account SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <select id="selectByOwner" resultType="com.xp.starsite.finance.entity.FinanceAccount">
+        SELECT <include refid="cols"/> FROM finance_account
+        WHERE deleted = 0 AND owner_member_id = #{ownerMemberId}
+        ORDER BY id ASC
+    </select>
+
+    <select id="selectDistinctOwnerIds" resultType="long">
+        SELECT DISTINCT owner_member_id FROM finance_account WHERE deleted = 0
+    </select>
+</mapper>

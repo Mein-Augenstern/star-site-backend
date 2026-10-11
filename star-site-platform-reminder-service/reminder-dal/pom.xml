@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.xp.starsite</groupId>
+        <artifactId>star-site-platform-reminder-service</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>reminder-dal</artifactId>
+    <name>reminder-dal</name>
+    <description>提醒域 DAL 数据访问层：MyBatis 官方 mapper + XML，SQL 全收敛在 XML（EmailChannel 邮件出站网关暂驻本模块）</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>reminder-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>star-site-common</artifactId>
+        </dependency>
+        <!-- EmailChannel 取会员联系方式（MemberApi 出站） -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>member-facade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- MyBatis 官方 starter（替代 MyBatis-Plus）：版本由根 pom 统一管理 -->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+    </dependencies>
+</project>

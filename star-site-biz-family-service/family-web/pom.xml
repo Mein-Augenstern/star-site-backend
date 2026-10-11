@@ -12,7 +12,7 @@
 
     <artifactId>family-web</artifactId>
     <name>family-web</name>
-    <description>家庭域 Web 层：controller（V 层，禁止直依赖 mapper/core-service）</description>
+    <description>家庭域 Web 层：controller（V 层，禁止直依赖 mapper/dal）</description>
 
     <dependencies>
         <dependency>

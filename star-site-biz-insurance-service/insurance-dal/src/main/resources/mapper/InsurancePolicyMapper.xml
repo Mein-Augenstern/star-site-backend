@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 保单 SQL（DAL）：全部参数绑定 #{}，逻辑删查询统一 deleted=0 -->
+<mapper namespace="com.xp.starsite.insurance.mapper.InsurancePolicyMapper">
+
+    <sql id="cols">
+        id, family_id, owner_member_id, company, product_name, policy_no, category,
+        insured_member_id, insured_member_name, start_date, maturity_date, premium,
+        payment_freq, next_payment_date, coverage_amount, status, file_id, remark,
+        deleted, created_at, updated_at
+    </sql>
+
+    <!-- 雪花 id 应用侧赋值：事务消息需要在 insert 前拿到 id 填进事件载荷，故显式插入 id 列 -->
+    <insert id="insert">
+        INSERT INTO insurance_policy
+            (id, family_id, owner_member_id, company, product_name, policy_no, category,
+             insured_member_id, insured_member_name, start_date, maturity_date, premium,
+             payment_freq, next_payment_date, coverage_amount, status, file_id, remark)
+        VALUES
+            (#{id}, #{familyId}, #{ownerMemberId}, #{company}, #{productName}, #{policyNo}, #{category},
+             #{insuredMemberId}, #{insuredMemberName}, #{startDate}, #{maturityDate}, #{premium},
+             #{paymentFreq}, #{nextPaymentDate}, #{coverageAmount}, #{status}, #{fileId}, #{remark})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.insurance.entity.InsurancePolicy">
+        SELECT <include refid="cols"/> FROM insurance_policy
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <update id="update">
+        UPDATE insurance_policy
+        SET company = #{company},
+            product_name = #{productName},
+            policy_no = #{policyNo},
+            category = #{category},
+            insured_member_id = #{insuredMemberId},
+            insured_member_name = #{insuredMemberName},
+            start_date = #{startDate},
+            maturity_date = #{maturityDate},
+            premium = #{premium},
+            payment_freq = #{paymentFreq},
+            next_payment_date = #{nextPaymentDate},
+            coverage_amount = #{coverageAmount},
+            status = #{status},
+            file_id = #{fileId},
+            remark = #{remark}
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="markDeleted">
+        UPDATE insurance_policy SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <sql id="listWhere">
+        WHERE deleted = 0
+          AND owner_member_id = #{ownerMemberId}
+        <if test="insuredMemberId != null">AND insured_member_id = #{insuredMemberId}</if>
+        <if test="category != null and category != ''">AND category = #{category}</if>
+        <if test="status != null">AND status = #{status}</if>
+    </sql>
+
+    <select id="selectPage" resultType="com.xp.starsite.insurance.entity.InsurancePolicy">
+        SELECT <include refid="cols"/> FROM insurance_policy
+        <include refid="listWhere"/>
+        ORDER BY id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countByOwner" resultType="long">
+        SELECT COUNT(*) FROM insurance_policy
+        <include refid="listWhere"/>
+    </select>
+
+    <select id="selectActiveByOwner" resultType="com.xp.starsite.insurance.entity.InsurancePolicy">
+        SELECT <include refid="cols"/> FROM insurance_policy
+        WHERE deleted = 0 AND owner_member_id = #{ownerMemberId} AND status = 1
+        ORDER BY id ASC
+    </select>
+</mapper>

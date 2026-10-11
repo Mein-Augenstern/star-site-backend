@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 提醒规则 SQL（DAL）：全部参数绑定 #{}；无 deleted 列，撤销为物理删（唯一键干净） -->
+<mapper namespace="com.xp.starsite.reminder.mapper.ReminderRuleMapper">
+
+    <sql id="cols">
+        id, family_id, family_member_id, owner_member_id, source, biz_type, biz_id,
+        title, first_remind_at, repeat_type, repeat_until, advance_days, status,
+        created_at, updated_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO reminder_rule
+            (family_id, family_member_id, owner_member_id, source, biz_type, biz_id,
+             title, first_remind_at, repeat_type, repeat_until, advance_days, status)
+        VALUES
+            (#{familyId}, #{familyMemberId}, #{ownerMemberId}, #{source}, #{bizType}, #{bizId},
+             #{title}, #{firstRemindAt}, #{repeatType}, #{repeatUntil}, #{advanceDays}, #{status})
+    </insert>
+
+    <select id="selectByIdempotentKey" resultType="com.xp.starsite.reminder.entity.ReminderRule">
+        SELECT <include refid="cols"/> FROM reminder_rule
+        WHERE source = #{source} AND biz_type = #{bizType} AND biz_id = #{bizId}
+    </select>
+
+    <select id="selectById" resultType="com.xp.starsite.reminder.entity.ReminderRule">
+        SELECT <include refid="cols"/> FROM reminder_rule
+        WHERE id = #{id}
+    </select>
+
+    <update id="update">
+        UPDATE reminder_rule
+        SET family_id        = #{familyId},
+            family_member_id = #{familyMemberId},
+            owner_member_id  = #{ownerMemberId},
+            biz_id           = #{bizId},
+            title            = #{title},
+            first_remind_at  = #{firstRemindAt},
+            repeat_type      = #{repeatType},
+            repeat_until     = #{repeatUntil},
+            advance_days     = #{advanceDays},
+            status           = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM reminder_rule WHERE id = #{id}
+    </delete>
+
+    <select id="selectEnabled" resultType="com.xp.starsite.reminder.entity.ReminderRule">
+        SELECT <include refid="cols"/> FROM reminder_rule
+        WHERE status = 1
+    </select>
+
+    <select id="selectActiveBySourceAndMembers" resultType="com.xp.starsite.reminder.entity.ReminderRule">
+        SELECT <include refid="cols"/> FROM reminder_rule
+        WHERE status = 1
+          AND source = #{source}
+          AND family_member_id IN
+        <foreach collection="familyMemberIds" item="mid" open="(" separator="," close=")">#{mid}</foreach>
+        ORDER BY id DESC
+    </select>
+</mapper>

@@ -1,7 +1,5 @@
 package com.xp.starsite.archive.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.api.dto.FamilyMemberSnapshotDTO;
 import com.xp.starsite.api.event.reminder.ReminderCancelEvent;
@@ -12,6 +10,7 @@ import com.xp.starsite.common.mq.EventPublisher;
 import com.xp.starsite.common.mq.event.EventTypes;
 import com.xp.starsite.common.mq.event.Topics;
 import com.xp.starsite.common.result.ResultCode;
+import com.xp.starsite.common.util.IdGenerator;
 import com.xp.starsite.archive.dto.DocumentSaveDTO;
 import com.xp.starsite.archive.entity.ArchiveDocument;
 import com.xp.starsite.archive.mapper.ArchiveDocumentMapper;
@@ -24,11 +23,17 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
 import java.util.Set;
 
 /**
  * 证件夹实现。提醒事件取舍与保单域一致：
  * 到期提醒（主提醒）走事务消息与落库原子；撤销走普通发送（丢失仅多一条提醒噪声）。
+ * <p>
+ * 数据访问全部经 DAL（{@link ArchiveDocumentMapper}）：SQL 收敛在 mapper XML，
+ * 业务层零 SQL 拼装；逻辑删（deleted=0 过滤 / UPDATE 置位）。
+ * 主键为应用侧雪花 id（{@link IdGenerator}）——半消息载荷需在 insert 前拿到 id，
+ * 该语义保持不变。
  *
  * @author xiaopu
  * @since 2026-10
@@ -47,13 +52,15 @@ public class DocumentServiceImpl implements DocumentService {
     private final ArchiveDocumentMapper documentMapper;
     private final FamilyOwnershipGuard ownershipGuard;
     private final EventPublisher eventPublisher;
+    /** 雪花 id（替代 MyBatis-Plus ASSIGN_ID）：事务消息载荷需 insert 前拿到 id */
+    private final IdGenerator idGenerator;
 
     @Override
     public DocumentVO create(Long memberId, DocumentSaveDTO dto) {
         FamilyMemberSnapshotDTO holder = ownershipGuard.requireOwned(memberId, dto.getHolderMemberId());
         ArchiveDocument doc = new ArchiveDocument();
         // 雪花 id 应用侧先赋值：半消息载荷需要 bizId
-        doc.setId(com.baomidou.mybatisplus.core.toolkit.IdWorker.getId());
+        doc.setId(idGenerator.nextId());
         applyDto(doc, dto);
         doc.setFamilyId(holder.getFamilyId());
         doc.setOwnerMemberId(memberId);
@@ -69,14 +76,17 @@ public class DocumentServiceImpl implements DocumentService {
         if (holderMemberId != null) {
             ownershipGuard.requireOwned(memberId, holderMemberId);
         }
-        Page<ArchiveDocument> result = documentMapper.selectPage(Page.of(page, size),
-                new LambdaQueryWrapper<ArchiveDocument>()
-                        .eq(ArchiveDocument::getOwnerMemberId, memberId)
-                        .eq(holderMemberId != null, ArchiveDocument::getHolderMemberId, holderMemberId)
-                        .eq(StringUtils.hasText(docType), ArchiveDocument::getDocType, docType)
-                        .orderByAsc(ArchiveDocument::getExpiryDate));
-        return PageVO.of(result.getRecords().stream().map(this::toVO).toList(),
-                result.getTotal(), result.getCurrent(), result.getSize());
+        // 分页 count 先行：0 直接短路，不再取页
+        long total = documentMapper.countByOwner(memberId, holderMemberId,
+                StringUtils.hasText(docType) ? docType : null);
+        if (total == 0) {
+            return PageVO.of(List.of(), 0, page, size);
+        }
+        long offset = (page - 1) * size;
+        List<DocumentVO> vos = documentMapper
+                .selectPage(memberId, holderMemberId, StringUtils.hasText(docType) ? docType : null, offset, (int) size)
+                .stream().map(this::toVO).toList();
+        return PageVO.of(vos, total, page, size);
     }
 
     @Override
@@ -90,7 +100,7 @@ public class DocumentServiceImpl implements DocumentService {
         FamilyMemberSnapshotDTO holder = ownershipGuard.requireOwned(memberId, dto.getHolderMemberId());
         applyDto(doc, dto);
         doc.setHolderMemberName(holder.getName());
-        documentMapper.updateById(doc);
+        documentMapper.update(doc);
         // 有效期仍在 → upsert 规则；清空（改长期）→ 撤销
         if (doc.getExpiryDate() != null) {
             eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_REGISTER,
@@ -104,7 +114,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public void delete(Long memberId, Long id) {
         ArchiveDocument doc = requireOwnedDocument(memberId, id);
-        documentMapper.deleteById(id);
+        documentMapper.markDeleted(id);
         publishCancel(doc);
         log.info("删除证件: id={}", id);
     }

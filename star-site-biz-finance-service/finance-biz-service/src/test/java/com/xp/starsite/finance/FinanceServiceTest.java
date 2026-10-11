@@ -1,6 +1,7 @@
 package com.xp.starsite.finance;
 
 import com.xp.starsite.common.exception.BizException;
+import com.xp.starsite.common.util.IdGenerator;
 import com.xp.starsite.finance.dto.AccountSaveDTO;
 import com.xp.starsite.finance.dto.TransactionSaveDTO;
 import com.xp.starsite.finance.entity.FinanceAccount;
@@ -44,14 +45,16 @@ class FinanceServiceTest {
     private FinanceAccountMapper accountMapper;
     @Mock
     private FinanceTransactionMapper transactionMapper;
+    @Mock
+    private IdGenerator idGenerator;
 
     /** EventPublisher 在 F1 财务域未使用（AccountServiceImpl 不依赖），占位满足构造 */
     private AccountServiceImpl accountService() {
-        return new AccountServiceImpl(accountMapper, transactionMapper);
+        return new AccountServiceImpl(accountMapper, transactionMapper, idGenerator);
     }
 
     private TransactionServiceImpl txService() {
-        return new TransactionServiceImpl(accountMapper, transactionMapper);
+        return new TransactionServiceImpl(accountMapper, transactionMapper, idGenerator);
     }
 
     private FinanceAccount account(long id, BigDecimal balance) {
@@ -162,7 +165,7 @@ class FinanceServiceTest {
 
         // 支出删除 → 余额回加
         assertEquals(0, acc.getBalance().compareTo(new BigDecimal("100")));
-        verify(transactionMapper).deleteById(5L);
+        verify(transactionMapper).markDeleted(5L);
     }
 
     @Test
@@ -185,7 +188,7 @@ class FinanceServiceTest {
         leg2.setBalanceAfter(new BigDecimal("40"));
         leg2.setTransferGroupId(999L);
         when(transactionMapper.selectById(6L)).thenReturn(leg1);
-        when(transactionMapper.selectList(any())).thenReturn(List.of(leg1, leg2));
+        when(transactionMapper.selectByTransferGroupId(999L)).thenReturn(List.of(leg1, leg2));
         FinanceAccount from = account(11L, new BigDecimal("60"));
         FinanceAccount to = account(22L, new BigDecimal("40"));
         to.setOwnerMemberId(ME);
@@ -195,7 +198,7 @@ class FinanceServiceTest {
         txService().delete(ME, 6L);
 
         // 两腿都删 + 双账户回滚
-        verify(transactionMapper, times(2)).deleteById(anyLong());
+        verify(transactionMapper, times(2)).markDeleted(anyLong());
         assertEquals(0, from.getBalance().compareTo(new BigDecimal("100")));
         assertEquals(0, to.getBalance().compareTo(new BigDecimal("0")));
     }

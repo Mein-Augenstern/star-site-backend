@@ -1,9 +1,5 @@
 package com.xp.starsite.member.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -11,16 +7,15 @@ import java.time.LocalDateTime;
 /**
  * 会员账号（member）：登录主体（用户名密码 + 微信身份两通道），与家庭成员（自然人）分离。
  * created_at / updated_at 由数据库默认值维护。
+ * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
  * @author xiaopu
  * @since 2026-10
  */
 @Data
-@TableName("member")
 public class Member {
 
     /** 主键 */
-    @TableId(type = IdType.AUTO)
     private Long id;
 
     /** 登录名 */
@@ -51,7 +46,6 @@ public class Member {
     private Integer status;
 
     /** 逻辑删除：1已删 0未删 */
-    @TableLogic
     private Integer deleted;
 
     /** 创建时间（DB 维护） */

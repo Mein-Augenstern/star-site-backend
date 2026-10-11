@@ -1,9 +1,5 @@
 package com.xp.starsite.archive.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -12,16 +8,15 @@ import java.time.LocalDateTime;
 /**
  * 家庭证件（archive_document）：证件夹主体表。
  * 到期提醒以 expiry_date 为源（非长期证件），扫描件存 file 服务。
+ * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
  * @author xiaopu
  * @since 2026-10
  */
 @Data
-@TableName("archive_document")
 public class ArchiveDocument {
 
     /** 雪花 id（应用侧赋值）：到期提醒事件需在 insert 前拿到 id 填进事件载荷 */
-    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /** 家庭 id（多人协作预留冗余） */
@@ -55,7 +50,6 @@ public class ArchiveDocument {
     private String remark;
 
     /** 逻辑删标志（0 正常 1 已删） */
-    @TableLogic
     private Integer deleted;
 
     /** 创建时间（DB 维护） */

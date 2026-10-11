@@ -70,7 +70,7 @@ class FinanceDiagnosisTest {
         when(reportService.balanceSheet(ME)).thenReturn(sheet("2105000", "8000"));
         when(reportService.incomeExpense(ME, 2026, 9)).thenReturn(ie("12000", "4000"));
         when(reportService.cashFlow(ME)).thenReturn(new com.xp.starsite.finance.vo.CashFlowVO());
-        when(accountMapper.selectList(any())).thenReturn(List.of());
+        when(accountMapper.selectByOwner(ME)).thenReturn(List.of());
     }
 
     private com.xp.starsite.finance.vo.BalanceSheetVO sheet(String asset, String liability) {

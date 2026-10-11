@@ -1,13 +1,23 @@
 package com.xp.starsite.file.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.xp.starsite.file.entity.FileRecord;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
- * 文件记录表 MyBatis-Plus Mapper
+ * file 文件记录表数据访问（DAL）：SQL 全部收敛在 mapper XML，业务层只见业务语义方法。
+ * 主键自增：INSERT 不含 id（useGeneratedKeys 回填），created_at 由 DB 默认值维护。
+ * 表无 deleted 列（文件不做逻辑删），查询不过滤逻辑删。
  *
  * @author xiaopu
  * @since 2026-10
  */
-public interface FileRecordMapper extends BaseMapper<FileRecord> {
+@Mapper
+public interface FileRecordMapper {
+
+    /** 新建文件记录 */
+    int insert(FileRecord record);
+
+    /** 按 id 取记录（不存在返回 null） */
+    FileRecord selectById(@Param("id") Long id);
 }

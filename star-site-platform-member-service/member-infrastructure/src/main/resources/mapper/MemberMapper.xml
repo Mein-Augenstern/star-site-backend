@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 会员账号 SQL（DAL）：全部参数绑定 #{}，逻辑删查询统一 deleted=0，密码列仅整列替换 -->
+<mapper namespace="com.xp.starsite.member.mapper.MemberMapper">
+
+    <sql id="cols">
+        id, username, password, nickname, avatar, email, phone, gender, bio,
+        status, deleted, created_at, updated_at
+    </sql>
+
+    <!-- username/password 微信静默注册时可为 null（表结构已放开非空约束）；id/时间戳由 DB 维护 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO member
+            (username, password, nickname, avatar, email, phone, gender, bio, status)
+        VALUES
+            (#{username}, #{password}, #{nickname}, #{avatar}, #{email}, #{phone}, #{gender}, #{bio}, #{status})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.member.entity.Member">
+        SELECT <include refid="cols"/> FROM member
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <select id="selectByUsername" resultType="com.xp.starsite.member.entity.Member">
+        SELECT <include refid="cols"/> FROM member
+        WHERE username = #{username} AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <select id="countByUsername" resultType="long">
+        SELECT COUNT(*) FROM member
+        WHERE username = #{username} AND deleted = 0
+    </select>
+
+    <!-- 资料更新：动态列，仅非空字段更新（原 MP updateById 的 null 不更新语义） -->
+    <update id="updateProfile">
+        UPDATE member
+        <set>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="avatar != null">avatar = #{avatar},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="gender != null">gender = #{gender},</if>
+            <if test="bio != null">bio = #{bio},</if>
+        </set>
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="updatePassword">
+        UPDATE member SET password = #{password}
+        WHERE id = #{id} AND deleted = 0
+    </update>
+</mapper>
