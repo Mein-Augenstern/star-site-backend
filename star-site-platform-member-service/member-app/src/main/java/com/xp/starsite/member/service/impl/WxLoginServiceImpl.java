@@ -1,12 +1,11 @@
 package com.xp.starsite.member.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.util.JwtUtil;
 import com.xp.starsite.member.entity.Member;
 import com.xp.starsite.member.entity.MemberIdentity;
+import com.xp.starsite.member.integration.WxSessionGateway;
 import com.xp.starsite.member.mapper.MemberIdentityMapper;
 import com.xp.starsite.member.mapper.MemberMapper;
 import com.xp.starsite.member.service.WxLoginService;
@@ -14,19 +13,16 @@ import com.xp.starsite.member.vo.LoginVO;
 import com.xp.starsite.member.vo.MemberVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestClient;
 
 /**
- * 微信小程序登录实现。
+ * 微信小程序登录/绑定用例（app 层：只做编排，微信协议细节在 infrastructure 的 WxSessionGateway）。
  * <p>
- * 经典时序：wx.login() code → jscode2session(appid,secret) → openid+unionid+session_key
+ * 经典时序：wx.login() code → jscode2session → openid+unionid+session_key
  * → 按 unionid 归一、openid 兜底查身份 → 命中登录 / 未命中静默注册 → 签发 JWT。
- * <p>
- * 双通道：配置 wx.mp.secret 走真实 jscode2session；未配置走 mock（code 即 openid），
- * 开发态不依赖真 secret 即可全链路跑通。session_key 落 identity.credential，永不下发。
+ * session_key 落 identity.credential，永不下发。
  */
 @Slf4j
 @Service
@@ -36,25 +32,15 @@ public class WxLoginServiceImpl implements WxLoginService {
     private final MemberMapper memberMapper;
     private final MemberIdentityMapper identityMapper;
     private final JwtUtil jwtUtil;
-    private final ObjectMapper objectMapper;
-    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
-
-    @Value("${wx.mp.appid:}")
-    private String appid;
-
-    @Value("${wx.mp.secret:}")
-    private String secret;
-
-    private RestClient restClient() {
-        return RestClient.create();
-    }
+    private final PasswordEncoder passwordEncoder;
+    private final WxSessionGateway wxSessionGateway;
 
     @Override
     public LoginVO loginByWechatMp(String code) {
         if (code == null || code.isBlank()) {
             throw new BizException(400, "code 不能为空");
         }
-        WxSession session = fetchSession(code);
+        WxSessionGateway.WxSession session = wxSessionGateway.fetch(code);
 
         // 1) openid 精确命中 → 直接登录
         MemberIdentity identity = identityMapper.selectOne(new LambdaQueryWrapper<MemberIdentity>()
@@ -126,7 +112,7 @@ public class WxLoginServiceImpl implements WxLoginService {
         if (code == null || code.isBlank()) {
             throw new BizException(400, "code 不能为空");
         }
-        WxSession session = fetchSession(code);
+        WxSessionGateway.WxSession session = wxSessionGateway.fetch(code);
 
         // 1) openid 已绑其他账号 → 拒绝重复绑定
         MemberIdentity existing = identityMapper.selectOne(new LambdaQueryWrapper<MemberIdentity>()
@@ -182,47 +168,14 @@ public class WxLoginServiceImpl implements WxLoginService {
                 .build();
     }
 
-    private com.xp.starsite.member.entity.Member loadByUsername(String username) {
-        return memberMapper.selectOne(new LambdaQueryWrapper<com.xp.starsite.member.entity.Member>()
-                .eq(com.xp.starsite.member.entity.Member::getUsername, username));
-    }
-
-    private WxSession fetchSession(String code) {
-        if (secret == null || secret.isBlank()) {
-            // mock 通道：code 即 openid，开发态全链路不依赖真 secret
-            log.info("wx-login mock 通道（未配置 wx.mp.secret）: code={}", code);
-            return new WxSession(code, "sk-mock-" + code.hashCode(), null);
-        }
-        JsonNode resp;
-        try {
-            resp = restClient().get()
-                    .uri("https://api.weixin.qq.com/sns/jscode2session?appid={a}&secret={s}&js_code={c}&grant_type=authorization_code",
-                            appid, secret, code)
-                    .retrieve()
-                    .body(JsonNode.class);
-        } catch (Exception e) {
-            log.warn("jscode2session 调用失败: {}", e.getMessage());
-            throw new BizException(503, "微信登录服务暂不可用，请稍后再试");
-        }
-        if (resp == null || resp.path("errcode").asInt(0) != 0) {
-            int err = resp == null ? -1 : resp.path("errcode").asInt(-1);
-            log.warn("jscode2session 返回错误: {}", resp);
-            if (err == 40029 || err == 40163) {
-                throw new BizException(400, "登录凭证无效，请重试");
-            }
-            throw new BizException(503, "微信登录失败，请稍后再试");
-        }
-        return new WxSession(resp.path("openid").asText(),
-                resp.path("session_key").asText(null),
-                resp.hasNonNull("unionid") ? resp.path("unionid").asText() : null);
+    private Member loadByUsername(String username) {
+        return memberMapper.selectOne(new LambdaQueryWrapper<Member>()
+                .eq(Member::getUsername, username));
     }
 
     private MemberVO toVO(Member m) {
         MemberVO vo = new MemberVO();
         org.springframework.beans.BeanUtils.copyProperties(m, vo);
         return vo;
-    }
-
-    private record WxSession(String openid, String sessionKey, String unionid) {
     }
 }
