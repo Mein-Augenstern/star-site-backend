@@ -2,6 +2,8 @@ package com.xp.starsite.health.controller;
 
 import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
+import com.xp.starsite.common.template.QueryTemplate;
+import com.xp.starsite.common.template.WriteTemplate;
 import com.xp.starsite.health.dto.MetricBatchDTO;
 import com.xp.starsite.health.service.MetricService;
 import com.xp.starsite.health.vo.MetricTrendPoint;
@@ -25,7 +27,8 @@ import java.util.List;
  * 日常指标接口：血压/血糖/体重等自测指标的录入、分页、删除与趋势曲线。
  * 注意与报告指标（{@link ReportController} 的 /reports/{id}/indicators 与 /trends）区分：
  * 本控制器读写 daily_metric（按日自测），报告指标读写体检报告单上的 health_indicator。
- * 拆分约定与鉴权说明见 {@link ReportController} 类注释。
+ * 拆分约定与鉴权说明见 {@link ReportController} 类注释；
+ * 业务逻辑统一经模板包裹（动作名 health.metric.*）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -36,6 +39,8 @@ import java.util.List;
 public class MetricController {
 
     private final MetricService metricService;
+    private final QueryTemplate queryTemplate;
+    private final WriteTemplate writeTemplate;
 
     /**
      * 批量录入日常指标（血压一次产生高压+低压两条）
@@ -43,7 +48,8 @@ public class MetricController {
     @PostMapping("/metrics")
     public R<List<MetricVO>> addMetrics(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                         @Valid @RequestBody MetricBatchDTO dto) {
-        return R.ok(metricService.addMetrics(memberId, dto));
+        return R.ok(writeTemplate.execute("health.metric.batchAdd",
+                () -> metricService.addMetrics(memberId, dto)));
     }
 
     /**
@@ -55,7 +61,8 @@ public class MetricController {
                                            @RequestParam(required = false) String metricType,
                                            @RequestParam(defaultValue = "1") long page,
                                            @RequestParam(defaultValue = "20") long size) {
-        return R.ok(metricService.listMetrics(memberId, familyMemberId, metricType, page, size));
+        return R.ok(queryTemplate.execute("health.metric.page",
+                () -> metricService.listMetrics(memberId, familyMemberId, metricType, page, size)));
     }
 
     /**
@@ -64,7 +71,8 @@ public class MetricController {
     @DeleteMapping("/metrics/{id}")
     public R<Void> deleteMetric(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                 @PathVariable Long id) {
-        metricService.deleteMetric(memberId, id);
+        writeTemplate.execute("health.metric.delete",
+                () -> metricService.deleteMetric(memberId, id));
         return R.ok();
     }
 
@@ -75,6 +83,7 @@ public class MetricController {
     public R<List<MetricTrendPoint>> metricTrends(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                                   @RequestParam Long familyMemberId,
                                                   @RequestParam String metricType) {
-        return R.ok(metricService.metricTrends(memberId, familyMemberId, metricType));
+        return R.ok(queryTemplate.execute("health.metric.trend",
+                () -> metricService.metricTrends(memberId, familyMemberId, metricType)));
     }
 }

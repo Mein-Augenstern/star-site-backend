@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  star-site 统一日志配置（SOFA 式分文件 digest 体系）。
+  本文件位于 star-site-common jar 根，Spring Boot 自动拾取，所有微服务共享：
+    业务日志      → 控制台（compose/k8s logs 采集）
+    rpc-server-digest.log → 本服务作为服务端被调摘要
+    rpc-client-digest.log → 本服务作为客户端外调摘要（Feign）
+    mq-send-digest.log    → 消息发送摘要
+    mq-consume-digest.log → 消息消费摘要
+    db-digest.log         → SQL 执行摘要
+  digest 行为 JSON（含 traceId），业务日志 pattern 带 %X{traceId}，与摘要日志可互查。
+-->
+<configuration scan="true" scanPeriod="60 seconds">
+
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="star-app"/>
+    <property name="LOG_HOME" value="logs/${APP_NAME}"/>
+    <property name="CONSOLE_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%X{traceId}] %bold(%-40logger{36}) : %msg%n"/>
+    <property name="DIGEST_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %msg%n"/>
+    <property name="MAX_HISTORY_DAYS" value="15"/>
+    <property name="MAX_FILE_SIZE" value="100MB"/>
+    <property name="TOTAL_CAP" value="2GB"/>
+
+    <!-- 控制台：业务日志（含 traceId） -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ===== digest 分文件（SOFA 命名惯例） ===== -->
+    <appender name="RPC_SERVER_DIGEST" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/rpc-server-digest.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/rpc-server-digest.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_HISTORY_DAYS}</maxHistory>
+            <totalSizeCap>${TOTAL_CAP}</totalSizeCap>
+        </rollingPolicy>
+        <encoder><pattern>${DIGEST_PATTERN}</pattern><charset>UTF-8</charset></encoder>
+    </appender>
+
+    <appender name="RPC_CLIENT_DIGEST" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/rpc-client-digest.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/rpc-client-digest.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_HISTORY_DAYS}</maxHistory>
+            <totalSizeCap>${TOTAL_CAP}</totalSizeCap>
+        </rollingPolicy>
+        <encoder><pattern>${DIGEST_PATTERN}</pattern><charset>UTF-8</charset></encoder>
+    </appender>
+
+    <appender name="MQ_SEND_DIGEST" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/mq-send-digest.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/mq-send-digest.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_HISTORY_DAYS}</maxHistory>
+            <totalSizeCap>${TOTAL_CAP}</totalSizeCap>
+        </rollingPolicy>
+        <encoder><pattern>${DIGEST_PATTERN}</pattern><charset>UTF-8</charset></encoder>
+    </appender>
+
+    <appender name="MQ_CONSUME_DIGEST" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/mq-consume-digest.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/mq-consume-digest.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_HISTORY_DAYS}</maxHistory>
+            <totalSizeCap>${TOTAL_CAP}</totalSizeCap>
+        </rollingPolicy>
+        <encoder><pattern>${DIGEST_PATTERN}</pattern><charset>UTF-8</charset></encoder>
+    </appender>
+
+    <appender name="DB_DIGEST" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/db-digest.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/db-digest.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_HISTORY_DAYS}</maxHistory>
+            <totalSizeCap>${TOTAL_CAP}</totalSizeCap>
+        </rollingPolicy>
+        <encoder><pattern>${DIGEST_PATTERN}</pattern><charset>UTF-8</charset></encoder>
+    </appender>
+
+    <!-- digest logger：独立文件、不向 root 传播（控制台不刷屏） -->
+    <logger name="DIGEST_RPC_SERVER" level="INFO" additivity="false">
+        <appender-ref ref="RPC_SERVER_DIGEST"/>
+    </logger>
+    <logger name="DIGEST_RPC_CLIENT" level="INFO" additivity="false">
+        <appender-ref ref="RPC_CLIENT_DIGEST"/>
+    </logger>
+    <logger name="DIGEST_MQ_SEND" level="INFO" additivity="false">
+        <appender-ref ref="MQ_SEND_DIGEST"/>
+    </logger>
+    <logger name="DIGEST_MQ_CONSUME" level="INFO" additivity="false">
+        <appender-ref ref="MQ_CONSUME_DIGEST"/>
+    </logger>
+    <logger name="DIGEST_DB" level="INFO" additivity="false">
+        <appender-ref ref="DB_DIGEST"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

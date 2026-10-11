@@ -2,21 +2,24 @@ package com.xp.starsite.health.controller;
 
 import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
+import com.xp.starsite.common.template.QueryTemplate;
+import com.xp.starsite.common.template.WriteTemplate;
 import com.xp.starsite.health.ai.ReportInterpretationService;
 import com.xp.starsite.health.ai.ReportOcrService;
 import com.xp.starsite.health.service.ReportInsightService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 报告智能解读接口：LLM 解读（同步/异步）与拍照 OCR 结构化。
- * 拆分约定与鉴权说明见 {@link ReportController} 类注释。
+ * 拆分约定与鉴权说明见 {@link ReportController} 类注释；
+ * 业务逻辑统一经模板包裹（动作名 health.insight.*）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -27,6 +30,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReportInsightController {
 
     private final ReportInsightService reportInsightService;
+    private final QueryTemplate queryTemplate;
+    private final WriteTemplate writeTemplate;
 
     /**
      * AI 解读报告（同步，结果落库缓存；force=true 强制重新解读）
@@ -38,7 +43,8 @@ public class ReportInsightController {
             @RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
             @PathVariable Long id,
             @RequestParam(defaultValue = "false") boolean force) {
-        return R.ok(reportInsightService.interpret(memberId, id, force));
+        return R.ok(writeTemplate.execute("health.insight.interpret",
+                () -> reportInsightService.interpret(memberId, id, force)));
     }
 
     /**
@@ -50,7 +56,8 @@ public class ReportInsightController {
     public R<Boolean> interpretAsync(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                      @PathVariable Long id,
                                      @RequestParam(defaultValue = "false") boolean force) {
-        return R.ok(reportInsightService.interpretAsync(memberId, id, force));
+        return R.ok(writeTemplate.execute("health.insight.interpretAsync",
+                () -> reportInsightService.interpretAsync(memberId, id, force)));
     }
 
     /**
@@ -59,7 +66,8 @@ public class ReportInsightController {
     @PostMapping("/reports/ocr")
     public R<ReportOcrService.OcrDraft> ocr(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                             @RequestBody OcrRequest req) {
-        return R.ok(reportInsightService.ocr(memberId, req.fileId()));
+        return R.ok(queryTemplate.execute("health.insight.ocr",
+                () -> reportInsightService.ocr(memberId, req.fileId())));
     }
 
     /**

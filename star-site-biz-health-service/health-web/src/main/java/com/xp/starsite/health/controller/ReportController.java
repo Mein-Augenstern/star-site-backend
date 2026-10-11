@@ -2,6 +2,8 @@ package com.xp.starsite.health.controller;
 
 import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
+import com.xp.starsite.common.template.QueryTemplate;
+import com.xp.starsite.common.template.WriteTemplate;
 import com.xp.starsite.health.dto.IndicatorBatchDTO;
 import com.xp.starsite.health.dto.ReportCreateDTO;
 import com.xp.starsite.health.service.ReportService;
@@ -29,6 +31,9 @@ import java.util.List;
  * 类级统一挂 /api/health，资源边界由方法级路径表达——历史 URL 保持逐字节不变（小程序在用）。
  * 全部端点需 JWT；memberId 从网关注入的 JWT attribute 取，用于归属校验防横向越权。
  * AI 解读与 OCR 见 {@link ReportInsightController}。
+ * <p>
+ * 业务逻辑统一经模板包裹（{@link QueryTemplate}/@link WriteTemplate）：
+ * 动作留痕、异常归一，动作名规范为 health.report.*。
  *
  * @author xiaopu
  * @since 2026-10
@@ -39,6 +44,8 @@ import java.util.List;
 public class ReportController {
 
     private final ReportService reportService;
+    private final QueryTemplate queryTemplate;
+    private final WriteTemplate writeTemplate;
 
     /**
      * 上传报告元数据（建档；标题缺省为「&lt;年份&gt;年体检报告」）
@@ -46,7 +53,8 @@ public class ReportController {
     @PostMapping("/reports")
     public R<HealthReportVO> create(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                     @Valid @RequestBody ReportCreateDTO dto) {
-        return R.ok(reportService.createReport(memberId, dto));
+        return R.ok(writeTemplate.execute("health.report.create",
+                () -> reportService.createReport(memberId, dto)));
     }
 
     /**
@@ -58,7 +66,8 @@ public class ReportController {
                                           @RequestParam(required = false) Integer year,
                                           @RequestParam(defaultValue = "1") long page,
                                           @RequestParam(defaultValue = "10") long size) {
-        return R.ok(reportService.listReports(memberId, familyMemberId, year, page, size));
+        return R.ok(queryTemplate.execute("health.report.page",
+                () -> reportService.listReports(memberId, familyMemberId, year, page, size)));
     }
 
     /**
@@ -67,7 +76,8 @@ public class ReportController {
     @GetMapping("/reports/{id}")
     public R<HealthReportVO> detail(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                     @PathVariable Long id) {
-        return R.ok(reportService.getDetail(memberId, id));
+        return R.ok(queryTemplate.execute("health.report.detail",
+                () -> reportService.getDetail(memberId, id)));
     }
 
     /**
@@ -77,7 +87,8 @@ public class ReportController {
     public R<Void> addIndicators(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                  @PathVariable Long id,
                                  @Valid @RequestBody IndicatorBatchDTO dto) {
-        reportService.addIndicators(memberId, id, dto);
+        writeTemplate.execute("health.report.indicator.batch",
+                () -> reportService.addIndicators(memberId, id, dto));
         return R.ok();
     }
 
@@ -87,7 +98,8 @@ public class ReportController {
     @DeleteMapping("/reports/{id}")
     public R<Void> delete(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                           @PathVariable Long id) {
-        reportService.deleteReport(memberId, id);
+        writeTemplate.execute("health.report.delete",
+                () -> reportService.deleteReport(memberId, id));
         return R.ok();
     }
 
@@ -98,7 +110,8 @@ public class ReportController {
     public R<List<HealthReportVO>> search(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                           @RequestParam String keyword,
                                           @RequestParam(required = false) Long familyMemberId) {
-        return R.ok(reportService.search(memberId, keyword, familyMemberId));
+        return R.ok(queryTemplate.execute("health.report.search",
+                () -> reportService.search(memberId, keyword, familyMemberId)));
     }
 
     /**
@@ -108,6 +121,7 @@ public class ReportController {
     public R<List<TrendPointVO>> trends(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                         @RequestParam Long familyMemberId,
                                         @RequestParam String itemName) {
-        return R.ok(reportService.trends(memberId, familyMemberId, itemName));
+        return R.ok(queryTemplate.execute("health.report.trend",
+                () -> reportService.trends(memberId, familyMemberId, itemName)));
     }
 }

@@ -53,16 +53,22 @@ class RocketMqEventPublisher implements EventPublisher, DisposableBean {
     public void publish(String topic, String eventType, String bizType, Long bizId, Object payload) {
         EventEnvelope env = envelope(eventType, bizType, bizId, payload);
         Message msg = toMessage(topic, env);
+        long start = System.currentTimeMillis();
         try {
             SendResult r = producer.send(msg);
             if (r.getSendStatus() != SendStatus.SEND_OK) {
                 throw new IllegalStateException("消息发送失败: " + r.getSendStatus());
             }
+            com.xp.starsite.common.template.MessageTemplate.sendDigest(
+                    topic, eventType, env.getEventId(), false, true,
+                    System.currentTimeMillis() - start, null);
             log.debug("事件已发送: topic={}, type={}, eventId={}", topic, eventType, env.getEventId());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            sendDigestFail(topic, eventType, env.getEventId(), false, start, "interrupted");
             throw new IllegalStateException("消息发送被中断", e);
         } catch (Exception e) {
+            sendDigestFail(topic, eventType, env.getEventId(), false, start, e.getMessage());
             throw new IllegalStateException("消息发送异常: " + e.getMessage(), e);
         }
     }
@@ -72,15 +78,28 @@ class RocketMqEventPublisher implements EventPublisher, DisposableBean {
                                      LocalTransactionExecutor localTransaction) {
         EventEnvelope env = envelope(eventType, bizType, bizId, payload);
         Message msg = toMessage(topic, env);
+        long start = System.currentTimeMillis();
         try {
             SendResult r = producer.sendMessageInTransaction(msg, new PendingTx(env.getEventId(), localTransaction));
             if (r == null || r.getSendStatus() != SendStatus.SEND_OK) {
                 // 半消息发送失败：本地事务还没执行，这里抛异常即可让调用方回滚业务
                 throw new IllegalStateException("事务半消息发送失败: " + (r == null ? "null" : r.getSendStatus()));
             }
+            com.xp.starsite.common.template.MessageTemplate.sendDigest(
+                    topic, eventType, env.getEventId(), true, true,
+                    System.currentTimeMillis() - start, null);
         } catch (org.apache.rocketmq.client.exception.MQClientException e) {
+            sendDigestFail(topic, eventType, env.getEventId(), true, start, e.getMessage());
             throw new IllegalStateException("事务消息发送异常: " + e.getMessage(), e);
         }
+    }
+
+    /** 发送失败也留痕（排障时 mq-send-digest 有失败记录可查） */
+    private void sendDigestFail(String topic, String eventType, String eventId,
+                                boolean transactional, long start, String error) {
+        com.xp.starsite.common.template.MessageTemplate.sendDigest(
+                topic, eventType, eventId, transactional, false,
+                System.currentTimeMillis() - start, error);
     }
 
     private EventEnvelope envelope(String eventType, String bizType, Long bizId, Object payload) {
@@ -109,6 +128,9 @@ class RocketMqEventPublisher implements EventPublisher, DisposableBean {
             Message msg = new Message(topic, env.getEventType(), body);
             msg.setKeys(env.getBizId() == null ? env.getEventId() : String.valueOf(env.getBizId()));
             msg.putUserProperty("eventId", env.getEventId());
+            // 链路透传：消费端还原 traceId，发送/消费日志同链路可查
+            msg.putUserProperty(com.xp.starsite.common.log.TraceContext.MQ_KEY_TRACE_ID,
+                    com.xp.starsite.common.log.TraceContext.current());
             return msg;
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw new IllegalStateException("事件序列化失败", e);

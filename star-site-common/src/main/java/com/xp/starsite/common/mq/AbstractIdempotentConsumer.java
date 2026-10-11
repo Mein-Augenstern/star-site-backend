@@ -27,16 +27,46 @@ public abstract class AbstractIdempotentConsumer {
      * @return true = 首次消费，已执行 doConsume；false = 重复消息，已跳过
      */
     protected final boolean consumeIdempotent(String eventId, Runnable doConsume) {
+        return consumeIdempotent("unknown", "unknown", eventId, null, doConsume);
+    }
+
+    /**
+     * 带留痕的幂等消费：mq-consume-digest 一行/次（topic/tag/eventId/状态/耗时），
+     * doConsume 异常原样上抛交 MQ 重试（业务可重入由子类保证）。
+     *
+     * @param traceId 发送方透传的 traceId（消息属性 trace_id，可空）
+     */
+    protected final boolean consumeIdempotent(String topic, String tag, String eventId,
+                                              String traceId, Runnable doConsume) {
+        com.xp.starsite.common.log.TraceContext.set(traceId);
+        long start = System.currentTimeMillis();
+        boolean first;
         try {
             jdbcTemplate.update(
                     "INSERT INTO event_consume (consumer_group, event_id, consumed_at) VALUES (?, ?, NOW())",
                     consumerGroup, eventId);
+            first = true;
         } catch (DuplicateKeyException e) {
             log.info("重复事件，跳过: group={}, eventId={}", consumerGroup, eventId);
+            emitConsumeDigest(topic, tag, eventId, "duplicate", null, start);
             return false;
         }
-        doConsume.run();
-        return true;
+        try {
+            doConsume.run();
+            emitConsumeDigest(topic, tag, eventId, "success", null, start);
+            return true;
+        } catch (Exception e) {
+            emitConsumeDigest(topic, tag, eventId, "error", e.getClass().getSimpleName(), start);
+            throw e;
+        } finally {
+            com.xp.starsite.common.log.TraceContext.clear();
+        }
+    }
+
+    private void emitConsumeDigest(String topic, String tag, String eventId,
+                                   String status, String error, long start) {
+        com.xp.starsite.common.template.MessageTemplate.consumeDigest(
+                topic, tag, eventId, consumerGroup, status, error, System.currentTimeMillis() - start);
     }
 
     /** 当前消费组名（日志与排查用） */

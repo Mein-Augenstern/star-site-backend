@@ -2,6 +2,8 @@ package com.xp.starsite.health.controller;
 
 import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
+import com.xp.starsite.common.template.QueryTemplate;
+import com.xp.starsite.common.template.WriteTemplate;
 import com.xp.starsite.health.dto.PregnancyUpsertDTO;
 import com.xp.starsite.health.service.PregnancyService;
 import com.xp.starsite.health.vo.PregnancyVO;
@@ -18,7 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 孕期助手接口：孕期档案维护与计算视图（孕周/预产期/产检里程碑/增重建议）。
  * 计算规则见 {@link com.xp.starsite.health.service.PregnancyService} 类注释；
- * 拆分约定与鉴权说明见 {@link ReportController} 类注释。
+ * 拆分约定与鉴权说明见 {@link ReportController} 类注释；
+ * 业务逻辑统一经模板包裹（动作名 health.pregnancy.*）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -29,6 +32,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class PregnancyController {
 
     private final PregnancyService pregnancyService;
+    private final QueryTemplate queryTemplate;
+    private final WriteTemplate writeTemplate;
 
     /**
      * 设置/更新孕期档案（一人一份，重复提交覆盖；
@@ -37,7 +42,8 @@ public class PregnancyController {
     @PostMapping("/pregnancy")
     public R<PregnancyVO> upsertPregnancy(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                           @Valid @RequestBody PregnancyUpsertDTO dto) {
-        return R.ok(pregnancyService.upsertPregnancy(memberId, dto));
+        return R.ok(writeTemplate.execute("health.pregnancy.upsert",
+                () -> pregnancyService.upsertPregnancy(memberId, dto)));
     }
 
     /**
@@ -46,6 +52,7 @@ public class PregnancyController {
     @GetMapping("/pregnancy")
     public R<PregnancyVO> getPregnancy(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                        @RequestParam Long familyMemberId) {
-        return R.ok(pregnancyService.getPregnancy(memberId, familyMemberId));
+        return R.ok(queryTemplate.execute("health.pregnancy.get",
+                () -> pregnancyService.getPregnancy(memberId, familyMemberId)));
     }
 }
