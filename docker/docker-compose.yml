@@ -14,6 +14,8 @@ x-app-env: &app-env
   SPRING_DATASOURCE_USERNAME: root
   SPRING_DATASOURCE_PASSWORD: root123
   JWT_SECRET: star-site-local-dev-secret-change-me-32bytes!
+  # P4 可观测：抓取端点（micrometer-registry-prometheus 已在各 start 模块）
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,prometheus
 x-app-build: &app-build
   context: ..
   dockerfile: docker/Dockerfile
