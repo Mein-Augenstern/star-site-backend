@@ -45,7 +45,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final IdGenerator idGenerator;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public TransactionVO create(Long memberId, TransactionSaveDTO dto) {
         FinanceAccount account = requireOwnedAccount(memberId, dto.getAccountId());
         return switch (dto.getDirection()) {
@@ -80,7 +80,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void delete(Long memberId, Long id) {
         FinanceTransaction t = requireOwnedTransaction(memberId, id);
         if (t.getDirection() == DIR_TRANSFER) {
@@ -105,7 +105,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "金额必须大于 0");
         }
         BigDecimal delta = direction == DIR_INCOME ? amount : amount.negate();
-        applyBalance(account, account.getBalance().add(delta));
+        applyBalanceDelta(account, delta);
 
         FinanceTransaction t = baseTransaction(memberId, account, dto, direction, amount);
         t.setBalanceAfter(account.getBalance());
@@ -118,7 +118,7 @@ public class TransactionServiceImpl implements TransactionService {
         if (dto.getAmount().signum() == 0) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "调整差额不能为 0");
         }
-        applyBalance(account, account.getBalance().add(dto.getAmount()));
+        applyBalanceDelta(account, dto.getAmount());
 
         FinanceTransaction t = baseTransaction(memberId, account, dto, DIR_ADJUST, dto.getAmount());
         t.setBalanceAfter(account.getBalance());
@@ -143,8 +143,8 @@ public class TransactionServiceImpl implements TransactionService {
 
         // 转账组 id 也是雪花（两腿共享，成对查询用）
         long groupId = idGenerator.nextId();
-        applyBalance(from, from.getBalance().subtract(dto.getAmount()));
-        applyBalance(to, to.getBalance().add(dto.getAmount()));
+        applyBalanceDelta(from, dto.getAmount().negate());
+        applyBalanceDelta(to, dto.getAmount());
 
         FinanceTransaction out = baseTransaction(memberId, from, dto, DIR_TRANSFER, dto.getAmount().negate());
         out.setTransferGroupId(groupId);
@@ -173,13 +173,21 @@ public class TransactionServiceImpl implements TransactionService {
         BigDecimal delta = t.getDirection() == DIR_EXPENSE
                 ? t.getAmount()
                 : t.getAmount().negate();
-        applyBalance(account, account.getBalance().add(delta));
+        applyBalanceDelta(account, delta);
     }
 
-    /** 余额增量维护：显式 updateBalance SQL + 内存同步（供 balanceAfter 快照与测试断言） */
-    private void applyBalance(FinanceAccount account, BigDecimal newBalance) {
+    /**
+     * 余额原子增量（军规「一锁二判三更新」）：
+     * 一锁——UPDATE 行锁锁账户行；二判——影响行数判账户存在；三更新——balance=balance+delta 原子更新。
+     * 并发记账/导入下不丢更新；随后重读取新值，供 balance_after 快照与内存同步。
+     */
+    private BigDecimal applyBalanceDelta(FinanceAccount account, BigDecimal delta) {
+        if (accountMapper.updateBalanceDelta(account.getId(), delta) == 0) {
+            throw new BizException(ResultCode.BAD_REQUEST.getCode(), "账户不存在或已注销");
+        }
+        BigDecimal newBalance = accountMapper.selectById(account.getId()).getBalance();
         account.setBalance(newBalance);
-        accountMapper.updateBalance(account.getId(), newBalance);
+        return newBalance;
     }
 
     private FinanceTransaction baseTransaction(Long memberId, FinanceAccount account,

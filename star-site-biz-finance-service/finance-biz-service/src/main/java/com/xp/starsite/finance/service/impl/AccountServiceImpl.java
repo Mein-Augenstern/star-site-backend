@@ -46,7 +46,7 @@ public class AccountServiceImpl implements AccountService {
     private final IdGenerator idGenerator;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AccountVO create(Long memberId, AccountSaveDTO dto) {
         validateType(dto.getAccountType());
         FinanceAccount account = new FinanceAccount();

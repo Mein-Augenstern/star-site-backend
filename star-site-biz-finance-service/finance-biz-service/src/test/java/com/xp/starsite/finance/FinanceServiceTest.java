@@ -80,12 +80,25 @@ class FinanceServiceTest {
         return dto;
     }
 
+    /** 模拟 DAL 原子增量（一锁二判三更新）：余额在「库」里加 delta，重查可见；账户不存在返回 0 行 */
+    private void atomicBalanceStub() {
+        when(accountMapper.updateBalanceDelta(anyLong(), any(BigDecimal.class))).thenAnswer(inv -> {
+            FinanceAccount a = accountMapper.selectById(inv.getArgument(0, Long.class));
+            if (a == null) {
+                return 0;
+            }
+            a.setBalance(a.getBalance().add(inv.getArgument(1, BigDecimal.class)));
+            return 1;
+        });
+    }
+
     /* ===== 记账与余额联动 ===== */
 
     @Test
     void incomeIncreasesBalanceWithSnapshot() {
         FinanceAccount acc = account(11L, new BigDecimal("100"));
         when(accountMapper.selectById(11L)).thenReturn(acc);
+        atomicBalanceStub();
 
         txService().create(ME, dto(1, 11L, "50"));
 
@@ -99,6 +112,7 @@ class FinanceServiceTest {
     void expenseDecreasesBalance() {
         FinanceAccount acc = account(11L, new BigDecimal("100"));
         when(accountMapper.selectById(11L)).thenReturn(acc);
+        atomicBalanceStub();
 
         txService().create(ME, dto(2, 11L, "30"));
 
@@ -123,6 +137,7 @@ class FinanceServiceTest {
         to.setAccountType("bank");
         when(accountMapper.selectById(11L)).thenReturn(from);
         when(accountMapper.selectById(22L)).thenReturn(to);
+        atomicBalanceStub();
 
         TransactionSaveDTO dto = dto(3, 11L, "40");
         dto.setToAccountId(22L);
@@ -160,6 +175,7 @@ class FinanceServiceTest {
         when(transactionMapper.selectById(5L)).thenReturn(t);
         FinanceAccount acc = account(11L, new BigDecimal("70"));
         when(accountMapper.selectById(11L)).thenReturn(acc);
+        atomicBalanceStub();
 
         txService().delete(ME, 5L);
 
@@ -194,6 +210,7 @@ class FinanceServiceTest {
         to.setOwnerMemberId(ME);
         when(accountMapper.selectById(11L)).thenReturn(from);
         when(accountMapper.selectById(22L)).thenReturn(to);
+        atomicBalanceStub();
 
         txService().delete(ME, 6L);
 

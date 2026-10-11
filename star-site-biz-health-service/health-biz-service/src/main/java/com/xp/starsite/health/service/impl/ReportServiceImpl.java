@@ -91,7 +91,7 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void addIndicators(Long memberId, Long reportId, IndicatorBatchDTO dto) {
         HealthReport report = requireOwnedReport(memberId, reportId);
         // 重录覆盖：先清掉该报告旧指标

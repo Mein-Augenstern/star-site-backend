@@ -115,7 +115,7 @@ public class AssetServiceImpl implements AssetService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public AssetVO update(Long memberId, Long id, AssetSaveDTO dto) {
         ArchiveAsset asset = requireOwnedAsset(memberId, id);
         FamilyMemberSnapshotDTO holder = resolveHolder(memberId, dto.getHolderMemberId());

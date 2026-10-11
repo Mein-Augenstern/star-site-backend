@@ -109,7 +109,7 @@ public class WxLoginServiceImpl implements WxLoginService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public LoginVO bindAccountByPassword(String code, String username, String password) {
         if (code == null || code.isBlank()) {
             throw new BizException(400, "code 不能为空");

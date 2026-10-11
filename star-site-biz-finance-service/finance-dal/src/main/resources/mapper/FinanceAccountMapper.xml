@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<!-- 资金账户 SQL（DAL）：逻辑删；余额由流水增量维护，更新走显式 updateBalance -->
+<!-- 资金账户 SQL（DAL）：逻辑删；余额由流水经 updateBalanceDelta 原子增量维护 -->
 <mapper namespace="com.xp.starsite.finance.mapper.FinanceAccountMapper">
 
     <sql id="cols">
@@ -31,9 +31,9 @@
         WHERE id = #{id} AND deleted = 0
     </update>
 
-    <!-- 余额增量维护：业务层在事务内算好新余额写入 -->
-    <update id="updateBalance">
-        UPDATE finance_account SET balance = #{balance}
+    <!-- 一锁二判三更新：UPDATE 行锁锁账户 → WHERE 判存在 → balance=balance+#{delta} 原子增量，并发不丢更新 -->
+    <update id="updateBalanceDelta">
+        UPDATE finance_account SET balance = balance + #{delta}
         WHERE id = #{id} AND deleted = 0
     </update>
 

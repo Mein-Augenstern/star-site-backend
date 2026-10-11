@@ -43,7 +43,7 @@ public class ImportServiceImpl implements ImportService {
     private final IdGenerator idGenerator;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ImportResult importBill(Long memberId, Long accountId, MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "请选择账单文件");
@@ -53,7 +53,7 @@ public class ImportServiceImpl implements ImportService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ImportResult doImport(Long memberId, Long accountId, String content) {
         FinanceAccount account = accountMapper.selectById(accountId);
         if (account == null) {
@@ -81,7 +81,9 @@ public class ImportServiceImpl implements ImportService {
             }
         }
         if (delta.signum() != 0) {
-            accountMapper.updateBalance(account.getId(), account.getBalance().add(delta));
+            // 原子增量（一锁二判三更新）：并发导入/记账下不丢更新
+            accountMapper.updateBalanceDelta(account.getId(), delta);
+            account.setBalance(account.getBalance().add(delta));
         }
         log.info("账单导入: channel={}, parsed={}, imported={}, dup={}, skipped={}, delta={}",
                 parsed.getChannel(), parsed.getTransactions().size(), imported, duplicates,

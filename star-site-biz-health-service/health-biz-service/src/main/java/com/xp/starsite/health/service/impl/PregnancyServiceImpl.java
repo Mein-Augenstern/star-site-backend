@@ -56,6 +56,8 @@ public class PregnancyServiceImpl implements PregnancyService {
     public PregnancyVO upsertPregnancy(Long memberId, PregnancyUpsertDTO dto) {
         ownershipGuard.requireOwned(memberId, dto.getFamilyMemberId());
         PregnancyProfile profile = pregnancyMapper.selectByFamilyMemberId(dto.getFamilyMemberId());
+        // 军规「一锁二判三更新」防并发首建：uk_member(family_member_id) 兜底，
+        // 并发双插第二个必撞唯一键 → 捕获后转更新（判重放并发场景，正常路径先判后插）
         if (profile == null) {
             profile = new PregnancyProfile();
             profile.setFamilyMemberId(dto.getFamilyMemberId());
@@ -63,7 +65,15 @@ public class PregnancyServiceImpl implements PregnancyService {
             profile.setLmpDate(dto.getLmpDate());
             profile.setHeightCm(dto.getHeightCm());
             profile.setPrePregnancyWeight(dto.getPrePregnancyWeight());
-            pregnancyMapper.insert(profile);
+            try {
+                pregnancyMapper.insert(profile);
+            } catch (org.springframework.dao.DuplicateKeyException e) {
+                profile = pregnancyMapper.selectByFamilyMemberId(dto.getFamilyMemberId());
+                profile.setLmpDate(dto.getLmpDate());
+                profile.setHeightCm(dto.getHeightCm());
+                profile.setPrePregnancyWeight(dto.getPrePregnancyWeight());
+                pregnancyMapper.update(profile);
+            }
         } else {
             profile.setLmpDate(dto.getLmpDate());
             profile.setHeightCm(dto.getHeightCm());

@@ -65,7 +65,7 @@ public class ReminderServiceImpl implements ReminderService {
     private final ObjectProvider<EmailChannel> emailChannel;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void upsertRule(ReminderRegisterEvent event) {
         // 幂等键（source,bizType,bizId）：先查后 insert/update
         ReminderRule rule = ruleMapper.selectByIdempotentKey(
@@ -97,7 +97,7 @@ public class ReminderServiceImpl implements ReminderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void upsertRuleFromInternal(ReminderRuleDTO dto) {
         ReminderRegisterEvent event = new ReminderRegisterEvent();
         event.setSource(dto.getSource());
@@ -116,7 +116,7 @@ public class ReminderServiceImpl implements ReminderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteRuleFromInternal(ReminderRuleDTO dto) {
         ReminderCancelEvent event = new ReminderCancelEvent();
         event.setSource(dto.getSource());
@@ -126,7 +126,7 @@ public class ReminderServiceImpl implements ReminderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void cancelRule(ReminderCancelEvent event) {
         ReminderRule rule = ruleMapper.selectByIdempotentKey(
                 event.getSource(), event.getBizType(), event.getBizId());
@@ -143,7 +143,7 @@ public class ReminderServiceImpl implements ReminderService {
     private static final String USER_BIZ_TYPE = "user_rule";
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public UserRuleVO createUserRule(Long memberId, UserRuleCreateDTO dto) {
         FamilyMemberSnapshotDTO snapshot =
                 ownershipGuard.requireOwned(memberId, dto.getFamilyMemberId());
@@ -182,7 +182,7 @@ public class ReminderServiceImpl implements ReminderService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public void deleteUserRule(Long memberId, Long ruleId) {
         ReminderRule rule = requireOwnedRule(memberId, ruleId);
         occurrenceMapper.deleteActiveByRuleId(rule.getId());

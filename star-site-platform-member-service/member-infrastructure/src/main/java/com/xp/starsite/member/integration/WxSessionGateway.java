@@ -34,6 +34,9 @@ public class WxSessionGateway {
     @Value("${wx.mp.secret:}")
     private String secret;
 
+    /** 复用 RestClient（资源规约：避免每请求新建连接栈） */
+    private final RestClient restClient = RestClient.create();
+
     public WxSession fetch(String code) {
         if (secret == null || secret.isBlank()) {
             // mock 通道：code 即 openid，开发态全链路不依赖真 secret
@@ -42,7 +45,7 @@ public class WxSessionGateway {
         }
         JsonNode resp;
         try {
-            resp = RestClient.create().get()
+            resp = restClient.get()
                     .uri("https://api.weixin.qq.com/sns/jscode2session?appid={a}&secret={s}&js_code={c}&grant_type=authorization_code",
                             appid, secret, code)
                     .retrieve()

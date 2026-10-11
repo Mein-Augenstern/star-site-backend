@@ -9,7 +9,9 @@ import java.util.List;
 
 /**
  * 资金账户数据访问（DAL）：finance_account，逻辑删。
- * 余额由流水增量维护——更新余额走显式 {@link #updateBalance}（不整行 update，避免覆盖并发流水）。
+ * 余额维护走 {@link #updateBalanceDelta} 原子增量（一锁二判三更新：
+ * UPDATE 行锁锁账户 → WHERE deleted=0 判存在 → balance=balance+delta 原子更新），
+ * 并发流水/导入下不丢更新；严禁业务层读-算-写覆盖余额。
  *
  * @author xiaopu
  * @since 2026-10
@@ -26,8 +28,12 @@ public interface FinanceAccountMapper {
     /** 编辑账户资料（按 id，只更新业务变更列：名称/类型/机构/备注，不动余额） */
     int update(FinanceAccount account);
 
-    /** 余额增量维护（流水/导入/回滚后由业务层算好新余额写入） */
-    int updateBalance(@Param("id") Long id, @Param("balance") BigDecimal balance);
+    /**
+     * 余额原子增量（delta 可正可负）。
+     *
+     * @return 影响行数：0 = 账户不存在/已删（调用方须判存报错）
+     */
+    int updateBalanceDelta(@Param("id") Long id, @Param("delta") BigDecimal delta);
 
     /** 逻辑删：deleted 置 1（注销账户，余额须已为 0 由业务层校验） */
     int markDeleted(@Param("id") Long id);
