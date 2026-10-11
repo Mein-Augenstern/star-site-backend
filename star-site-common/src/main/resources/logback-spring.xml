@@ -15,7 +15,7 @@
     <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="star-app"/>
     <property name="LOG_HOME" value="logs/${APP_NAME}"/>
     <property name="CONSOLE_PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%X{traceId}] %bold(%-40logger{36}) : %msg%n"/>
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%X{traceId}] %-40logger{36} : %msg%n"/>
     <property name="DIGEST_PATTERN"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} %msg%n"/>
     <property name="MAX_HISTORY_DAYS" value="15"/>

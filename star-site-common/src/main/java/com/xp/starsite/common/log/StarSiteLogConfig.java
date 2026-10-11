@@ -63,8 +63,11 @@ public class StarSiteLogConfig {
 
     @Bean
     @ConditionalOnClass(name = "org.apache.ibatis.session.SqlSessionFactory")
-    public Interceptor dbDigestInterceptor() {
-        return new DbDigestInterceptor();
+    public Interceptor dbDigestInterceptor(Environment env) {
+        // 阈值配置化：star.log.db.slow-sql-ms / star.log.db.max-sql-length
+        return new DbDigestInterceptor(
+                env.getProperty("star.log.db.slow-sql-ms", Long.class, 1000L),
+                env.getProperty("star.log.db.max-sql-length", Integer.class, 500));
     }
 
     @Bean

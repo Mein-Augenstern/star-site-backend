@@ -28,11 +28,16 @@ import java.util.Properties;
 })
 public class DbDigestInterceptor implements Interceptor {
 
-    /** 慢 SQL 阈值（ms）：超阈值在业务日志 warn */
-    private static final long SLOW_SQL_MS = 1000;
+    /** 慢 SQL 阈值（ms），经 star.log.db.slow-sql-ms 配置 */
+    private final long slowSqlMs;
 
-    /** digest 里 SQL 最大长度（防大 SQL 刷爆日志） */
-    private static final int MAX_SQL_LENGTH = 500;
+    /** digest 里 SQL 最大长度（防大 SQL 刷爆日志），经 star.log.db.max-sql-length 配置 */
+    private final int maxSqlLength;
+
+    public DbDigestInterceptor(long slowSqlMs, int maxSqlLength) {
+        this.slowSqlMs = slowSqlMs;
+        this.maxSqlLength = maxSqlLength;
+    }
 
     @Override
     public Object intercept(Invocation invocation) throws Throwable {
@@ -47,8 +52,8 @@ public class DbDigestInterceptor implements Interceptor {
             DigestLoggers.emit(DigestLoggers.DB, DigestLoggers.fields(
                     "method", invocation.getMethod().getName(),
                     "costMs", cost,
-                    "sql", sql.length() > MAX_SQL_LENGTH ? sql.substring(0, MAX_SQL_LENGTH) + "...(" + sql.length() + ")" : sql));
-            if (cost > SLOW_SQL_MS) {
+                    "sql", sql.length() > maxSqlLength ? sql.substring(0, maxSqlLength) + "...(" + sql.length() + ")" : sql));
+            if (cost > slowSqlMs) {
                 org.slf4j.LoggerFactory.getLogger("STAR_SLOW_SQL")
                         .warn("慢 SQL {}ms: {}", cost, sql);
             }

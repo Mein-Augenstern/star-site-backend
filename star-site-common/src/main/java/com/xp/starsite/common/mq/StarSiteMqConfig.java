@@ -29,7 +29,10 @@ public class StarSiteMqConfig {
         String group = env.getProperty("rocketmq.producer.group",
                 "G_" + env.getProperty("spring.application.name", "app") + "_producer");
         return new RocketMqEventPublisher(namesrv, group,
-                env.getProperty("spring.application.name", "unknown"));
+                env.getProperty("spring.application.name", "unknown"),
+                // 发送超时与事件体上限配置化（不写死代码）：rocketmq.send-msg-timeout-ms / star.mq.max-body-bytes
+                env.getProperty("rocketmq.send-msg-timeout-ms", Integer.class, 3000),
+                env.getProperty("star.mq.max-body-bytes", Integer.class, 1048576));
     }
 
     // 声明在真实实现之后：@ConditionalOnMissingBean 按注册顺序求值

@@ -14,7 +14,10 @@ x-app-env: &app-env
   SPRING_DATASOURCE_USERNAME: root
   SPRING_DATASOURCE_PASSWORD: root123
   JWT_SECRET: star-site-local-dev-secret-change-me-32bytes!
-  # P4 可观测：抓取端点（micrometer-registry-prometheus 已在各 start 模块）
+  # Feign 超时配置化（服务端间调用统一基线；特殊服务可在各自 env 覆盖）
+  SPRING_CLOUD_OPENFEIGN_CLIENT_CONFIG_DEFAULT_CONNECT-TIMEOUT: 3000
+  SPRING_CLOUD_OPENFEIGN_CLIENT_CONFIG_DEFAULT_READ-TIMEOUT: 10000
+  # P4 可观测：management 端点（micrometer-registry-prometheus 已在各 start 模块）
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,prometheus
 x-app-build: &app-build
   context: ..

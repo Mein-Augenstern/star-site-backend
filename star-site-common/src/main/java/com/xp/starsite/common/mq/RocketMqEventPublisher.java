@@ -28,17 +28,20 @@ class RocketMqEventPublisher implements EventPublisher, DisposableBean {
 
     private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule());
 
-    /** 单事件体上限（RocketMQ 默认 4MB，这里按业务事件远小于此的假设收敛到 1MB） */
-    private static final int MAX_BODY_BYTES = 1024 * 1024;
+    /** 单事件体上限（RocketMQ 默认 4MB，业务事件按远小于此假设，可经 star.mq.max-body-bytes 调整） */
+    private final int maxBodyBytes;
 
     private final String sourceService;
     private final TransactionMQProducer producer;
 
-    RocketMqEventPublisher(String nameServer, String producerGroup, String sourceService) {
+    RocketMqEventPublisher(String nameServer, String producerGroup, String sourceService,
+                           int sendMsgTimeoutMs, int maxBodyBytes) {
         this.sourceService = sourceService;
+        this.maxBodyBytes = maxBodyBytes;
         // 事务消息须用 TransactionMQProducer（listener 只能在构造时传入）
         this.producer = new TransactionMQProducer(producerGroup);
         this.producer.setNamesrvAddr(nameServer);
+        this.producer.setSendMsgTimeout(sendMsgTimeoutMs);
         this.producer.setInstanceName("event-publisher-" + UUID.randomUUID());
         this.producer.setTransactionListener(new DomainTransactionListener());
         try {
@@ -122,8 +125,8 @@ class RocketMqEventPublisher implements EventPublisher, DisposableBean {
     private Message toMessage(String topic, EventEnvelope env) {
         try {
             byte[] body = MAPPER.writeValueAsBytes(env);
-            if (body.length > MAX_BODY_BYTES) {
-                throw new IllegalStateException("事件体超过 1MB，拒绝发送: eventId=" + env.getEventId());
+            if (body.length > maxBodyBytes) {
+                throw new IllegalStateException("事件体超过 " + maxBodyBytes + " 字节，拒绝发送: eventId=" + env.getEventId());
             }
             Message msg = new Message(topic, env.getEventType(), body);
             msg.setKeys(env.getBizId() == null ? env.getEventId() : String.valueOf(env.getBizId()));
