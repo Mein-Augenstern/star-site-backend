@@ -12,7 +12,9 @@ WORKDIR /build
 # 整仓复制（模块间依赖 parent/common/api，整仓构建最省心）
 COPY . .
 ARG MODULE
-RUN mvn -q -pl "${MODULE}" -am package -DskipTests \
+# 整仓构建：reactor 内含 common/api 等内部依赖（容器内 .m2 无历史产物，-pl/-f 单模块取不到兄弟模块）；
+# 全部服务镜像共享此 RUN 层缓存：代码不变时仅首次全量，后续镜像构建秒级命中
+RUN mvn -q package -DskipTests \
         -s /build/docker/maven-settings.xml
 
 # ---------- 运行阶段：仅 JRE ----------
