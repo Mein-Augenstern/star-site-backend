@@ -12,90 +12,23 @@
 
     <artifactId>star-site-biz-finance-service</artifactId>
     <name>star-site-biz-finance-service</name>
-    <description>财务微服务：资金账户、记账流水、三张表（F1 起步：账户+记账）</description>
+    <description>财务微服务（SOFA 风格多模块聚合工程）：资金账户、记账流水、三张表</description>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>finance-core-model</module>
+        <module>finance-core-service</module>
+        <module>finance-integration</module>
+        <module>finance-biz-service</module>
+        <module>finance-web</module>
+        <module>finance-start</module>
+    </modules>
 
     <dependencies>
-        <dependency>
-            <groupId>com.xp.starsite</groupId>
-            <artifactId>star-site-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.xp.starsite</groupId>
-            <artifactId>star-site-api</artifactId>
-        </dependency>
-        <!-- F2 资产负债表聚合：Feign 调 archive 资产总览 -->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-openfeign</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
-        </dependency>
-        <!-- F3 消费 TOPIC_FILE 的 FileUploaded 事件（异步账单导入） -->
-        <dependency>
-            <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-spring-boot-starter</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.cloud</groupId>
-            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-jsqlparser</artifactId>
-            <version>${mybatis-plus.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>

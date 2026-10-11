@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.xp.starsite</groupId>
+        <artifactId>star-site-biz-finance-service</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>finance-biz-service</artifactId>
+    <name>finance-biz-service</name>
+    <description>财务域业务层：service 编排、AI 诊断、账单导入解析、DTO/VO 契约（M 层）</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>finance-core-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>star-site-common</artifactId>
+        </dependency>
+        <!-- F2 资产负债表聚合：ArchiveApi；F3 账单导入事件契约 -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>star-site-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
