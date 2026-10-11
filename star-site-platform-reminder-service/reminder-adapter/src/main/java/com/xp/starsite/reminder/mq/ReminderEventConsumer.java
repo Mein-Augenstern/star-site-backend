@@ -37,7 +37,8 @@ public class ReminderEventConsumer extends AbstractIdempotentConsumer implements
     @Override
     public void onMessage(String raw) {
         EventEnvelope env = EnvelopeDecoder.decode(raw);
-        consumeIdempotent(env.getEventId(), () -> dispatch(env));
+        consumeIdempotent("TOPIC_REMINDER", env.getEventType(), env.getEventId(),
+                env.getTraceId(), () -> dispatch(env));
     }
 
     private void dispatch(EventEnvelope env) {

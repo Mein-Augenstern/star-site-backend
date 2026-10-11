@@ -51,7 +51,8 @@ public class FileUploadedConsumer extends AbstractIdempotentConsumer implements 
         if (!EventTypes.FILE_UPLOADED.equals(env.getEventType())) {
             return;
         }
-        consumeIdempotent(env.getEventId(), () -> dispatch(env));
+        consumeIdempotent("TOPIC_FILE", env.getEventType(), env.getEventId(),
+                env.getTraceId(), () -> dispatch(env));
     }
 
     private void dispatch(EventEnvelope env) {

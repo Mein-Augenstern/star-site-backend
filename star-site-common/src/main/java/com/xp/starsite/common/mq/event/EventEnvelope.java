@@ -38,4 +38,7 @@ public class EventEnvelope implements Serializable {
 
     /** 事件体 JSON（具体领域事件类的序列化结果） */
     private String payloadJson;
+
+    /** 发送方 traceId（链路透传：消费端还原后，发送/消费日志同链路可查；旧消息可空） */
+    private String traceId;
 }

@@ -116,6 +116,7 @@ class RocketMqEventPublisher implements EventPublisher, DisposableBean {
                     .bizId(bizId)
                     .occurredAt(LocalDateTime.now())
                     .payloadJson(payloadJson)
+                    .traceId(com.xp.starsite.common.log.TraceContext.current())
                     .build();
         } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             throw new IllegalStateException("事件序列化失败", e);

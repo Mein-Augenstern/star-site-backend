@@ -2,6 +2,7 @@ package com.xp.starsite.family.controller;
 
 import com.xp.starsite.api.dto.FamilyMemberSnapshotDTO;
 import com.xp.starsite.common.result.R;
+import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.family.service.FamilyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,11 +13,15 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * 服务间内部接口（Feign 提供方）。
+ * 服务间内部接口（Feign 提供方）：归属校验与成员快照。
  * <p>
  * /internal/** 不在网关路由表里，外网请求到网关直接 404；
  * JwtAuthInterceptor 只拦 /api/**，本控制器不经 JWT，仅限内网服务间调用。
- * 调用方统一走 star-site-api 的 FamilyApi + FamilyOwnershipGuard。
+ * 调用方统一走 family-facade 的 FamilyApi + FamilyOwnershipGuard。
+ * 业务逻辑统一经模板包裹（动作名 family.internal.*）。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @RestController
 @RequestMapping("/internal/family")
@@ -24,15 +29,20 @@ import java.util.List;
 public class FamilyInternalController {
 
     private final FamilyService familyService;
+    private final QueryTemplate queryTemplate;
 
+    /** 归属校验：归属返回成员快照；不归属/不存在返回 data=null */
     @GetMapping("/ownership")
     public R<FamilyMemberSnapshotDTO> checkOwnership(@RequestParam("memberId") Long memberId,
                                                      @RequestParam("familyMemberId") Long familyMemberId) {
-        return R.ok(familyService.checkOwnership(memberId, familyMemberId));
+        return R.ok(queryTemplate.execute("family.internal.ownership",
+                () -> familyService.checkOwnership(memberId, familyMemberId)));
     }
 
+    /** 当前账号家庭的成员快照全集（无家庭返回空列表） */
     @GetMapping("/members")
     public R<List<FamilyMemberSnapshotDTO>> listMembers(@RequestParam("memberId") Long memberId) {
-        return R.ok(familyService.listMemberSnapshots(memberId));
+        return R.ok(queryTemplate.execute("family.internal.members",
+                () -> familyService.listMemberSnapshots(memberId)));
     }
 }

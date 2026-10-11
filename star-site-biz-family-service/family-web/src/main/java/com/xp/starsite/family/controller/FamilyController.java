@@ -2,6 +2,8 @@ package com.xp.starsite.family.controller;
 
 import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
+import com.xp.starsite.common.template.QueryTemplate;
+import com.xp.starsite.common.template.WriteTemplate;
 import com.xp.starsite.family.dto.FamilyCreateDTO;
 import com.xp.starsite.family.dto.FamilyMemberDTO;
 import com.xp.starsite.family.service.FamilyService;
@@ -22,7 +24,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * 家庭档案接口（全部需 JWT）
+ * 家庭档案接口：家庭建档、成员档案（自然人）增删改查。
+ * 全部端点需 JWT；业务逻辑统一经模板包裹（动作名 family.*），
+ * 归属防线由 Service 层 FamilyOwnershipGuard 承担（fail-closed）。
+ *
+ * @author xiaopu
+ * @since 2026-10
  */
 @RestController
 @RequestMapping("/api/family")
@@ -30,40 +37,66 @@ import java.util.List;
 public class FamilyController {
 
     private final FamilyService familyService;
+    private final QueryTemplate queryTemplate;
+    private final WriteTemplate writeTemplate;
 
+    /**
+     * 创建家庭（一个顶梁柱一个家）
+     */
     @PostMapping
     public R<FamilyVO> create(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                               @Valid @RequestBody FamilyCreateDTO dto) {
-        return R.ok(familyService.create(memberId, dto));
+        return R.ok(writeTemplate.execute("family.create",
+                () -> familyService.create(memberId, dto)));
     }
 
+    /**
+     * 我的家庭（未建返回 data=null）
+     */
     @GetMapping("/mine")
     public R<FamilyVO> mine(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return R.ok(familyService.mine(memberId));
+        return R.ok(queryTemplate.execute("family.mine",
+                () -> familyService.mine(memberId)));
     }
 
+    /**
+     * 新增家庭成员档案
+     */
     @PostMapping("/members")
     public R<FamilyMemberVO> addMember(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                        @Valid @RequestBody FamilyMemberDTO dto) {
-        return R.ok(familyService.addMember(memberId, dto));
+        return R.ok(writeTemplate.execute("family.member.add",
+                () -> familyService.addMember(memberId, dto)));
     }
 
+    /**
+     * 家庭成员档案列表
+     */
     @GetMapping("/members")
     public R<List<FamilyMemberVO>> listMembers(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return R.ok(familyService.listMembers(memberId));
+        return R.ok(queryTemplate.execute("family.member.list",
+                () -> familyService.listMembers(memberId)));
     }
 
+    /**
+     * 更新家庭成员档案
+     */
     @PutMapping("/members/{id}")
     public R<FamilyMemberVO> updateMember(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                           @PathVariable Long id,
                                           @Valid @RequestBody FamilyMemberDTO dto) {
-        return R.ok(familyService.updateMember(memberId, id, dto));
+        return R.ok(writeTemplate.execute("family.member.update",
+                () -> familyService.updateMember(memberId, id, dto)));
     }
 
+    /**
+     * 删除家庭成员档案（逻辑删）
+     */
     @DeleteMapping("/members/{id}")
     public R<Void> deleteMember(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                 @PathVariable Long id) {
-        familyService.deleteMember(memberId, id);
+        writeTemplate.execute("family.member.delete",
+                () -> familyService.deleteMember(memberId, id));
         return R.ok();
     }
 }
