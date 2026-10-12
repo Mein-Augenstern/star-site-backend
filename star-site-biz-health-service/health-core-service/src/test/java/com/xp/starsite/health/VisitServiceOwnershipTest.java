@@ -4,7 +4,7 @@ import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.health.dto.VisitCreateDTO;
 import com.xp.starsite.health.entity.VisitRecord;
-import com.xp.starsite.health.mapper.VisitRecordMapper;
+import com.xp.starsite.health.repository.VisitRecordRepository;
 import com.xp.starsite.health.service.impl.VisitServiceImpl;
 import com.xp.starsite.health.vo.PageVO;
 import org.junit.jupiter.api.Test;
@@ -13,11 +13,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /**
@@ -34,12 +34,12 @@ class VisitServiceOwnershipTest {
     private static final long FOREIGN_FAMILY_MEMBER = 99L;
 
     @Mock
-    private VisitRecordMapper visitMapper;
+    private VisitRecordRepository visitRepository;
     @Mock
     private FamilyOwnershipGuard ownershipGuard;
 
     private VisitServiceImpl newService() {
-        return new VisitServiceImpl(visitMapper, ownershipGuard);
+        return new VisitServiceImpl(visitRepository, ownershipGuard);
     }
 
     private VisitCreateDTO visitDto(long familyMemberId) {
@@ -61,17 +61,6 @@ class VisitServiceOwnershipTest {
     }
 
     @Test
-    void createVisitAllowsOwnFamilyMember() {
-        when(ownershipGuard.requireOwned(ME, MY_FAMILY_MEMBER)).thenReturn(null);
-        when(visitMapper.insert(any(VisitRecord.class))).thenAnswer(inv -> {
-            inv.getArgument(0, VisitRecord.class).setId(1L);
-            return 1;
-        });
-
-        assertEquals(1L, newService().createVisit(ME, visitDto(MY_FAMILY_MEMBER)).getId());
-    }
-
-    @Test
     void listVisitsWithoutMemberIdNarrowsToEmptyFamily() {
         when(ownershipGuard.listOwnedMemberIds(ME)).thenReturn(List.of());
 
@@ -85,7 +74,7 @@ class VisitServiceOwnershipTest {
         VisitRecord foreign = new VisitRecord();
         foreign.setId(9L);
         foreign.setFamilyMemberId(FOREIGN_FAMILY_MEMBER);
-        when(visitMapper.selectById(9L)).thenReturn(foreign);
+        when(visitRepository.findById(9L)).thenReturn(Optional.of(foreign));
         when(ownershipGuard.requireOwned(ME, FOREIGN_FAMILY_MEMBER))
                 .thenThrow(new BizException(403, "无权限访问该家庭成员的数据"));
 

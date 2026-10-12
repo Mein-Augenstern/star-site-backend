@@ -3,15 +3,15 @@ package com.xp.starsite.health.service.impl;
 import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
+import com.xp.starsite.health.converter.VisitConverter;
 import com.xp.starsite.health.dto.VisitCreateDTO;
 import com.xp.starsite.health.entity.VisitRecord;
-import com.xp.starsite.health.mapper.VisitRecordMapper;
+import com.xp.starsite.health.repository.VisitRecordRepository;
 import com.xp.starsite.health.service.VisitService;
 import com.xp.starsite.health.vo.PageVO;
 import com.xp.starsite.health.vo.VisitVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,7 +19,8 @@ import java.util.Set;
 
 /**
  * 就医记录服务实现。越权防线约定见 {@link com.xp.starsite.health.service.VisitService}。
- * 数据访问全部经 DAL（{@link VisitRecordMapper}），SQL 收敛在 mapper XML。
+ * 数据访问经仓储层（{@link VisitRecordRepository}，实现位于 core-service 内、底层调用 dal DAO），
+ * service 只面向领域模型 Entity 编排。
  *
  * @author xiaopu
  * @since 2026-10
@@ -29,7 +30,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class VisitServiceImpl implements VisitService {
 
-    private final VisitRecordMapper visitMapper;
+    private final VisitRecordRepository visitRepository;
     private final FamilyOwnershipGuard ownershipGuard;
 
     @Override
@@ -44,9 +45,9 @@ public class VisitServiceImpl implements VisitService {
         visit.setMedication(dto.getMedication());
         visit.setCost(dto.getCost());
         visit.setRemark(dto.getRemark());
-        visitMapper.insert(visit);
-        log.info("新建就医记录: id={}, member={}, date={}", visit.getId(), dto.getFamilyMemberId(), dto.getVisitDate());
-        return toVO(visit);
+        VisitRecord saved = visitRepository.save(visit);
+        log.info("新建就医记录: id={}, member={}, date={}", saved.getId(), dto.getFamilyMemberId(), dto.getVisitDate());
+        return VisitConverter.toVO(saved);
     }
 
     @Override
@@ -55,24 +56,22 @@ public class VisitServiceImpl implements VisitService {
         if (scope.isEmpty()) {
             return PageVO.of(List.of(), 0, page, size);
         }
-        long total = visitMapper.countByScope(scope);
+        long total = visitRepository.countByScope(scope);
         if (total == 0) {
             return PageVO.of(List.of(), 0, page, size);
         }
         long offset = (page - 1) * size;
-        List<VisitVO> vos = visitMapper.selectPage(scope, offset, (int) size)
-                .stream().map(this::toVO).toList();
+        List<VisitVO> vos = visitRepository.pageByScope(scope, offset, (int) size)
+                .stream().map(VisitConverter::toVO).toList();
         return PageVO.of(vos, total, page, size);
     }
 
     @Override
     public void deleteVisit(Long memberId, Long id) {
-        VisitRecord visit = visitMapper.selectById(id);
-        if (visit == null) {
-            throw new BizException(ResultCode.BAD_REQUEST.getCode(), "就医记录不存在");
-        }
+        VisitRecord visit = visitRepository.findById(id)
+                .orElseThrow(() -> new BizException(ResultCode.BAD_REQUEST.getCode(), "就医记录不存在"));
         ownershipGuard.requireOwned(memberId, visit.getFamilyMemberId());
-        visitMapper.markDeleted(id);
+        visitRepository.markDeleted(id);
     }
 
     /** 列表/搜索的数据范围（指定成员单查，否则全家收口），与报告服务同语义 */
@@ -82,11 +81,5 @@ public class VisitServiceImpl implements VisitService {
             return Set.of(familyMemberId);
         }
         return Set.copyOf(ownershipGuard.listOwnedMemberIds(memberId));
-    }
-
-    private VisitVO toVO(VisitRecord v) {
-        VisitVO vo = new VisitVO();
-        BeanUtils.copyProperties(v, vo);
-        return vo;
     }
 }

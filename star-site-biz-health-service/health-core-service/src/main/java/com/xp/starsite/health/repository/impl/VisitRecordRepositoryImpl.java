@@ -2,7 +2,7 @@ package com.xp.starsite.health.repository.impl;
 
 import com.xp.starsite.health.converter.VisitConverter;
 import com.xp.starsite.health.dal.dataobject.VisitRecordDO;
-import com.xp.starsite.health.dal.mapper.VisitRecordMapper;
+import com.xp.starsite.health.mapper.VisitRecordMapper;
 import com.xp.starsite.health.entity.VisitRecord;
 import com.xp.starsite.health.repository.VisitRecordRepository;
 import lombok.RequiredArgsConstructor;

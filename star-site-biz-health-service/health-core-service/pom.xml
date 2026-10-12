@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>health-core-service</artifactId>
-    <name>health-biz-service</name>
+    <name>health-core-service</name>
     <description>健康域业务层：service 编排、AI 解读/OCR 业务、DTO/VO 契约（M 层）</description>
 
     <dependencies>
