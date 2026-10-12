@@ -22,7 +22,7 @@
              #{paymentFreq}, #{nextPaymentDate}, #{coverageAmount}, #{status}, #{fileId}, #{remark})
     </insert>
 
-    <select id="selectById" resultType="com.xp.starsite.insurance.entity.InsurancePolicy">
+    <select id="selectById" resultType="com.xp.starsite.insurance.dal.dataobject.InsurancePolicyDO">
         SELECT <include refid="cols"/> FROM insurance_policy
         WHERE id = #{id} AND deleted = 0
     </select>
@@ -59,7 +59,7 @@
         <if test="status != null">AND status = #{status}</if>
     </sql>
 
-    <select id="selectPage" resultType="com.xp.starsite.insurance.entity.InsurancePolicy">
+    <select id="selectPage" resultType="com.xp.starsite.insurance.dal.dataobject.InsurancePolicyDO">
         SELECT <include refid="cols"/> FROM insurance_policy
         <include refid="listWhere"/>
         ORDER BY id DESC
@@ -71,7 +71,7 @@
         <include refid="listWhere"/>
     </select>
 
-    <select id="selectActiveByOwner" resultType="com.xp.starsite.insurance.entity.InsurancePolicy">
+    <select id="selectActiveByOwner" resultType="com.xp.starsite.insurance.dal.dataobject.InsurancePolicyDO">
         SELECT <include refid="cols"/> FROM insurance_policy
         WHERE deleted = 0 AND owner_member_id = #{ownerMemberId} AND status = 1
         ORDER BY id ASC

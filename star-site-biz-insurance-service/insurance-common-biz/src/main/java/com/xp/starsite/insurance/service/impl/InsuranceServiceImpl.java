@@ -10,7 +10,7 @@ import com.xp.starsite.common.result.ResultCode;
 import com.xp.starsite.common.util.IdGenerator;
 import com.xp.starsite.insurance.dto.PolicySaveDTO;
 import com.xp.starsite.insurance.entity.InsurancePolicy;
-import com.xp.starsite.insurance.mapper.InsurancePolicyMapper;
+import com.xp.starsite.insurance.repository.InsurancePolicyRepository;
 import com.xp.starsite.insurance.service.InsuranceService;
 import com.xp.starsite.insurance.vo.CoverageMapVO;
 import com.xp.starsite.insurance.vo.PageVO;
@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * - 缴费提醒（主提醒）走事务消息，「落库成功 ⇔ 事件一定发出」；
  * - 到期提醒 / 删除撤销走普通发送，丢失只少一条提醒、不产生脏数据，不值得为它扩事务范围。
  * 消费端（reminder-service，Step 2）以 (source, bizType, bizId) 幂等。
- * 数据访问全部经 DAL（{@link InsurancePolicyMapper}），SQL 收敛在 mapper XML。
+ * 数据访问经仓储层（{@link InsurancePolicyRepository}，实现位于 core-service、底层调用 dal DAO）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -56,7 +56,7 @@ public class InsuranceServiceImpl implements InsuranceService {
             "critical_illness", "major_medical", "accident", "life",
             "annuity", "vehicle", "property", "other");
 
-    private final InsurancePolicyMapper policyMapper;
+    private final InsurancePolicyRepository policyRepository;
     private final FamilyOwnershipGuard ownershipGuard;
     private final EventPublisher eventPublisher;
     private final IdGenerator idGenerator;
@@ -73,10 +73,10 @@ public class InsuranceServiceImpl implements InsuranceService {
         policy.setInsuredMemberName(insured.getName());
         // 主提醒与落库原子：半消息 → insert → 提交；insert 失败消息回滚
         eventPublisher.publishTransactional(Topics.TOPIC_REMINDER, EventTypes.REMINDER_REGISTER,
-                "policy", policy.getId(), paymentReminderOf(policy), () -> policyMapper.insert(policy));
+                "policy", policy.getId(), paymentReminderOf(policy), () -> policyRepository.save(policy));
         publishExpiryReminder(policy);
         log.info("创建保单: id={}, insured={}, category={}", policy.getId(), insured.getName(), policy.getCategory());
-        return toVO(policyMapper.selectById(policy.getId()));
+        return toVO(policyRepository.findById(policy.getId()).orElse(null));
     }
 
     @Override
@@ -85,13 +85,13 @@ public class InsuranceServiceImpl implements InsuranceService {
         if (insuredMemberId != null) {
             ownershipGuard.requireOwned(memberId, insuredMemberId);
         }
-        long total = policyMapper.countByOwner(memberId, insuredMemberId, category, status);
+        long total = policyRepository.countByOwner(memberId, insuredMemberId, category, status);
         if (total == 0) {
             return PageVO.of(List.of(), 0, page, size);
         }
         long offset = (page - 1) * size;
-        List<PolicyVO> vos = policyMapper
-                .selectPage(memberId, insuredMemberId, category, status, offset, (int) size)
+        List<PolicyVO> vos = policyRepository
+                .pageByOwner(memberId, insuredMemberId, category, status, offset, (int) size)
                 .stream().map(this::toVO).toList();
         return PageVO.of(vos, total, page, size);
     }
@@ -107,18 +107,18 @@ public class InsuranceServiceImpl implements InsuranceService {
         FamilyMemberSnapshotDTO insured = ownershipGuard.requireOwned(memberId, dto.getInsuredMemberId());
         applyDto(policy, dto);
         policy.setInsuredMemberName(insured.getName());
-        policyMapper.update(policy);
+        policyRepository.update(policy);
         // Register 是 upsert 语义：被保人/日期改了，重发覆盖规则
         eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_REGISTER,
                 "policy", policy.getId(), paymentReminderOf(policy));
         publishExpiryReminder(policy);
-        return toVO(policyMapper.selectById(id));
+        return toVO(policyRepository.findById(id).orElse(null));
     }
 
     @Override
     public void delete(Long memberId, Long id) {
         InsurancePolicy policy = requireOwnedPolicy(memberId, id);
-        policyMapper.markDeleted(id);
+        policyRepository.markDeleted(id);
         eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_CANCEL, "policy", id,
                 cancelReminderOf(policy, "policy_payment"));
         eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_CANCEL, "policy", id,
@@ -129,7 +129,7 @@ public class InsuranceServiceImpl implements InsuranceService {
     @Override
     public CoverageMapVO coverageMap(Long memberId) {
         List<FamilyMemberSnapshotDTO> members = ownershipGuard.listOwnedMembers(memberId);
-        List<InsurancePolicy> activePolicies = policyMapper.selectActiveByOwner(memberId);
+        List<InsurancePolicy> activePolicies = policyRepository.selectActiveByOwner(memberId);
 
         Map<Long, List<String>> covered = activePolicies.stream().collect(
                 Collectors.groupingBy(InsurancePolicy::getInsuredMemberId,
@@ -158,7 +158,7 @@ public class InsuranceServiceImpl implements InsuranceService {
 
     /** 按 id 取保单并校验归属：不存在报 400，他人保单 403 */
     private InsurancePolicy requireOwnedPolicy(Long memberId, Long id) {
-        InsurancePolicy policy = policyMapper.selectById(id);
+        InsurancePolicy policy = policyRepository.findById(id).orElse(null);
         if (policy == null) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "保单不存在");
         }

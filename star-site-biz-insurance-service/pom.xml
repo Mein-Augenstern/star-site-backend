@@ -19,6 +19,7 @@
     <modules>
         <module>insurance-core-model</module>
         <module>insurance-dal</module>
+        <module>insurance-core-service</module>
         <module>insurance-common-biz</module>
         <module>insurance-web</module>
         <module>insurance-start</module>
