@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>file-common-biz</artifactId>
-    <name>file-app</name>
+    <name>file-common-biz</name>
     <description>文件域应用层：上传/下载用例编排（经 FileStorage 端口）+ VO 契约</description>
 
     <dependencies>

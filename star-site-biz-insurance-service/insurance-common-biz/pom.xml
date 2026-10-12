@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>insurance-common-biz</artifactId>
-    <name>insurance-biz-service</name>
+    <name>insurance-common-biz</name>
     <description>保单域业务层：service 编排、DTO/VO 契约（M 层）</description>
 
     <dependencies>

@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>file-core-model</artifactId>
-    <name>file-domain</name>
+    <name>file-core-model</name>
     <description>文件域领域模型：FileRecord + FileStorage 存储端口（六边形出站端口，纯接口，纯 POJO 无框架依赖）</description>
 
     <dependencies>

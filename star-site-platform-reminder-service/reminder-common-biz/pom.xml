@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>reminder-common-biz</artifactId>
-    <name>reminder-app</name>
+    <name>reminder-common-biz</name>
     <description>提醒域应用层：规则注册/取消、到期扫描、通知触达用例编排 + DTO/VO 契约</description>
 
     <dependencies>

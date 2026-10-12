@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>family-common-biz</artifactId>
-    <name>family-biz-service</name>
+    <name>family-common-biz</name>
     <description>家庭域业务层：service 编排、DTO/VO 契约（M 层）</description>
 
     <dependencies>

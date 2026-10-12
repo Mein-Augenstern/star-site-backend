@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>reminder-core-model</artifactId>
-    <name>reminder-domain</name>
+    <name>reminder-core-model</name>
     <description>提醒域领域模型：ReminderRule/ReminderOccurrence/Notification（不依赖应用层）</description>
 
     <!-- entity 纯 POJO：lombok 由父 pom 注入（provided），表结构映射在 reminder-dal 的 mapper XML -->

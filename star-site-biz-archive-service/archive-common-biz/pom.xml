@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>archive-common-biz</artifactId>
-    <name>archive-biz-service</name>
+    <name>archive-common-biz</name>
     <description>档案域业务层：service 编排、DTO/VO 契约（M 层）</description>
 
     <dependencies>

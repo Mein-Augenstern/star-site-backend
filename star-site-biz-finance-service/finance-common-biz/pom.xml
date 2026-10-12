@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>finance-common-biz</artifactId>
-    <name>finance-biz-service</name>
+    <name>finance-common-biz</name>
     <description>财务域业务层：service 编排、AI 诊断、账单导入解析、DTO/VO 契约（M 层）</description>
 
     <dependencies>
