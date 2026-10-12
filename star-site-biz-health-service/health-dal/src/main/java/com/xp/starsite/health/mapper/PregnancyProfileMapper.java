@@ -1,6 +1,6 @@
 package com.xp.starsite.health.mapper;
 
-import com.xp.starsite.health.entity.PregnancyProfile;
+import com.xp.starsite.health.dal.dataobject.PregnancyProfileDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -14,11 +14,11 @@ import org.apache.ibatis.annotations.Param;
 public interface PregnancyProfileMapper {
 
     /** 按家庭成员取档案（一人一条；无档案返回 null） */
-    PregnancyProfile selectByFamilyMemberId(@Param("familyMemberId") Long familyMemberId);
+    PregnancyProfileDO selectByFamilyMemberId(@Param("familyMemberId") Long familyMemberId);
 
     /** 新建档案 */
-    int insert(PregnancyProfile profile);
+    int insert(PregnancyProfileDO profile);
 
     /** 更新档案（按 id，更新 LMP/身高/孕前体重业务列） */
-    int update(PregnancyProfile profile);
+    int update(PregnancyProfileDO profile);
 }

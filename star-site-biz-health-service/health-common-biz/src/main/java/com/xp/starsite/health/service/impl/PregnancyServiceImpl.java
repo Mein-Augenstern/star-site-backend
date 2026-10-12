@@ -4,7 +4,7 @@ import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.health.dto.PregnancyUpsertDTO;
 import com.xp.starsite.health.entity.PregnancyProfile;
 import com.xp.starsite.health.integration.PregnancyReminderBridge;
-import com.xp.starsite.health.mapper.PregnancyProfileMapper;
+import com.xp.starsite.health.repository.PregnancyProfileRepository;
 import com.xp.starsite.health.service.PregnancyService;
 import com.xp.starsite.health.vo.PregnancyVO;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +20,7 @@ import java.util.List;
 /**
  * 孕期助手服务实现。计算规则见 {@link com.xp.starsite.health.service.PregnancyService} 类注释。
  * 档案落库后经 {@link PregnancyReminderBridge} 将产检里程碑注册为提醒中心规则（幂等 upsert）。
+ * 数据访问经仓储层（{@link PregnancyProfileRepository}，底层调用 dal DAO）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -48,14 +49,15 @@ public class PregnancyServiceImpl implements PregnancyService {
     private static final int SECOND_TRIMESTER_FROM = 13;
     private static final int THIRD_TRIMESTER_FROM = 28;
 
-    private final PregnancyProfileMapper pregnancyMapper;
+    private final PregnancyProfileRepository pregnancyRepository;
     private final FamilyOwnershipGuard ownershipGuard;
     private final PregnancyReminderBridge reminderBridge;
 
     @Override
     public PregnancyVO upsertPregnancy(Long memberId, PregnancyUpsertDTO dto) {
         ownershipGuard.requireOwned(memberId, dto.getFamilyMemberId());
-        PregnancyProfile profile = pregnancyMapper.selectByFamilyMemberId(dto.getFamilyMemberId());
+        PregnancyProfile profile = pregnancyRepository.findByFamilyMemberId(dto.getFamilyMemberId())
+                .orElse(null);
         // 军规「一锁二判三更新」防并发首建：uk_member(family_member_id) 兜底，
         // 并发双插第二个必撞唯一键 → 捕获后转更新（判重放并发场景，正常路径先判后插）
         if (profile == null) {
@@ -66,19 +68,20 @@ public class PregnancyServiceImpl implements PregnancyService {
             profile.setHeightCm(dto.getHeightCm());
             profile.setPrePregnancyWeight(dto.getPrePregnancyWeight());
             try {
-                pregnancyMapper.insert(profile);
+                pregnancyRepository.save(profile);
             } catch (org.springframework.dao.DuplicateKeyException e) {
-                profile = pregnancyMapper.selectByFamilyMemberId(dto.getFamilyMemberId());
+                profile = pregnancyRepository.findByFamilyMemberId(dto.getFamilyMemberId())
+                        .orElseThrow(() -> new IllegalStateException("并发首建后档案消失"));
                 profile.setLmpDate(dto.getLmpDate());
                 profile.setHeightCm(dto.getHeightCm());
                 profile.setPrePregnancyWeight(dto.getPrePregnancyWeight());
-                pregnancyMapper.update(profile);
+                pregnancyRepository.save(profile);
             }
         } else {
             profile.setLmpDate(dto.getLmpDate());
             profile.setHeightCm(dto.getHeightCm());
             profile.setPrePregnancyWeight(dto.getPrePregnancyWeight());
-            pregnancyMapper.update(profile);
+            pregnancyRepository.save(profile);
         }
         // 里程碑注册提醒规则（幂等，已过窗口自动跳过）；
         // 提醒中心不可用只告警不阻断——孕周保存是主链路，提醒注册是增强链路
@@ -97,8 +100,9 @@ public class PregnancyServiceImpl implements PregnancyService {
     @Override
     public PregnancyVO getPregnancy(Long memberId, Long familyMemberId) {
         ownershipGuard.requireOwned(memberId, familyMemberId);
-        PregnancyProfile profile = pregnancyMapper.selectByFamilyMemberId(familyMemberId);
-        return profile == null ? null : toVO(profile);
+        return pregnancyRepository.findByFamilyMemberId(familyMemberId)
+                .map(this::toVO)
+                .orElse(null);
     }
 
     /** 孕周中枢：以 LMP 为锚点计算孕周/预产期/阶段/产检计划/增重建议 */

@@ -8,7 +8,7 @@
         ended, remark, deleted, created_at, updated_at
     </sql>
 
-    <select id="selectByFamilyMemberId" resultType="com.xp.starsite.health.entity.PregnancyProfile">
+    <select id="selectByFamilyMemberId" resultType="com.xp.starsite.health.dal.dataobject.PregnancyProfileDO">
         SELECT <include refid="cols"/> FROM pregnancy_profile
         WHERE family_member_id = #{familyMemberId} AND deleted = 0
         LIMIT 1
