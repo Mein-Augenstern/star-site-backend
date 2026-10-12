@@ -3,7 +3,7 @@ package com.xp.starsite.file.service.impl;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
 import com.xp.starsite.file.entity.FileRecord;
-import com.xp.starsite.file.mapper.FileRecordMapper;
+import com.xp.starsite.file.repository.FileRecordRepository;
 import com.xp.starsite.file.service.FileService;
 import com.xp.starsite.common.mq.EventPublisher;
 import com.xp.starsite.common.mq.event.EventTypes;
@@ -24,7 +24,7 @@ import java.util.Set;
 /**
  * 文件服务实现：校验类型/大小 → 存储落盘（本地或 OSS）→ 建记录 → 发布上传完成事件。
  * 账单导入场景额外放行 CSV；存储实现按 file.storage-type 自动切换。
- * 数据访问经 DAL（{@link FileRecordMapper}，SQL 在 mapper XML）。
+ * 数据访问经仓储层（{@link FileRecordRepository}，实现位于 core-service、底层调用 dal DAO）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -38,7 +38,7 @@ public class FileServiceImpl implements FileService {
     private static final Set<String> ALLOWED_BIZ = Set.of("avatar", "report", "other", "bill_import");
     private static final long MAX_SIZE = 20L * 1024 * 1024;
 
-    private final FileRecordMapper fileRecordMapper;
+    private final FileRecordRepository fileRecordRepository;
     private final FileStorage fileStorage;
     private final EventPublisher eventPublisher;
 
@@ -79,7 +79,7 @@ public class FileServiceImpl implements FileService {
         record.setSizeBytes(file.getSize());
         record.setBizType(StringUtils.hasText(bizType) ? bizType : "other");
         record.setUploaderMemberId(uploaderMemberId);
-        fileRecordMapper.insert(record);
+        fileRecordRepository.save(record);
         log.info("文件上传: id={}, name={}, size={}, biz={}", record.getId(), original, file.getSize(), record.getBizType());
         // 上传完成事件（普通消息：丢发的后果是消费方漏处理该文件，重传即恢复）
         FileUploadedEvent event = new FileUploadedEvent();
@@ -101,7 +101,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public FileRecord requireFile(Long id) {
-        FileRecord record = fileRecordMapper.selectById(id);
+        FileRecord record = fileRecordRepository.findById(id).orElse(null);
         if (record == null) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "文件不存在");
         }

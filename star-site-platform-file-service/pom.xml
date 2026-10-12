@@ -20,6 +20,7 @@
         <module>file-facade</module>
         <module>file-core-model</module>
         <module>file-dal</module>
+        <module>file-core-service</module>
         <module>file-common-biz</module>
         <module>file-adapter</module>
         <module>file-start</module>

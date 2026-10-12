@@ -15,7 +15,7 @@
             (#{fileName}, #{storageKey}, #{contentType}, #{sizeBytes}, #{bizType}, #{uploaderMemberId})
     </insert>
 
-    <select id="selectById" resultType="com.xp.starsite.file.entity.FileRecord">
+    <select id="selectById" resultType="com.xp.starsite.file.dal.dataobject.FileRecordDO">
         SELECT <include refid="cols"/> FROM file
         WHERE id = #{id}
     </select>

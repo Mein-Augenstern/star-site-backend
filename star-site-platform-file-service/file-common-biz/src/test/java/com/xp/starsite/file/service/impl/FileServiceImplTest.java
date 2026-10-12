@@ -3,13 +3,15 @@ package com.xp.starsite.file.service.impl;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.mq.EventPublisher;
 import com.xp.starsite.file.entity.FileRecord;
-import com.xp.starsite.file.mapper.FileRecordMapper;
+import com.xp.starsite.file.repository.FileRecordRepository;
 import com.xp.starsite.file.storage.FileStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,7 +31,7 @@ class FileServiceImplTest {
     private static final long OTHER = 8L;
 
     @Mock
-    private FileRecordMapper fileRecordMapper;
+    private FileRecordRepository fileRecordRepository;
     @Mock
     private FileStorage fileStorage;
     @Mock
@@ -39,7 +41,7 @@ class FileServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new FileServiceImpl(fileRecordMapper, fileStorage, eventPublisher);
+        service = new FileServiceImpl(fileRecordRepository, fileStorage, eventPublisher);
     }
 
     private FileRecord record(Long uploaderMemberId, String contentType) {
@@ -55,7 +57,7 @@ class FileServiceImplTest {
 
     @Test
     void ownerCanReadRecord() {
-        when(fileRecordMapper.selectById(1L)).thenReturn(record(ME, "text/csv"));
+        when(fileRecordRepository.findById(1L)).thenReturn(Optional.of(record(ME, "text/csv")));
 
         FileRecord out = service.requireOwnedFile(ME, 1L);
 
@@ -64,7 +66,7 @@ class FileServiceImplTest {
 
     @Test
     void otherMembersReaderThrows403() {
-        when(fileRecordMapper.selectById(1L)).thenReturn(record(ME, "text/csv"));
+        when(fileRecordRepository.findById(1L)).thenReturn(Optional.of(record(ME, "text/csv")));
 
         BizException e = assertThrows(BizException.class, () -> service.requireOwnedFile(OTHER, 1L));
         assertEquals(403, e.getCode());
@@ -72,7 +74,7 @@ class FileServiceImplTest {
 
     @Test
     void missingFileThrows400() {
-        when(fileRecordMapper.selectById(99L)).thenReturn(null);
+        when(fileRecordRepository.findById(99L)).thenReturn(Optional.empty());
 
         BizException e = assertThrows(BizException.class, () -> service.requireOwnedFile(ME, 99L));
         assertEquals(400, e.getCode());

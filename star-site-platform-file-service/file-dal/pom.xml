@@ -15,6 +15,8 @@
     <description>文件域 DAL 数据访问层：MyBatis 官方 mapper + XML，SQL 全收敛在 XML（FileStorage 端口适配器 LocalFileStorage / OssFileStorage 暂驻本模块）</description>
 
     <dependencies>
+        <!-- FileStorage 六边形出站端口的适配器（Local/OSS）实现 core-model 的端口接口——端口依赖非实体泄漏；
+             mapper 已切 DO，SQL 链路不感知领域模型 -->
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>file-core-model</artifactId>

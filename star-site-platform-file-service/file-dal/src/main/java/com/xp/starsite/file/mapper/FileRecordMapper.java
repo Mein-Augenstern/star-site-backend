@@ -1,6 +1,6 @@
 package com.xp.starsite.file.mapper;
 
-import com.xp.starsite.file.entity.FileRecord;
+import com.xp.starsite.file.dal.dataobject.FileRecordDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -16,8 +16,8 @@ import org.apache.ibatis.annotations.Param;
 public interface FileRecordMapper {
 
     /** 新建文件记录 */
-    int insert(FileRecord record);
+    int insert(FileRecordDO record);
 
     /** 按 id 取记录（不存在返回 null） */
-    FileRecord selectById(@Param("id") Long id);
+    FileRecordDO selectById(@Param("id") Long id);
 }
