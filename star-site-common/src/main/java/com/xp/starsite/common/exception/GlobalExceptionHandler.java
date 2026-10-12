@@ -9,7 +9,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * 全局异常处理：所有异常统一转成 R 响应体
@@ -38,13 +37,6 @@ public class GlobalExceptionHandler {
         FieldError fieldError = e.getBindingResult().getFieldError();
         String message = fieldError != null ? fieldError.getDefaultMessage() : "请求参数错误";
         return R.fail(ResultCode.BAD_REQUEST.getCode(), message);
-    }
-
-    /** 未知路径：返回 404 而非 500（Spring 6 起静态资源兜底会抛 NoResourceFoundException） */
-    @ExceptionHandler(NoResourceFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public R<Void> handleNoResource(NoResourceFoundException e) {
-        return R.fail(ResultCode.BAD_REQUEST.getCode(), "接口不存在");
     }
 
     /** 兜底 */
