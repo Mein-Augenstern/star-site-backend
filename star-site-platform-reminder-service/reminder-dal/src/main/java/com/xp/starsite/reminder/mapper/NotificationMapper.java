@@ -1,6 +1,6 @@
 package com.xp.starsite.reminder.mapper;
 
-import com.xp.starsite.reminder.entity.Notification;
+import com.xp.starsite.reminder.dal.dataobject.NotificationDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -17,10 +17,10 @@ import java.util.List;
 public interface NotificationMapper {
 
     /** 新建通知（id DB 自增回填；created_at 由 DB 默认值维护） */
-    int insert(Notification notification);
+    int insert(NotificationDO notification);
 
     /** 按 id 取通知，不存在返回 null */
-    Notification selectById(@Param("id") Long id);
+    NotificationDO selectById(@Param("id") Long id);
 
     /** 未读数（铃铛角标） */
     long countUnread(@Param("ownerMemberId") Long ownerMemberId);
@@ -29,9 +29,9 @@ public interface NotificationMapper {
     long countByOwner(@Param("ownerMemberId") Long ownerMemberId);
 
     /** 通知分页：归属账号，按 id 倒序（count 先行后再取页） */
-    List<Notification> selectPageByOwner(@Param("ownerMemberId") Long ownerMemberId,
-                                         @Param("offset") long offset,
-                                         @Param("limit") int limit);
+    List<NotificationDO> selectPageByOwner(@Param("ownerMemberId") Long ownerMemberId,
+                                           @Param("offset") long offset,
+                                           @Param("limit") int limit);
 
     /** 标记已读（归属校验内嵌 WHERE，非本人通知 no-op） */
     int markRead(@Param("id") Long id, @Param("ownerMemberId") Long ownerMemberId);

@@ -10,10 +10,10 @@ import com.xp.starsite.reminder.entity.Notification;
 import com.xp.starsite.reminder.vo.UserRuleVO;
 import com.xp.starsite.reminder.entity.ReminderOccurrence;
 import com.xp.starsite.reminder.entity.ReminderRule;
-import com.xp.starsite.reminder.mapper.NotificationMapper;
-import com.xp.starsite.reminder.mapper.ReminderOccurrenceMapper;
-import com.xp.starsite.reminder.mapper.ReminderRuleMapper;
 import com.xp.starsite.reminder.notify.EmailChannel;
+import com.xp.starsite.reminder.repository.NotificationRepository;
+import com.xp.starsite.reminder.repository.ReminderOccurrenceRepository;
+import com.xp.starsite.reminder.repository.ReminderRuleRepository;
 import com.xp.starsite.reminder.service.ReminderService;
 import com.xp.starsite.reminder.vo.NotificationVO;
 import com.xp.starsite.reminder.vo.OccurrenceVO;
@@ -39,8 +39,8 @@ import java.util.Set;
  * 唯一键幂等），当天到期的 PENDING 实例投站内通知——天粒度满足缴费/到期场景；
  * 延迟消息精确投递留作 V2 自定义"某日某时"提醒的练兵场景。
  * <p>
- * 数据访问全部经 DAL（{@link ReminderRuleMapper}/{@link ReminderOccurrenceMapper}/
- * {@link NotificationMapper}）：SQL 收敛在 mapper XML，业务层零 SQL 拼装；
+ * 数据访问经仓储层（{@link ReminderRuleRepository}/{@link ReminderOccurrenceRepository}/
+ * {@link NotificationRepository}，实现位于 core-service、底层调用 dal DAO）；
  * 规则撤销为物理删（reminder 域三表无 deleted 列，唯一键干净优先）。
  *
  * @author xiaopu
@@ -57,9 +57,9 @@ public class ReminderServiceImpl implements ReminderService {
     private static final int ST_DONE = 3;
     private static final int ST_DISMISSED = 4;
 
-    private final ReminderRuleMapper ruleMapper;
-    private final ReminderOccurrenceMapper occurrenceMapper;
-    private final NotificationMapper notificationMapper;
+    private final ReminderRuleRepository ruleRepository;
+    private final ReminderOccurrenceRepository occurrenceRepository;
+    private final NotificationRepository notificationRepository;
     private final FamilyOwnershipGuard ownershipGuard;
     /** 邮件渠道可选：未配 spring.mail.host 时不装配（null = 仅站内信） */
     private final ObjectProvider<EmailChannel> emailChannel;
@@ -68,8 +68,8 @@ public class ReminderServiceImpl implements ReminderService {
     @Transactional(rollbackFor = Exception.class)
     public void upsertRule(ReminderRegisterEvent event) {
         // 幂等键（source,bizType,bizId）：先查后 insert/update
-        ReminderRule rule = ruleMapper.selectByIdempotentKey(
-                event.getSource(), event.getBizType(), event.getBizId());
+        ReminderRule rule = ruleRepository.findByIdempotentKey(
+                event.getSource(), event.getBizType(), event.getBizId()).orElse(null);
         boolean isNew = rule == null;
         if (isNew) {
             rule = new ReminderRule();
@@ -86,9 +86,9 @@ public class ReminderServiceImpl implements ReminderService {
         rule.setAdvanceDays(event.getAdvanceDays() == null ? 0 : event.getAdvanceDays());
         rule.setStatus(1);
         if (isNew) {
-            ruleMapper.insert(rule);
+            ruleRepository.save(rule);
         } else {
-            ruleMapper.update(rule);
+            ruleRepository.update(rule);
         }
         // 立即补生成首期实例（扫描任务兜底，uk 防重）
         generateOccurrences(rule, LocalDate.now(), LocalDate.now().plusDays(30));
@@ -128,14 +128,14 @@ public class ReminderServiceImpl implements ReminderService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void cancelRule(ReminderCancelEvent event) {
-        ReminderRule rule = ruleMapper.selectByIdempotentKey(
-                event.getSource(), event.getBizType(), event.getBizId());
+        ReminderRule rule = ruleRepository.findByIdempotentKey(
+                event.getSource(), event.getBizType(), event.getBizId()).orElse(null);
         if (rule == null) {
             return;
         }
         // 未完成实例一并清掉；已投递的通知保留（历史）
-        occurrenceMapper.deleteActiveByRuleId(rule.getId());
-        ruleMapper.deleteById(rule.getId());
+        occurrenceRepository.deleteActiveByRuleId(rule.getId());
+        ruleRepository.deleteById(rule.getId());
         log.info("提醒规则撤销: {}.{}.{}", event.getSource(), event.getBizType(), event.getBizId());
     }
 
@@ -161,9 +161,9 @@ public class ReminderServiceImpl implements ReminderService {
         rule.setRepeatUntil(dto.getRepeatUntil());
         rule.setAdvanceDays(0);
         rule.setStatus(1);
-        ruleMapper.insert(rule);
+        ruleRepository.save(rule);
         rule.setBizId(rule.getId());
-        ruleMapper.update(rule);
+        ruleRepository.update(rule);
         generateOccurrences(rule, LocalDate.now(), LocalDate.now().plusDays(30));
         log.info("用户自建提醒: rule={}, member={}, for={}, title={}",
                 rule.getId(), memberId, dto.getFamilyMemberId(), dto.getTitle());
@@ -177,7 +177,7 @@ public class ReminderServiceImpl implements ReminderService {
             return List.of();
         }
         List<ReminderRule> rules =
-                ruleMapper.selectActiveBySourceAndMembers(USER_SOURCE, owned);
+                ruleRepository.selectActiveBySourceAndMembers(USER_SOURCE, owned);
         return rules.stream().map(r -> toUserRuleVO(r, countPending(r.getId()))).toList();
     }
 
@@ -185,14 +185,14 @@ public class ReminderServiceImpl implements ReminderService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteUserRule(Long memberId, Long ruleId) {
         ReminderRule rule = requireOwnedRule(memberId, ruleId);
-        occurrenceMapper.deleteActiveByRuleId(rule.getId());
-        ruleMapper.deleteById(rule.getId());
+        occurrenceRepository.deleteActiveByRuleId(rule.getId());
+        ruleRepository.deleteById(rule.getId());
         log.info("用户自建提醒删除: rule={}", rule.getId());
     }
 
     /** 校验自建规则归属：规则必须属于我的家庭成员 */
     private ReminderRule requireOwnedRule(Long memberId, Long ruleId) {
-        ReminderRule rule = ruleMapper.selectById(ruleId);
+        ReminderRule rule = ruleRepository.findById(ruleId).orElse(null);
         if (rule == null || !USER_SOURCE.equals(rule.getSource())) {
             throw new com.xp.starsite.common.exception.BizException(404, "提醒规则不存在");
         }
@@ -204,7 +204,7 @@ public class ReminderServiceImpl implements ReminderService {
     }
 
     private Long countPending(Long ruleId) {
-        return occurrenceMapper.countActiveByRuleId(ruleId);
+        return occurrenceRepository.countActiveByRuleId(ruleId);
     }
 
     private UserRuleVO toUserRuleVO(ReminderRule rule, Long pendingCount) {
@@ -218,13 +218,13 @@ public class ReminderServiceImpl implements ReminderService {
     public int scanAndNotify() {
         LocalDate today = LocalDate.now();
         // 补生成未来 30 天实例（uk 防重）
-        List<ReminderRule> rules = ruleMapper.selectEnabled();
+        List<ReminderRule> rules = ruleRepository.selectEnabled();
         for (ReminderRule rule : rules) {
             generateOccurrences(rule, today, today.plusDays(30));
         }
 
         // 投递今天（含逾期未投）到期的实例
-        List<ReminderOccurrence> due = occurrenceMapper.selectDuePendingUpTo(today);
+        List<ReminderOccurrence> due = occurrenceRepository.selectDuePendingUpTo(today);
         var channel = emailChannel.getIfAvailable();
         for (ReminderOccurrence occ : due) {
             Notification n = new Notification();
@@ -232,11 +232,11 @@ public class ReminderServiceImpl implements ReminderService {
             n.setOwnerMemberId(occ.getOwnerMemberId());
             n.setTitle(occ.getTitle());
             n.setReadFlag(0);
-            notificationMapper.insert(n);
+            notificationRepository.save(n);
             occ.setStatus(ST_NOTIFIED);
             LocalDateTime notifiedAt = LocalDateTime.now();
             occ.setNotifiedAt(notifiedAt);
-            occurrenceMapper.markNotified(occ.getId(), notifiedAt);
+            occurrenceRepository.markNotified(occ.getId(), notifiedAt);
             // 邮件触达（可选渠道）：失败不影响站内信
             if (channel != null && channel.applicable(occ.getOwnerMemberId())) {
                 channel.send(occ.getOwnerMemberId(), occ.getTitle(), occ.getDueDate().toString());
@@ -251,31 +251,31 @@ public class ReminderServiceImpl implements ReminderService {
     @Override
     public List<OccurrenceVO> upcoming(Long memberId, int days) {
         LocalDate today = LocalDate.now();
-        return occurrenceMapper.selectUpcomingByOwner(memberId, today.plusDays(days))
+        return occurrenceRepository.selectUpcomingByOwner(memberId, today.plusDays(days))
                 .stream().map(this::toOccurrenceVO).toList();
     }
 
     @Override
     public long unreadCount(Long memberId) {
-        return notificationMapper.countUnread(memberId);
+        return notificationRepository.countUnread(memberId);
     }
 
     @Override
     public List<NotificationVO> notifications(Long memberId, long page, long size) {
         // 分页 count 先行：0 直接短路，不再取页
-        long total = notificationMapper.countByOwner(memberId);
+        long total = notificationRepository.countByOwner(memberId);
         if (total == 0) {
             return List.of();
         }
         long offset = (page - 1) * size;
-        return notificationMapper.selectPageByOwner(memberId, offset, (int) size)
+        return notificationRepository.pageByOwner(memberId, offset, (int) size)
                 .stream().map(this::toNotificationVO).toList();
     }
 
     @Override
     public void markRead(Long memberId, Long notificationId) {
         // 归属校验内嵌 SQL（owner 不匹配 no-op）
-        notificationMapper.markRead(notificationId, memberId);
+        notificationRepository.markRead(notificationId, memberId);
     }
 
     @Override
@@ -289,12 +289,12 @@ public class ReminderServiceImpl implements ReminderService {
     }
 
     private void updateStatus(Long memberId, Long occurrenceId, int status) {
-        ReminderOccurrence occ = occurrenceMapper.selectById(occurrenceId);
+        ReminderOccurrence occ = occurrenceRepository.findById(occurrenceId).orElse(null);
         if (occ == null || !occ.getOwnerMemberId().equals(memberId)) {
             return;
         }
         occ.setStatus(status);
-        occurrenceMapper.updateStatus(occ.getId(), status);
+        occurrenceRepository.updateStatus(occ.getId(), status);
     }
 
     /** 按规则的重复语义，生成 [from, to] 窗口内的实例（uk 幂等，已存在则跳过） */
@@ -303,7 +303,7 @@ public class ReminderServiceImpl implements ReminderService {
             return;
         }
         for (LocalDate due : dueDatesOf(rule, from, to)) {
-            if (occurrenceMapper.countByRuleAndDueDate(rule.getId(), due) > 0) {
+            if (occurrenceRepository.countByRuleAndDueDate(rule.getId(), due) > 0) {
                 continue;
             }
             ReminderOccurrence occ = new ReminderOccurrence();
@@ -317,7 +317,7 @@ public class ReminderServiceImpl implements ReminderService {
             occ.setDueDate(due);
             occ.setStatus(ST_PENDING);
             try {
-                occurrenceMapper.insert(occ);
+                occurrenceRepository.save(occ);
             } catch (DuplicateKeyException e) {
                 // 并发/重放下的幂等兜底
                 log.debug("实例已存在，跳过: rule={}, due={}", rule.getId(), due);

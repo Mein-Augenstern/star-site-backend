@@ -1,6 +1,6 @@
 package com.xp.starsite.reminder.mapper;
 
-import com.xp.starsite.reminder.entity.ReminderOccurrence;
+import com.xp.starsite.reminder.dal.dataobject.ReminderOccurrenceDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -19,10 +19,10 @@ import java.util.List;
 public interface ReminderOccurrenceMapper {
 
     /** 新建实例（id DB 自增回填；uk_rule_due 冲突抛 DuplicateKeyException，并发幂等兜底） */
-    int insert(ReminderOccurrence occurrence);
+    int insert(ReminderOccurrenceDO occurrence);
 
     /** 按 id 取实例，不存在返回 null */
-    ReminderOccurrence selectById(@Param("id") Long id);
+    ReminderOccurrenceDO selectById(@Param("id") Long id);
 
     /** 实例是否已生成（生成前防重检查，与 uk_rule_due 双保险） */
     int countByRuleAndDueDate(@Param("ruleId") Long ruleId, @Param("dueDate") LocalDate dueDate);
@@ -34,11 +34,11 @@ public interface ReminderOccurrenceMapper {
     int deleteActiveByRuleId(@Param("ruleId") Long ruleId);
 
     /** 每日扫描投递：到期（due_date &le; 指定日）且待提醒的实例 */
-    List<ReminderOccurrence> selectDuePendingUpTo(@Param("dueDate") LocalDate dueDate);
+    List<ReminderOccurrenceDO> selectDuePendingUpTo(@Param("dueDate") LocalDate dueDate);
 
     /** 我的近期安排：归属账号、due_date &le; 截止日、未完成（待提醒/已通知），按应提醒日升序 */
-    List<ReminderOccurrence> selectUpcomingByOwner(@Param("ownerMemberId") Long ownerMemberId,
-                                                   @Param("dueBefore") LocalDate dueBefore);
+    List<ReminderOccurrenceDO> selectUpcomingByOwner(@Param("ownerMemberId") Long ownerMemberId,
+                                                     @Param("dueBefore") LocalDate dueBefore);
 
     /** 投递完成置位：status 1→2 + 通知时间（仅待提醒实例可置位） */
     int markNotified(@Param("id") Long id, @Param("notifiedAt") LocalDateTime notifiedAt);

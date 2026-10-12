@@ -17,11 +17,6 @@
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>reminder-core-model</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.xp.starsite</groupId>
             <artifactId>star-site-common</artifactId>
         </dependency>
         <!-- EmailChannel 取会员联系方式（MemberApi 出站） -->

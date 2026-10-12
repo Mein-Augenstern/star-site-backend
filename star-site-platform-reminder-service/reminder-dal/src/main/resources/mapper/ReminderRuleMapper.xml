@@ -18,12 +18,12 @@
              #{title}, #{firstRemindAt}, #{repeatType}, #{repeatUntil}, #{advanceDays}, #{status})
     </insert>
 
-    <select id="selectByIdempotentKey" resultType="com.xp.starsite.reminder.entity.ReminderRule">
+    <select id="selectByIdempotentKey" resultType="com.xp.starsite.reminder.dal.dataobject.ReminderRuleDO">
         SELECT <include refid="cols"/> FROM reminder_rule
         WHERE source = #{source} AND biz_type = #{bizType} AND biz_id = #{bizId}
     </select>
 
-    <select id="selectById" resultType="com.xp.starsite.reminder.entity.ReminderRule">
+    <select id="selectById" resultType="com.xp.starsite.reminder.dal.dataobject.ReminderRuleDO">
         SELECT <include refid="cols"/> FROM reminder_rule
         WHERE id = #{id}
     </select>
@@ -47,12 +47,12 @@
         DELETE FROM reminder_rule WHERE id = #{id}
     </delete>
 
-    <select id="selectEnabled" resultType="com.xp.starsite.reminder.entity.ReminderRule">
+    <select id="selectEnabled" resultType="com.xp.starsite.reminder.dal.dataobject.ReminderRuleDO">
         SELECT <include refid="cols"/> FROM reminder_rule
         WHERE status = 1
     </select>
 
-    <select id="selectActiveBySourceAndMembers" resultType="com.xp.starsite.reminder.entity.ReminderRule">
+    <select id="selectActiveBySourceAndMembers" resultType="com.xp.starsite.reminder.dal.dataobject.ReminderRuleDO">
         SELECT <include refid="cols"/> FROM reminder_rule
         WHERE status = 1
           AND source = #{source}

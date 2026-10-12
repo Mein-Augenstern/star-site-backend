@@ -17,7 +17,7 @@
              #{dueDate}, #{status})
     </insert>
 
-    <select id="selectById" resultType="com.xp.starsite.reminder.entity.ReminderOccurrence">
+    <select id="selectById" resultType="com.xp.starsite.reminder.dal.dataobject.ReminderOccurrenceDO">
         SELECT <include refid="cols"/> FROM reminder_occurrence
         WHERE id = #{id}
     </select>
@@ -38,14 +38,14 @@
         WHERE rule_id = #{ruleId} AND status IN (1, 2)
     </delete>
 
-    <select id="selectDuePendingUpTo" resultType="com.xp.starsite.reminder.entity.ReminderOccurrence">
+    <select id="selectDuePendingUpTo" resultType="com.xp.starsite.reminder.dal.dataobject.ReminderOccurrenceDO">
         SELECT <include refid="cols"/> FROM reminder_occurrence
         WHERE status = 1
           AND due_date &lt;= #{dueDate}
         ORDER BY due_date ASC, id ASC
     </select>
 
-    <select id="selectUpcomingByOwner" resultType="com.xp.starsite.reminder.entity.ReminderOccurrence">
+    <select id="selectUpcomingByOwner" resultType="com.xp.starsite.reminder.dal.dataobject.ReminderOccurrenceDO">
         SELECT <include refid="cols"/> FROM reminder_occurrence
         WHERE owner_member_id = #{ownerMemberId}
           AND due_date &lt;= #{dueBefore}

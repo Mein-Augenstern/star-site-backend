@@ -14,7 +14,7 @@
             (#{occurrenceId}, #{ownerMemberId}, #{title}, #{readFlag})
     </insert>
 
-    <select id="selectById" resultType="com.xp.starsite.reminder.entity.Notification">
+    <select id="selectById" resultType="com.xp.starsite.reminder.dal.dataobject.NotificationDO">
         SELECT <include refid="cols"/> FROM notification
         WHERE id = #{id}
     </select>
@@ -29,7 +29,7 @@
         WHERE owner_member_id = #{ownerMemberId}
     </select>
 
-    <select id="selectPageByOwner" resultType="com.xp.starsite.reminder.entity.Notification">
+    <select id="selectPageByOwner" resultType="com.xp.starsite.reminder.dal.dataobject.NotificationDO">
         SELECT <include refid="cols"/> FROM notification
         WHERE owner_member_id = #{ownerMemberId}
         ORDER BY id DESC
