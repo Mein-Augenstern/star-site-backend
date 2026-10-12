@@ -6,6 +6,7 @@ import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.result.ResultCode;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.file.controller.actions.FileActions;
 import com.xp.starsite.file.entity.FileRecord;
 import com.xp.starsite.file.service.FileService;
 import com.xp.starsite.file.storage.FileStorage;
@@ -13,7 +14,6 @@ import com.xp.starsite.file.vo.FileVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -56,37 +56,29 @@ public class FileController {
                             @RequestParam(value = "bizType", required = false) String bizType,
                             @RequestParam java.util.Map<String, String> metadata, // 全部表单参数随事件透传（如 accountId）
                             @RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return writeTemplate.write("file.upload",
+        return writeTemplate.write(FileActions.UPLOAD,
                 () -> fileService.upload(file, bizType, memberId, metadata));
     }
 
     /**
-     * 在线预览文件流；越权防线：仅上传者本人可读（多人协作后升级为家庭范围校验）
+     * 在线预览文件流；越权防线（仅上传者本人可读）下沉在 {@link FileService#requireOwnedFile}
+     * （不存在抛 BizException、越权抛 FORBIDDEN，语义由全局异常处理器兜底）。
+     * <p>内容类型解析选择下沉 service：媒体类型是文件域的业务属性（记录 contentType 的规范化），
+     * 且控制器不应感知解析规则；本方法只把 service 返回的 MIME 字符串写入响应头（HTTP 表达职责），
+     * 与原「解析为媒体类型再设置 Content-Type」的线上行为逐字节等价。
      * <p>不套模板：本方法返回 {@code ResponseEntity<InputStreamResource>} 文件流而非 {@link R}，
-     * 模板的响应封装（成功 R.ok / 失败 R.fail）不能包它；失败语义由全局异常处理器兜底
-     * （requireFile 不存在抛 BizException、越权抛 FORBIDDEN）。
+     * 模板的响应封装（成功 R.ok / 失败 R.fail）不能包它。
      *
      * @param memberId 当前登录账号（JWT 注入，用于越权校验）
      * @param id       文件 id
-     * @return 文件流响应（inline；Content-Type 取记录 contentType，缺省 octet-stream）
+     * @return 文件流响应（inline；Content-Type 取记录 contentType 规范化值，缺省 octet-stream）
      */
     @GetMapping("/{id}/view")
     public ResponseEntity<InputStreamResource> view(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                                     @PathVariable Long id) {
-        FileRecord record = fileService.requireFile(id);
-        if (!record.getUploaderMemberId().equals(memberId)) {
-            throw new BizException(ResultCode.FORBIDDEN);
-        }
-        MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
-        if (record.getContentType() != null) {
-            try {
-                mediaType = MediaType.parseMediaType(record.getContentType());
-            } catch (Exception ignored) {
-                // 保底 octet-stream
-            }
-        }
+        FileRecord record = fileService.requireOwnedFile(memberId, id);
         return ResponseEntity.ok()
-                .contentType(mediaType)
+                .header(HttpHeaders.CONTENT_TYPE, fileService.resolveContentType(record.getContentType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + record.getFileName() + "\"")
                 .body(new InputStreamResource(fileStorage.open(record.getStorageKey())));
     }
@@ -118,7 +110,7 @@ class FileInternalController {
      */
     @GetMapping("/{id}/content")
     public R<byte[]> content(@org.springframework.web.bind.annotation.PathVariable Long id) {
-        return queryTemplate.query("file.internal.content", () -> {
+        return queryTemplate.query(FileActions.INTERNAL_CONTENT, () -> {
             FileRecord record = fileService.requireFile(id);
             try {
                 return fileStorage.open(record.getStorageKey()).readAllBytes();

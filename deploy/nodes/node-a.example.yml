@@ -4,5 +4,17 @@
 services:
   platform-gateway:
     ports: !override ["127.0.0.1:18080:8080"]
+  # 服务按宿主机内网 IP 注册（DISCOVERY_IP），端口必须发布到同一内网 IP 供跨容器/跨节点直连
+  # （绑内网 IP 而非 0.0.0.0：公网安全组不开这些端口）
+  platform-member:
+    ports: !override ["***REMOVED-LAN-IP***:8081:8081"]
+  family:
+    ports: !override ["***REMOVED-LAN-IP***:8082:8082"]
+  platform-file:
+    ports: !override ["***REMOVED-LAN-IP***:8083:8083"]
+  health:
+    ports: !override ["***REMOVED-LAN-IP***:8084:8084"]
+  platform-reminder:
+    ports: !override ["***REMOVED-LAN-IP***:8085:8085"]
   nginx:
     ports: !override []

@@ -4,6 +4,7 @@ import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.reminder.controller.actions.ReminderActions;
 import com.xp.starsite.reminder.dto.UserRuleCreateDTO;
 import com.xp.starsite.reminder.service.ReminderService;
 import com.xp.starsite.reminder.vo.NotificationVO;
@@ -52,7 +53,7 @@ public class ReminderController {
     @GetMapping("/upcoming")
     public R<List<OccurrenceVO>> upcoming(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                           @RequestParam(defaultValue = "30") int days) {
-        return queryTemplate.query("reminder.upcoming",
+        return queryTemplate.query(ReminderActions.UPCOMING,
                 () -> reminderService.upcoming(memberId, days));
     }
 
@@ -64,7 +65,7 @@ public class ReminderController {
      */
     @GetMapping("/notifications/unread-count")
     public R<Long> unreadCount(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return queryTemplate.query("reminder.notification.unreadCount",
+        return queryTemplate.query(ReminderActions.NOTIFICATION_UNREAD_COUNT,
                 () -> reminderService.unreadCount(memberId));
     }
 
@@ -80,7 +81,7 @@ public class ReminderController {
     public R<List<NotificationVO>> notifications(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                                  @RequestParam(defaultValue = "1") long page,
                                                  @RequestParam(defaultValue = "10") long size) {
-        return queryTemplate.query("reminder.notification.list",
+        return queryTemplate.query(ReminderActions.NOTIFICATION_LIST,
                 () -> reminderService.notifications(memberId, page, size));
     }
 
@@ -94,7 +95,7 @@ public class ReminderController {
     @PutMapping("/notifications/{id}/read")
     public R<Void> markRead(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                             @PathVariable Long id) {
-        return writeTemplate.write("reminder.notification.read",
+        return writeTemplate.write(ReminderActions.NOTIFICATION_READ,
                 () -> reminderService.markRead(memberId, id));
     }
 
@@ -108,7 +109,7 @@ public class ReminderController {
     @PutMapping("/occurrences/{id}/done")
     public R<Void> done(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                         @PathVariable Long id) {
-        return writeTemplate.write("reminder.occurrence.done",
+        return writeTemplate.write(ReminderActions.OCCURRENCE_DONE,
                 () -> reminderService.completeOccurrence(memberId, id));
     }
 
@@ -122,7 +123,7 @@ public class ReminderController {
     @PutMapping("/occurrences/{id}/dismiss")
     public R<Void> dismiss(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                            @PathVariable Long id) {
-        return writeTemplate.write("reminder.occurrence.dismiss",
+        return writeTemplate.write(ReminderActions.OCCURRENCE_DISMISS,
                 () -> reminderService.dismissOccurrence(memberId, id));
     }
 
@@ -136,7 +137,7 @@ public class ReminderController {
     @PostMapping("/rules")
     public R<UserRuleVO> createUserRule(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                         @Valid @RequestBody UserRuleCreateDTO dto) {
-        return writeTemplate.write("reminder.rule.create",
+        return writeTemplate.write(ReminderActions.RULE_CREATE,
                 () -> reminderService.createUserRule(memberId, dto));
     }
 
@@ -148,7 +149,7 @@ public class ReminderController {
      */
     @GetMapping("/rules")
     public R<List<UserRuleVO>> listUserRules(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return queryTemplate.query("reminder.rule.list",
+        return queryTemplate.query(ReminderActions.RULE_LIST,
                 () -> reminderService.listUserRules(memberId));
     }
 
@@ -162,7 +163,7 @@ public class ReminderController {
     @DeleteMapping("/rules/{id}")
     public R<Void> deleteUserRule(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                   @PathVariable Long id) {
-        return writeTemplate.write("reminder.rule.delete",
+        return writeTemplate.write(ReminderActions.RULE_DELETE,
                 () -> reminderService.deleteUserRule(memberId, id));
     }
 }

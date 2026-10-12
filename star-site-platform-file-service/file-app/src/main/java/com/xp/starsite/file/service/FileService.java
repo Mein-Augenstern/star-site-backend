@@ -34,4 +34,23 @@ public interface FileService {
      * @throws com.xp.starsite.common.exception.BizException 文件不存在（400）
      */
     FileRecord requireFile(Long id);
+
+    /**
+     * 按 id 取本人文件（越权防线：仅上传者本人可读，多人协作后升级为家庭范围校验）
+     *
+     * @param memberId 当前登录账号（与记录上传者比对）
+     * @param id       文件记录 id
+     * @return 文件记录
+     * @throws com.xp.starsite.common.exception.BizException 文件不存在（400）、非上传者本人（403）
+     */
+    FileRecord requireOwnedFile(Long memberId, Long id);
+
+    /**
+     * 解析文件内容类型为规范化 MIME 字符串：空/非法回落 application/octet-stream（保底下载语义）。
+     * 预览响应头直接使用该字符串（HTTP 表达仍由 Controller 组装，媒体类型解析属文件域业务规则）。
+     *
+     * @param contentType 记录存储的 MIME 类型（可空）
+     * @return 规范化 MIME 字符串（非法/缺省为 application/octet-stream）
+     */
+    String resolveContentType(String contentType);
 }

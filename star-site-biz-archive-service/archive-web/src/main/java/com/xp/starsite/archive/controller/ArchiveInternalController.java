@@ -3,6 +3,7 @@ package com.xp.starsite.archive.controller;
 import com.xp.starsite.api.dto.AssetSummaryDTO;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
+import com.xp.starsite.archive.controller.actions.ArchiveActions;
 import com.xp.starsite.archive.service.AssetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,7 +36,7 @@ public class ArchiveInternalController {
      */
     @GetMapping("/assets/summary")
     public R<AssetSummaryDTO> summary(@RequestParam("memberId") Long memberId) {
-        return queryTemplate.query("archive.internal.summary",
+        return queryTemplate.query(ArchiveActions.INTERNAL_SUMMARY,
                 () -> new AssetSummaryDTO(assetService.summary(memberId).getTotalValue()));
     }
 }

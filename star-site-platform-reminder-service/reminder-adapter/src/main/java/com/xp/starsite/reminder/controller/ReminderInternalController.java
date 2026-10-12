@@ -2,6 +2,7 @@ package com.xp.starsite.reminder.controller;
 
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.reminder.controller.actions.ReminderActions;
 import com.xp.starsite.reminder.service.ReminderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,7 +31,7 @@ public class ReminderInternalController {
      */
     @PostMapping("/scan")
     public R<Integer> scan() {
-        return writeTemplate.write("reminder.internal.scan",
+        return writeTemplate.write(ReminderActions.INTERNAL_SCAN,
                 () -> reminderService.scanAndNotify());
     }
 }

@@ -10,9 +10,9 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>file-infrastructure</artifactId>
-    <name>file-infrastructure</name>
-    <description>文件域基础设施：DAL mapper（MyBatis 官方 + XML）+ FileStorage 端口适配器（LocalFileStorage / OssFileStorage）</description>
+    <artifactId>file-dal</artifactId>
+    <name>file-dal</name>
+    <description>文件域 DAL 数据访问层：MyBatis 官方 mapper + XML，SQL 全收敛在 XML（FileStorage 端口适配器 LocalFileStorage / OssFileStorage 暂驻本模块）</description>
 
     <dependencies>
         <dependency>

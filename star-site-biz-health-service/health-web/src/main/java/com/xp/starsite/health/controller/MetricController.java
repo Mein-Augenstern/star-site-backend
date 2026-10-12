@@ -4,6 +4,7 @@ import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.health.controller.actions.HealthActions;
 import com.xp.starsite.health.dto.MetricBatchDTO;
 import com.xp.starsite.health.service.MetricService;
 import com.xp.starsite.health.vo.MetricTrendPoint;
@@ -52,7 +53,7 @@ public class MetricController {
     @PostMapping("/metrics")
     public R<List<MetricVO>> addMetrics(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                         @Valid @RequestBody MetricBatchDTO dto) {
-        return writeTemplate.write("health.metric.batchAdd",
+        return writeTemplate.write(HealthActions.METRIC_BATCH_ADD,
                 () -> metricService.addMetrics(memberId, dto));
     }
 
@@ -72,7 +73,7 @@ public class MetricController {
                                            @RequestParam(required = false) String metricType,
                                            @RequestParam(defaultValue = "1") long page,
                                            @RequestParam(defaultValue = "20") long size) {
-        return queryTemplate.query("health.metric.page",
+        return queryTemplate.query(HealthActions.METRIC_PAGE,
                 () -> metricService.listMetrics(memberId, familyMemberId, metricType, page, size));
     }
 
@@ -86,7 +87,7 @@ public class MetricController {
     @DeleteMapping("/metrics/{id}")
     public R<Void> deleteMetric(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                 @PathVariable Long id) {
-        return writeTemplate.write("health.metric.delete",
+        return writeTemplate.write(HealthActions.METRIC_DELETE,
                 () -> metricService.deleteMetric(memberId, id));
     }
 
@@ -102,7 +103,7 @@ public class MetricController {
     public R<List<MetricTrendPoint>> metricTrends(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                                   @RequestParam Long familyMemberId,
                                                   @RequestParam String metricType) {
-        return queryTemplate.query("health.metric.trend",
+        return queryTemplate.query(HealthActions.METRIC_TREND,
                 () -> metricService.metricTrends(memberId, familyMemberId, metricType));
     }
 }

@@ -4,6 +4,7 @@ import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.health.controller.actions.HealthActions;
 import com.xp.starsite.health.dto.VisitCreateDTO;
 import com.xp.starsite.health.service.VisitService;
 import com.xp.starsite.health.vo.PageVO;
@@ -47,7 +48,7 @@ public class VisitController {
     @PostMapping("/visits")
     public R<VisitVO> createVisit(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                   @Valid @RequestBody VisitCreateDTO dto) {
-        return writeTemplate.write("health.visit.create",
+        return writeTemplate.write(HealthActions.VISIT_CREATE,
                 () -> visitService.createVisit(memberId, dto));
     }
 
@@ -65,7 +66,7 @@ public class VisitController {
                                          @RequestParam(required = false) Long familyMemberId,
                                          @RequestParam(defaultValue = "1") long page,
                                          @RequestParam(defaultValue = "10") long size) {
-        return queryTemplate.query("health.visit.page",
+        return queryTemplate.query(HealthActions.VISIT_PAGE,
                 () -> visitService.listVisits(memberId, familyMemberId, page, size));
     }
 
@@ -79,7 +80,7 @@ public class VisitController {
     @DeleteMapping("/visits/{id}")
     public R<Void> deleteVisit(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                @PathVariable Long id) {
-        return writeTemplate.write("health.visit.delete",
+        return writeTemplate.write(HealthActions.VISIT_DELETE,
                 () -> visitService.deleteVisit(memberId, id));
     }
 }

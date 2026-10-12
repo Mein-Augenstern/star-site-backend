@@ -27,7 +27,7 @@
         </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>file-infrastructure</artifactId>
+            <artifactId>file-dal</artifactId>
             <version>${project.version}</version>
         </dependency>
 

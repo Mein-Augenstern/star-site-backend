@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
@@ -59,8 +60,11 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public PageVO<TransactionVO> list(Long memberId, Long accountId, Integer direction,
-                                      int year, int month, long page, long size) {
-        YearMonth ym = YearMonth.of(year, month);
+                                      Integer year, Integer month, long page, long size) {
+        // 缺省归一化：year/month 不传取当前年月（业务规则收敛在 service，Controller 只透传）
+        int y = year == null ? LocalDate.now().getYear() : year;
+        int m = month == null ? LocalDate.now().getMonthValue() : month;
+        YearMonth ym = YearMonth.of(y, m);
         LocalDateTime start = ym.atDay(1).atStartOfDay();
         LocalDateTime end = ym.plusMonths(1).atDay(1).atStartOfDay();
         long total = transactionMapper.countByCondition(memberId, accountId, direction, start, end);

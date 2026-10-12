@@ -3,6 +3,7 @@ package com.xp.starsite.family.controller;
 import com.xp.starsite.api.dto.FamilyMemberSnapshotDTO;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
+import com.xp.starsite.family.controller.actions.FamilyActions;
 import com.xp.starsite.family.service.FamilyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,7 +42,7 @@ public class FamilyInternalController {
     @GetMapping("/ownership")
     public R<FamilyMemberSnapshotDTO> checkOwnership(@RequestParam("memberId") Long memberId,
                                                      @RequestParam("familyMemberId") Long familyMemberId) {
-        return queryTemplate.query("family.internal.ownership",
+        return queryTemplate.query(FamilyActions.INTERNAL_OWNERSHIP,
                 () -> familyService.checkOwnership(memberId, familyMemberId));
     }
 
@@ -53,7 +54,7 @@ public class FamilyInternalController {
      */
     @GetMapping("/members")
     public R<List<FamilyMemberSnapshotDTO>> listMembers(@RequestParam("memberId") Long memberId) {
-        return queryTemplate.query("family.internal.members",
+        return queryTemplate.query(FamilyActions.INTERNAL_MEMBERS,
                 () -> familyService.listMemberSnapshots(memberId));
     }
 }

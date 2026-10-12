@@ -4,6 +4,7 @@ import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.health.controller.actions.HealthActions;
 import com.xp.starsite.health.dto.PregnancyUpsertDTO;
 import com.xp.starsite.health.service.PregnancyService;
 import com.xp.starsite.health.vo.PregnancyVO;
@@ -46,7 +47,7 @@ public class PregnancyController {
     @PostMapping("/pregnancy")
     public R<PregnancyVO> upsertPregnancy(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                           @Valid @RequestBody PregnancyUpsertDTO dto) {
-        return writeTemplate.write("health.pregnancy.upsert",
+        return writeTemplate.write(HealthActions.PREGNANCY_UPSERT,
                 () -> pregnancyService.upsertPregnancy(memberId, dto));
     }
 
@@ -60,7 +61,7 @@ public class PregnancyController {
     @GetMapping("/pregnancy")
     public R<PregnancyVO> getPregnancy(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                        @RequestParam Long familyMemberId) {
-        return queryTemplate.query("health.pregnancy.get",
+        return queryTemplate.query(HealthActions.PREGNANCY_GET,
                 () -> pregnancyService.getPregnancy(memberId, familyMemberId));
     }
 }

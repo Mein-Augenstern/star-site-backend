@@ -4,6 +4,7 @@ import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.finance.controller.actions.FinanceActions;
 import com.xp.starsite.finance.dto.TransactionSaveDTO;
 import com.xp.starsite.finance.service.TransactionService;
 import com.xp.starsite.finance.vo.PageVO;
@@ -48,12 +49,12 @@ public class TransactionController {
     @PostMapping
     public R<TransactionVO> create(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                    @Valid @RequestBody TransactionSaveDTO dto) {
-        return writeTemplate.write("finance.transaction.create",
+        return writeTemplate.write(FinanceActions.TRANSACTION_CREATE,
                 () -> transactionService.create(memberId, dto));
     }
 
     /**
-     * 流水分页（按账期倒序；year/month 缺省取当月）
+     * 流水分页（按账期倒序；year/month 缺省取当月，归一化在 TransactionService 内完成）
      *
      * @param memberId  当前登录账号（JWT 注入）
      * @param accountId 可选，按账户过滤
@@ -72,10 +73,8 @@ public class TransactionController {
                                          @RequestParam(required = false) Integer month,
                                          @RequestParam(defaultValue = "1") long page,
                                          @RequestParam(defaultValue = "20") long size) {
-        int y = year == null ? java.time.LocalDate.now().getYear() : year;
-        int m = month == null ? java.time.LocalDate.now().getMonthValue() : month;
-        return queryTemplate.query("finance.transaction.page",
-                () -> transactionService.list(memberId, accountId, direction, y, m, page, size));
+        return queryTemplate.query(FinanceActions.TRANSACTION_PAGE,
+                () -> transactionService.list(memberId, accountId, direction, year, month, page, size));
     }
 
     /**
@@ -88,7 +87,7 @@ public class TransactionController {
     @GetMapping("/{id}")
     public R<TransactionVO> detail(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                    @PathVariable Long id) {
-        return queryTemplate.query("finance.transaction.detail",
+        return queryTemplate.query(FinanceActions.TRANSACTION_DETAIL,
                 () -> transactionService.getDetail(memberId, id));
     }
 
@@ -102,7 +101,7 @@ public class TransactionController {
     @DeleteMapping("/{id}")
     public R<Void> delete(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                           @PathVariable Long id) {
-        return writeTemplate.write("finance.transaction.delete",
+        return writeTemplate.write(FinanceActions.TRANSACTION_DELETE,
                 () -> transactionService.delete(memberId, id));
     }
 }

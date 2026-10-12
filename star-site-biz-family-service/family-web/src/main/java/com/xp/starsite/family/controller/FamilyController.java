@@ -4,6 +4,7 @@ import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.family.controller.actions.FamilyActions;
 import com.xp.starsite.family.dto.FamilyCreateDTO;
 import com.xp.starsite.family.dto.FamilyMemberDTO;
 import com.xp.starsite.family.service.FamilyService;
@@ -50,7 +51,7 @@ public class FamilyController {
     @PostMapping
     public R<FamilyVO> create(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                               @Valid @RequestBody FamilyCreateDTO dto) {
-        return writeTemplate.write("family.create",
+        return writeTemplate.write(FamilyActions.CREATE,
                 () -> familyService.create(memberId, dto));
     }
 
@@ -62,7 +63,7 @@ public class FamilyController {
      */
     @GetMapping("/mine")
     public R<FamilyVO> mine(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return queryTemplate.query("family.mine",
+        return queryTemplate.query(FamilyActions.MINE,
                 () -> familyService.mine(memberId));
     }
 
@@ -76,7 +77,7 @@ public class FamilyController {
     @PostMapping("/members")
     public R<FamilyMemberVO> addMember(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                        @Valid @RequestBody FamilyMemberDTO dto) {
-        return writeTemplate.write("family.member.add",
+        return writeTemplate.write(FamilyActions.MEMBER_ADD,
                 () -> familyService.addMember(memberId, dto));
     }
 
@@ -88,7 +89,7 @@ public class FamilyController {
      */
     @GetMapping("/members")
     public R<List<FamilyMemberVO>> listMembers(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return queryTemplate.query("family.member.list",
+        return queryTemplate.query(FamilyActions.MEMBER_LIST,
                 () -> familyService.listMembers(memberId));
     }
 
@@ -104,7 +105,7 @@ public class FamilyController {
     public R<FamilyMemberVO> updateMember(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                           @PathVariable Long id,
                                           @Valid @RequestBody FamilyMemberDTO dto) {
-        return writeTemplate.write("family.member.update",
+        return writeTemplate.write(FamilyActions.MEMBER_UPDATE,
                 () -> familyService.updateMember(memberId, id, dto));
     }
 
@@ -118,7 +119,7 @@ public class FamilyController {
     @DeleteMapping("/members/{id}")
     public R<Void> deleteMember(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                 @PathVariable Long id) {
-        return writeTemplate.write("family.member.delete",
+        return writeTemplate.write(FamilyActions.MEMBER_DELETE,
                 () -> familyService.deleteMember(memberId, id));
     }
 }

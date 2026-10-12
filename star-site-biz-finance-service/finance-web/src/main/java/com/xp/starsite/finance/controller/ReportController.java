@@ -4,6 +4,7 @@ import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.finance.controller.actions.FinanceActions;
 import com.xp.starsite.finance.service.ReportService;
 import com.xp.starsite.finance.vo.BalanceSheetVO;
 import com.xp.starsite.finance.vo.CashFlowVO;
@@ -46,7 +47,7 @@ public class ReportController {
      */
     @GetMapping("/balance-sheet")
     public R<BalanceSheetVO> balanceSheet(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return queryTemplate.query("finance.report.balanceSheet",
+        return queryTemplate.query(FinanceActions.REPORT_BALANCE_SHEET,
                 () -> reportService.balanceSheet(memberId));
     }
 
@@ -62,7 +63,7 @@ public class ReportController {
     public R<IncomeExpenseVO> incomeExpense(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                             @RequestParam int year,
                                             @RequestParam(defaultValue = "0") int month) {
-        return queryTemplate.query("finance.report.incomeExpense",
+        return queryTemplate.query(FinanceActions.REPORT_INCOME_EXPENSE,
                 () -> reportService.incomeExpense(memberId, year, month));
     }
 
@@ -74,7 +75,7 @@ public class ReportController {
      */
     @GetMapping("/cash-flow")
     public R<CashFlowVO> cashFlow(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return queryTemplate.query("finance.report.cashFlow",
+        return queryTemplate.query(FinanceActions.REPORT_CASH_FLOW,
                 () -> reportService.cashFlow(memberId));
     }
 
@@ -86,7 +87,7 @@ public class ReportController {
      */
     @GetMapping("/net-worth-trend")
     public R<List<NetWorthPointVO>> netWorthTrend(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return queryTemplate.query("finance.report.netWorth",
+        return queryTemplate.query(FinanceActions.REPORT_NET_WORTH,
                 () -> reportService.netWorthTrend(memberId));
     }
 
@@ -103,7 +104,7 @@ public class ReportController {
             @RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
             @RequestParam int year,
             @RequestParam int month) {
-        return queryTemplate.query("finance.report.categoryShare",
+        return queryTemplate.query(FinanceActions.REPORT_CATEGORY_SHARE,
                 () -> reportService.categoryShare(memberId, year, month));
     }
 
@@ -116,7 +117,7 @@ public class ReportController {
     @GetMapping("/monthly-trend")
     public R<List<com.xp.starsite.finance.vo.MonthlyTrendVO>> monthlyTrend(
             @RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return queryTemplate.query("finance.report.monthlyTrend",
+        return queryTemplate.query(FinanceActions.REPORT_MONTHLY_TREND,
                 () -> reportService.monthlyTrend(memberId));
     }
 
@@ -128,7 +129,7 @@ public class ReportController {
      */
     @PostMapping("/snapshot-now")
     public R<NetWorthPointVO> snapshotNow(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return writeTemplate.write("finance.report.snapshot",
+        return writeTemplate.write(FinanceActions.REPORT_SNAPSHOT,
                 () -> reportService.snapshotNow(memberId));
     }
 
@@ -140,7 +141,7 @@ public class ReportController {
      */
     @PostMapping("/health-diagnosis")
     public R<String> healthDiagnosis(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return queryTemplate.query("finance.diagnosis.run",
+        return queryTemplate.query(FinanceActions.DIAGNOSIS_RUN,
                 () -> diagnosisService.diagnose(memberId));
     }
 }

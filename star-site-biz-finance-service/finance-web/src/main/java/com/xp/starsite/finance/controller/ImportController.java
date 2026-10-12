@@ -4,6 +4,7 @@ import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.finance.controller.actions.FinanceActions;
 import com.xp.starsite.finance.service.ImportResult;
 import com.xp.starsite.finance.service.ImportService;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +46,7 @@ public class ImportController {
     public R<ImportResult> importBill(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                       @RequestParam("accountId") Long accountId,
                                       @RequestParam("file") MultipartFile file) {
-        return writeTemplate.write("finance.import.start",
+        return writeTemplate.write(FinanceActions.IMPORT_START,
                 () -> importService.importBill(memberId, accountId, file));
     }
 
@@ -60,7 +61,7 @@ public class ImportController {
     public R<java.util.List<com.xp.starsite.finance.entity.FinanceImportLog>> logs(
             @RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
             @RequestParam(value = "fileId", required = false) Long fileId) {
-        return queryTemplate.query("finance.import.logs",
+        return queryTemplate.query(FinanceActions.IMPORT_LOGS,
                 () -> importService.logs(memberId, fileId));
     }
 }

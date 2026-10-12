@@ -13,6 +13,7 @@ import com.xp.starsite.file.storage.FileStorage;
 import com.xp.starsite.file.vo.FileVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -105,5 +106,28 @@ public class FileServiceImpl implements FileService {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "文件不存在");
         }
         return record;
+    }
+
+    @Override
+    public FileRecord requireOwnedFile(Long memberId, Long id) {
+        FileRecord record = requireFile(id);
+        if (!record.getUploaderMemberId().equals(memberId)) {
+            throw new BizException(ResultCode.FORBIDDEN);
+        }
+        return record;
+    }
+
+    @Override
+    public String resolveContentType(String contentType) {
+        if (contentType == null) {
+            return MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        }
+        try {
+            // 与 MediaType.parseMediaType(...).toString() 等价：预览响应头取规范化形式
+            return MediaType.parseMediaType(contentType).toString();
+        } catch (Exception ignored) {
+            // 保底 octet-stream
+            return MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        }
     }
 }

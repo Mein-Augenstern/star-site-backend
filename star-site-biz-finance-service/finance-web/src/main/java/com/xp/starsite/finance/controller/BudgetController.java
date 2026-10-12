@@ -4,6 +4,7 @@ import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.finance.controller.actions.FinanceActions;
 import com.xp.starsite.finance.dto.BudgetSaveDTO;
 import com.xp.starsite.finance.service.BudgetService;
 import com.xp.starsite.finance.vo.BudgetVO;
@@ -49,7 +50,7 @@ public class BudgetController {
     @PostMapping
     public R<BudgetVO> save(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                             @Valid @RequestBody BudgetSaveDTO dto) {
-        return writeTemplate.write("finance.budget.save",
+        return writeTemplate.write(FinanceActions.BUDGET_SAVE,
                 () -> budgetService.save(memberId, dto));
     }
 
@@ -63,7 +64,7 @@ public class BudgetController {
     @GetMapping
     public R<List<BudgetVO>> list(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                   @RequestParam String period) {
-        return queryTemplate.query("finance.budget.list",
+        return queryTemplate.query(FinanceActions.BUDGET_LIST,
                 () -> budgetService.list(memberId, period));
     }
 
@@ -77,7 +78,7 @@ public class BudgetController {
     @DeleteMapping("/{id}")
     public R<Void> delete(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                           @PathVariable Long id) {
-        return writeTemplate.write("finance.budget.delete",
+        return writeTemplate.write(FinanceActions.BUDGET_DELETE,
                 () -> budgetService.delete(memberId, id));
     }
 }

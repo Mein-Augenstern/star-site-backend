@@ -8,10 +8,14 @@ import com.xp.starsite.member.constant.MemberStatus;
 import com.xp.starsite.member.dto.LoginDTO;
 import com.xp.starsite.member.dto.MemberUpdateDTO;
 import com.xp.starsite.member.dto.PasswordUpdateDTO;
+import com.xp.starsite.member.dto.ProfileCompleteDTO;
 import com.xp.starsite.member.dto.RegisterDTO;
 import com.xp.starsite.member.entity.Member;
+import com.xp.starsite.member.entity.MemberIdentity;
+import com.xp.starsite.member.mapper.MemberIdentityMapper;
 import com.xp.starsite.member.mapper.MemberMapper;
 import com.xp.starsite.member.service.MemberService;
+import com.xp.starsite.member.vo.IdentityVO;
 import com.xp.starsite.member.vo.LoginVO;
 import com.xp.starsite.member.vo.MemberVO;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +23,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.List;
+import java.util.Map;
+
 /**
- * 会员服务实现。数据访问全部经 DAL（{@link MemberMapper}），
+ * 会员服务实现。数据访问全部经 DAL（{@link MemberMapper}/{@link MemberIdentityMapper}），
  * 条件与 SQL 下沉到 mapper XML；分页不存在（会员主表无列表场景）。
  *
  * @author xiaopu
@@ -34,6 +42,7 @@ import org.springframework.util.StringUtils;
 public class MemberServiceImpl implements MemberService {
 
     private final MemberMapper memberMapper;
+    private final MemberIdentityMapper identityMapper;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder passwordEncoder;
 
@@ -108,6 +117,122 @@ public class MemberServiceImpl implements MemberService {
             throw new BizException(ResultCode.OLD_PASSWORD_ERROR);
         }
         memberMapper.updatePassword(id, passwordEncoder.encode(dto.getNewPassword()));
+    }
+
+    @Override
+    public List<IdentityVO> listIdentities(Long memberId) {
+        return identityMapper.selectByMemberId(memberId)
+                .stream().map(i -> new IdentityVO(i.getId(), i.getIdentityType(),
+                        mask(i.getIdentityType(), i.getIdentifier()), i.getCreatedAt() == null ? null : i.getCreatedAt().toString()))
+                .toList();
+    }
+
+    @Override
+    public void unbindIdentity(Long memberId, Long id) {
+        MemberIdentity identity = identityMapper.selectById(id);
+        if (identity == null || !identity.getMemberId().equals(memberId)) {
+            throw new BizException(404, "绑定关系不存在");
+        }
+        if (identityMapper.countByMemberId(memberId) <= 1) {
+            throw new BizException(400, "至少保留一种登录方式，无法解绑");
+        }
+        identityMapper.markDeleted(id);
+    }
+
+    @Override
+    public MemberVO completeProfile(Long memberId, ProfileCompleteDTO dto) {
+        Member member = memberMapper.selectById(memberId);
+        if (member == null) {
+            throw new BizException(404, "账号不存在");
+        }
+        if (dto.getNickname() != null && !dto.getNickname().isBlank()) {
+            member.setNickname(dto.getNickname());
+        }
+        if (dto.getAvatar() != null) {
+            member.setAvatar(dto.getAvatar());
+        }
+        memberMapper.updateProfile(member);
+        return getById(memberId);
+    }
+
+    @Override
+    public void sendEmailCode(Long memberId, String email) {
+        if (email == null || !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
+            throw new BizException(400, "邮箱格式不正确");
+        }
+        if (identityMapper.countByIdentity("EMAIL", email) > 0) {
+            throw new BizException(400, "该邮箱已被其他账号绑定");
+        }
+        String code = String.valueOf(100000 + new java.security.SecureRandom().nextInt(900000));
+        CodeStore.put("EMAIL:" + memberId, email + ":" + code, 300);
+        boolean sent = MailSender.trySend(email, code);
+        // 开发态未配 SMTP（sent=false）：验证码仍有效，提示从日志取（不发信）
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void bindEmail(Long memberId, String email, String code) {
+        String saved = CodeStore.get("EMAIL:" + memberId);
+        if (saved == null || !saved.equals(email + ":" + code)) {
+            throw new BizException(400, "验证码错误或已过期");
+        }
+        if (identityMapper.countByIdentity("EMAIL", email) > 0) {
+            throw new BizException(400, "该邮箱已被其他账号绑定");
+        }
+        MemberIdentity identity = new MemberIdentity();
+        identity.setMemberId(memberId);
+        identity.setIdentityType("EMAIL");
+        identity.setIdentifier(email);
+        identityMapper.insert(identity);
+        Member member = memberMapper.selectById(memberId);
+        if (member != null && member.getEmail() == null) {
+            member.setEmail(email);
+            memberMapper.updateProfile(member);
+        }
+        CodeStore.remove("EMAIL:" + memberId);
+    }
+
+    /** 标识符脱敏（PASSWORD 明文回显——前端改密用；其余中段打码） */
+    private String mask(String type, String id) {
+        if ("PASSWORD".equals(type)) {
+            return id;
+        }
+        if (id == null || id.length() <= 4) {
+            return id;
+        }
+        return id.substring(0, 2) + "****" + id.substring(id.length() - 2);
+    }
+
+    /** 内存验证码存储（5 分钟过期；生产换 Redis） */
+    static final class CodeStore {
+        private static final Map<String, String[]> STORE = new java.util.concurrent.ConcurrentHashMap<>();
+
+        static void put(String key, String value, long ttlSeconds) {
+            STORE.put(key, new String[]{value, String.valueOf(System.currentTimeMillis() + ttlSeconds * 1000)});
+        }
+
+        static String get(String key) {
+            String[] v = STORE.get(key);
+            if (v == null) return null;
+            if (Long.parseLong(v[1]) < System.currentTimeMillis()) {
+                STORE.remove(key);
+                return null;
+            }
+            return v[0];
+        }
+
+        static void remove(String key) {
+            STORE.remove(key);
+        }
+    }
+
+    /** 验证码投递通道：M1 开发态打日志（生产接 SMTP/短信服务商后替换本类即可） */
+    static final class MailSender {
+        static boolean trySend(String to, String code) {
+            org.slf4j.LoggerFactory.getLogger(MailSender.class)
+                    .info("[开发态] 邮箱验证码 to={} code={}（5 分钟内有效；生产环境接入 SMTP 后真实发信）", to, code);
+            return false;
+        }
     }
 
     private Member requireMember(Long id) {

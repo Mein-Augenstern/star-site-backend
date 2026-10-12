@@ -4,6 +4,7 @@ import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.finance.controller.actions.FinanceActions;
 import com.xp.starsite.finance.dto.GoalSaveDTO;
 import com.xp.starsite.finance.service.GoalService;
 import com.xp.starsite.finance.vo.GoalVO;
@@ -49,7 +50,7 @@ public class GoalController {
     @PostMapping
     public R<GoalVO> create(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                             @Valid @RequestBody GoalSaveDTO dto) {
-        return writeTemplate.write("finance.goal.create",
+        return writeTemplate.write(FinanceActions.GOAL_CREATE,
                 () -> goalService.create(memberId, dto));
     }
 
@@ -61,7 +62,7 @@ public class GoalController {
      */
     @GetMapping
     public R<List<GoalVO>> list(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return queryTemplate.query("finance.goal.list", () -> goalService.list(memberId));
+        return queryTemplate.query(FinanceActions.GOAL_LIST, () -> goalService.list(memberId));
     }
 
     /**
@@ -76,7 +77,7 @@ public class GoalController {
     public R<GoalVO> update(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                             @PathVariable Long id,
                             @Valid @RequestBody GoalSaveDTO dto) {
-        return writeTemplate.write("finance.goal.update",
+        return writeTemplate.write(FinanceActions.GOAL_UPDATE,
                 () -> goalService.update(memberId, id, dto));
     }
 
@@ -90,7 +91,7 @@ public class GoalController {
     @DeleteMapping("/{id}")
     public R<Void> delete(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                           @PathVariable Long id) {
-        return writeTemplate.write("finance.goal.delete",
+        return writeTemplate.write(FinanceActions.GOAL_DELETE,
                 () -> goalService.delete(memberId, id));
     }
 }

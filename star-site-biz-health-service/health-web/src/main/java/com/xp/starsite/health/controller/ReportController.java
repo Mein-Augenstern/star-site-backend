@@ -4,6 +4,7 @@ import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.health.controller.actions.HealthActions;
 import com.xp.starsite.health.dto.IndicatorBatchDTO;
 import com.xp.starsite.health.dto.ReportCreateDTO;
 import com.xp.starsite.health.service.ReportService;
@@ -57,7 +58,7 @@ public class ReportController {
     @PostMapping("/reports")
     public R<HealthReportVO> create(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                     @Valid @RequestBody ReportCreateDTO dto) {
-        return writeTemplate.write("health.report.create",
+        return writeTemplate.write(HealthActions.REPORT_CREATE,
                 () -> reportService.createReport(memberId, dto));
     }
 
@@ -73,7 +74,7 @@ public class ReportController {
                                           @RequestParam(required = false) Integer year,
                                           @RequestParam(defaultValue = "1") long page,
                                           @RequestParam(defaultValue = "10") long size) {
-        return queryTemplate.query("health.report.page",
+        return queryTemplate.query(HealthActions.REPORT_PAGE,
                 () -> reportService.listReports(memberId, familyMemberId, year, page, size));
     }
 
@@ -85,7 +86,7 @@ public class ReportController {
     @GetMapping("/reports/{id}")
     public R<HealthReportVO> detail(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                     @PathVariable Long id) {
-        return queryTemplate.query("health.report.detail",
+        return queryTemplate.query(HealthActions.REPORT_DETAIL,
                 () -> reportService.getDetail(memberId, id));
     }
 
@@ -98,7 +99,7 @@ public class ReportController {
     public R<Void> addIndicators(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                  @PathVariable Long id,
                                  @Valid @RequestBody IndicatorBatchDTO dto) {
-        return writeTemplate.write("health.report.indicator.batch",
+        return writeTemplate.write(HealthActions.REPORT_INDICATOR_BATCH,
                 () -> reportService.addIndicators(memberId, id, dto));
     }
 
@@ -110,7 +111,7 @@ public class ReportController {
     @DeleteMapping("/reports/{id}")
     public R<Void> delete(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                           @PathVariable Long id) {
-        return writeTemplate.write("health.report.delete",
+        return writeTemplate.write(HealthActions.REPORT_DELETE,
                 () -> reportService.deleteReport(memberId, id));
     }
 
@@ -123,7 +124,7 @@ public class ReportController {
     public R<List<HealthReportVO>> search(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                           @RequestParam String keyword,
                                           @RequestParam(required = false) Long familyMemberId) {
-        return queryTemplate.query("health.report.search",
+        return queryTemplate.query(HealthActions.REPORT_SEARCH,
                 () -> reportService.search(memberId, keyword, familyMemberId));
     }
 
@@ -136,7 +137,7 @@ public class ReportController {
     public R<List<TrendPointVO>> trends(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                         @RequestParam Long familyMemberId,
                                         @RequestParam String itemName) {
-        return queryTemplate.query("health.report.trend",
+        return queryTemplate.query(HealthActions.REPORT_TREND,
                 () -> reportService.trends(memberId, familyMemberId, itemName));
     }
 }

@@ -25,19 +25,19 @@ public interface TransactionService {
     TransactionVO create(Long memberId, TransactionSaveDTO dto);
 
     /**
-     * 流水分页（可按账户/方向筛选，时间倒序）
+     * 流水分页（可按账户/方向筛选，时间倒序；year/month 缺省取当前年月）
      *
      * @param memberId  当前登录账号
      * @param accountId 可选，按账户过滤
      * @param direction 可选，按方向过滤（1 收入 / 2 支出 / 3 转账 / 4 调整）
-     * @param year      年份
-     * @param month     月份，传 0 = 全年
+     * @param year      可空，年份（缺省当年）
+     * @param month     可空，月份（缺省当月；传 0 = 全年）
      * @param page      页码，从 1 起
      * @param size      每页条数
      * @return 流水分页
      */
     PageVO<TransactionVO> list(Long memberId, Long accountId, Integer direction,
-                               int year, int month, long page, long size);
+                               Integer year, Integer month, long page, long size);
 
     /**
      * 流水详情

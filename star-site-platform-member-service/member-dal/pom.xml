@@ -10,9 +10,9 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>member-infrastructure</artifactId>
-    <name>member-infrastructure</name>
-    <description>会员域基础设施：DAL mapper（MyBatis 官方 + XML）+ WxSessionGateway（微信 jscode2session 出站网关）</description>
+    <artifactId>member-dal</artifactId>
+    <name>member-dal</name>
+    <description>会员域 DAL 数据访问层：MyBatis 官方 mapper + XML，SQL 全收敛在 XML（WxSessionGateway 微信 jscode2session 出站网关暂驻本模块）</description>
 
     <dependencies>
         <dependency>

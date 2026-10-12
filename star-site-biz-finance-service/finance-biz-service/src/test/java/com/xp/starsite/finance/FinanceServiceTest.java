@@ -18,12 +18,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -242,6 +245,37 @@ class FinanceServiceTest {
 
         BizException e = assertThrows(BizException.class, () -> txService().delete(ME, 9L));
         assertEquals(403, e.getCode());
+    }
+
+    /* ===== 流水分页账期归一化（year/month 缺省规则在 service） ===== */
+
+    @Test
+    void listDefaultsToCurrentYearMonthWhenParamsAbsent() {
+        when(transactionMapper.countByCondition(eq(ME), isNull(), isNull(),
+                any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(0L);
+
+        txService().list(ME, null, null, null, null, 1, 20);
+
+        ArgumentCaptor<LocalDateTime> start = ArgumentCaptor.forClass(LocalDateTime.class);
+        ArgumentCaptor<LocalDateTime> end = ArgumentCaptor.forClass(LocalDateTime.class);
+        verify(transactionMapper).countByCondition(eq(ME), isNull(), isNull(), start.capture(), end.capture());
+        YearMonth now = YearMonth.now();
+        assertEquals(now.atDay(1).atStartOfDay(), start.getValue());
+        assertEquals(now.plusMonths(1).atDay(1).atStartOfDay(), end.getValue());
+    }
+
+    @Test
+    void listUsesExplicitYearMonthWhenProvided() {
+        when(transactionMapper.countByCondition(eq(ME), isNull(), isNull(),
+                any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(0L);
+
+        txService().list(ME, null, null, 2026, 1, 1, 20);
+
+        ArgumentCaptor<LocalDateTime> start = ArgumentCaptor.forClass(LocalDateTime.class);
+        ArgumentCaptor<LocalDateTime> end = ArgumentCaptor.forClass(LocalDateTime.class);
+        verify(transactionMapper).countByCondition(eq(ME), isNull(), isNull(), start.capture(), end.capture());
+        assertEquals(LocalDateTime.of(2026, 1, 1, 0, 0), start.getValue());
+        assertEquals(LocalDateTime.of(2026, 2, 1, 0, 0), end.getValue());
     }
 
     /* ===== 建户 ===== */

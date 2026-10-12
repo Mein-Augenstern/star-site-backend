@@ -6,6 +6,7 @@ import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
 import com.xp.starsite.health.ai.ReportInterpretationService;
 import com.xp.starsite.health.ai.ReportOcrService;
+import com.xp.starsite.health.controller.actions.HealthActions;
 import com.xp.starsite.health.service.ReportInsightService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,7 +47,7 @@ public class ReportInsightController {
             @RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
             @PathVariable Long id,
             @RequestParam(defaultValue = "false") boolean force) {
-        return writeTemplate.write("health.insight.interpret",
+        return writeTemplate.write(HealthActions.INSIGHT_INTERPRET,
                 () -> reportInsightService.interpret(memberId, id, force));
     }
 
@@ -64,7 +65,7 @@ public class ReportInsightController {
     public R<Boolean> interpretAsync(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                      @PathVariable Long id,
                                      @RequestParam(defaultValue = "false") boolean force) {
-        return writeTemplate.write("health.insight.interpretAsync",
+        return writeTemplate.write(HealthActions.INSIGHT_INTERPRET_ASYNC,
                 () -> reportInsightService.interpretAsync(memberId, id, force));
     }
 
@@ -78,7 +79,7 @@ public class ReportInsightController {
     @PostMapping("/reports/ocr")
     public R<ReportOcrService.OcrDraft> ocr(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                             @RequestBody OcrRequest req) {
-        return queryTemplate.query("health.insight.ocr",
+        return queryTemplate.query(HealthActions.INSIGHT_OCR,
                 () -> reportInsightService.ocr(memberId, req.fileId()));
     }
 

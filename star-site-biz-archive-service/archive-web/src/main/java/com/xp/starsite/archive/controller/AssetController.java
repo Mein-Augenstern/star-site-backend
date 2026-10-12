@@ -1,5 +1,6 @@
 package com.xp.starsite.archive.controller;
 
+import com.xp.starsite.archive.controller.actions.ArchiveActions;
 import com.xp.starsite.archive.dto.AssetSaveDTO;
 import com.xp.starsite.archive.service.AssetService;
 import com.xp.starsite.archive.vo.AssetSummaryVO;
@@ -53,7 +54,7 @@ public class AssetController {
     @PostMapping
     public R<AssetVO> create(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                              @Valid @RequestBody AssetSaveDTO dto) {
-        return writeTemplate.write("archive.asset.create",
+        return writeTemplate.write(ArchiveActions.ASSET_CREATE,
                 () -> assetService.create(memberId, dto));
     }
 
@@ -71,7 +72,7 @@ public class AssetController {
                                    @RequestParam(required = false) String assetType,
                                    @RequestParam(defaultValue = "1") long page,
                                    @RequestParam(defaultValue = "20") long size) {
-        return queryTemplate.query("archive.asset.page",
+        return queryTemplate.query(ArchiveActions.ASSET_PAGE,
                 () -> assetService.list(memberId, assetType, page, size));
     }
 
@@ -84,7 +85,7 @@ public class AssetController {
      */
     @GetMapping("/summary")
     public R<AssetSummaryVO> summary(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return queryTemplate.query("archive.asset.summary",
+        return queryTemplate.query(ArchiveActions.ASSET_SUMMARY,
                 () -> assetService.summary(memberId));
     }
 
@@ -98,7 +99,7 @@ public class AssetController {
     @GetMapping("/{id}")
     public R<AssetVO> detail(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                              @PathVariable Long id) {
-        return queryTemplate.query("archive.asset.detail",
+        return queryTemplate.query(ArchiveActions.ASSET_DETAIL,
                 () -> assetService.getDetail(memberId, id));
     }
 
@@ -112,7 +113,7 @@ public class AssetController {
     @GetMapping("/{id}/valuations")
     public R<List<ValuationPointVO>> valuations(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                                 @PathVariable Long id) {
-        return queryTemplate.query("archive.asset.valuations",
+        return queryTemplate.query(ArchiveActions.ASSET_VALUATIONS,
                 () -> assetService.valuations(memberId, id));
     }
 
@@ -128,7 +129,7 @@ public class AssetController {
     public R<AssetVO> update(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                              @PathVariable Long id,
                              @Valid @RequestBody AssetSaveDTO dto) {
-        return writeTemplate.write("archive.asset.update",
+        return writeTemplate.write(ArchiveActions.ASSET_UPDATE,
                 () -> assetService.update(memberId, id, dto));
     }
 
@@ -142,7 +143,7 @@ public class AssetController {
     @DeleteMapping("/{id}")
     public R<Void> delete(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                           @PathVariable Long id) {
-        return writeTemplate.write("archive.asset.delete",
+        return writeTemplate.write(ArchiveActions.ASSET_DELETE,
                 () -> assetService.delete(memberId, id));
     }
 }

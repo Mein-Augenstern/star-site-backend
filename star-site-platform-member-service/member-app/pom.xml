@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>member-infrastructure</artifactId>
+            <artifactId>member-dal</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

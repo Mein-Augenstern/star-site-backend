@@ -4,6 +4,7 @@ import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.insurance.controller.actions.InsuranceActions;
 import com.xp.starsite.insurance.dto.PolicySaveDTO;
 import com.xp.starsite.insurance.service.InsuranceService;
 import com.xp.starsite.insurance.vo.CoverageMapVO;
@@ -49,7 +50,7 @@ public class InsuranceController {
     @PostMapping("/policies")
     public R<PolicyVO> create(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                               @Valid @RequestBody PolicySaveDTO dto) {
-        return writeTemplate.write("insurance.policy.create",
+        return writeTemplate.write(InsuranceActions.POLICY_CREATE,
                 () -> insuranceService.create(memberId, dto));
     }
 
@@ -71,7 +72,7 @@ public class InsuranceController {
                                     @RequestParam(required = false) Integer status,
                                     @RequestParam(defaultValue = "1") long page,
                                     @RequestParam(defaultValue = "10") long size) {
-        return queryTemplate.query("insurance.policy.page",
+        return queryTemplate.query(InsuranceActions.POLICY_PAGE,
                 () -> insuranceService.list(memberId, insuredMemberId, category, status, page, size));
     }
 
@@ -85,7 +86,7 @@ public class InsuranceController {
     @GetMapping("/policies/{id}")
     public R<PolicyVO> detail(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                               @PathVariable Long id) {
-        return queryTemplate.query("insurance.policy.detail",
+        return queryTemplate.query(InsuranceActions.POLICY_DETAIL,
                 () -> insuranceService.getDetail(memberId, id));
     }
 
@@ -101,7 +102,7 @@ public class InsuranceController {
     public R<PolicyVO> update(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                               @PathVariable Long id,
                               @Valid @RequestBody PolicySaveDTO dto) {
-        return writeTemplate.write("insurance.policy.update",
+        return writeTemplate.write(InsuranceActions.POLICY_UPDATE,
                 () -> insuranceService.update(memberId, id, dto));
     }
 
@@ -115,7 +116,7 @@ public class InsuranceController {
     @DeleteMapping("/policies/{id}")
     public R<Void> delete(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                           @PathVariable Long id) {
-        return writeTemplate.write("insurance.policy.delete",
+        return writeTemplate.write(InsuranceActions.POLICY_DELETE,
                 () -> insuranceService.delete(memberId, id));
     }
 
@@ -127,7 +128,7 @@ public class InsuranceController {
      */
     @GetMapping("/coverage-map")
     public R<CoverageMapVO> coverageMap(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return queryTemplate.query("insurance.map",
+        return queryTemplate.query(InsuranceActions.COVERAGE_MAP,
                 () -> insuranceService.coverageMap(memberId));
     }
 }

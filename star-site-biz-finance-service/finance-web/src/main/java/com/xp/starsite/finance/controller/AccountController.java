@@ -4,6 +4,7 @@ import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.finance.controller.actions.FinanceActions;
 import com.xp.starsite.finance.dto.AccountSaveDTO;
 import com.xp.starsite.finance.service.AccountService;
 import com.xp.starsite.finance.vo.AccountVO;
@@ -49,7 +50,7 @@ public class AccountController {
     @PostMapping
     public R<AccountVO> create(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                @Valid @RequestBody AccountSaveDTO dto) {
-        return writeTemplate.write("finance.account.create",
+        return writeTemplate.write(FinanceActions.ACCOUNT_CREATE,
                 () -> accountService.create(memberId, dto));
     }
 
@@ -61,7 +62,7 @@ public class AccountController {
      */
     @GetMapping
     public R<List<AccountVO>> list(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return queryTemplate.query("finance.account.list", () -> accountService.list(memberId));
+        return queryTemplate.query(FinanceActions.ACCOUNT_LIST, () -> accountService.list(memberId));
     }
 
     /**
@@ -74,7 +75,7 @@ public class AccountController {
     @GetMapping("/{id}")
     public R<AccountVO> detail(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                @PathVariable Long id) {
-        return queryTemplate.query("finance.account.detail",
+        return queryTemplate.query(FinanceActions.ACCOUNT_DETAIL,
                 () -> accountService.getDetail(memberId, id));
     }
 
@@ -90,7 +91,7 @@ public class AccountController {
     public R<AccountVO> update(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                @PathVariable Long id,
                                @Valid @RequestBody AccountSaveDTO dto) {
-        return writeTemplate.write("finance.account.update",
+        return writeTemplate.write(FinanceActions.ACCOUNT_UPDATE,
                 () -> accountService.update(memberId, id, dto));
     }
 
@@ -104,7 +105,7 @@ public class AccountController {
     @DeleteMapping("/{id}")
     public R<Void> delete(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                           @PathVariable Long id) {
-        return writeTemplate.write("finance.account.delete",
+        return writeTemplate.write(FinanceActions.ACCOUNT_DELETE,
                 () -> accountService.delete(memberId, id));
     }
 }

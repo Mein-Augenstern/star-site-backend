@@ -1,5 +1,6 @@
 package com.xp.starsite.archive.controller;
 
+import com.xp.starsite.archive.controller.actions.ArchiveActions;
 import com.xp.starsite.archive.dto.DocumentSaveDTO;
 import com.xp.starsite.archive.service.DocumentService;
 import com.xp.starsite.archive.vo.DocumentVO;
@@ -49,7 +50,7 @@ public class DocumentController {
     @PostMapping
     public R<DocumentVO> create(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                 @Valid @RequestBody DocumentSaveDTO dto) {
-        return writeTemplate.write("archive.document.create",
+        return writeTemplate.write(ArchiveActions.DOCUMENT_CREATE,
                 () -> documentService.create(memberId, dto));
     }
 
@@ -69,7 +70,7 @@ public class DocumentController {
                                       @RequestParam(required = false) String docType,
                                       @RequestParam(defaultValue = "1") long page,
                                       @RequestParam(defaultValue = "20") long size) {
-        return queryTemplate.query("archive.document.page",
+        return queryTemplate.query(ArchiveActions.DOCUMENT_PAGE,
                 () -> documentService.list(memberId, holderMemberId, docType, page, size));
     }
 
@@ -83,7 +84,7 @@ public class DocumentController {
     @GetMapping("/{id}")
     public R<DocumentVO> detail(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                 @PathVariable Long id) {
-        return queryTemplate.query("archive.document.detail",
+        return queryTemplate.query(ArchiveActions.DOCUMENT_DETAIL,
                 () -> documentService.getDetail(memberId, id));
     }
 
@@ -99,7 +100,7 @@ public class DocumentController {
     public R<DocumentVO> update(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                 @PathVariable Long id,
                                 @Valid @RequestBody DocumentSaveDTO dto) {
-        return writeTemplate.write("archive.document.update",
+        return writeTemplate.write(ArchiveActions.DOCUMENT_UPDATE,
                 () -> documentService.update(memberId, id, dto));
     }
 
@@ -113,7 +114,7 @@ public class DocumentController {
     @DeleteMapping("/{id}")
     public R<Void> delete(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                           @PathVariable Long id) {
-        return writeTemplate.write("archive.document.delete",
+        return writeTemplate.write(ArchiveActions.DOCUMENT_DELETE,
                 () -> documentService.delete(memberId, id));
     }
 }
