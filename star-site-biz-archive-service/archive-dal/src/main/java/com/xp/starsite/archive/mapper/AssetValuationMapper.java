@@ -1,6 +1,6 @@
 package com.xp.starsite.archive.mapper;
 
-import com.xp.starsite.archive.entity.AssetValuation;
+import com.xp.starsite.archive.dal.dataobject.AssetValuationDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -17,8 +17,8 @@ import java.util.List;
 public interface AssetValuationMapper {
 
     /** 追加一条估值留痕（id DB 自增回填；created_at 由 DB 默认值维护） */
-    int insert(AssetValuation valuation);
+    int insert(AssetValuationDO valuation);
 
     /** 某资产的估值曲线（按估值时点升序） */
-    List<AssetValuation> selectByAssetId(@Param("assetId") Long assetId);
+    List<AssetValuationDO> selectByAssetId(@Param("assetId") Long assetId);
 }

@@ -17,6 +17,11 @@
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
+            <artifactId>archive-core-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
             <artifactId>archive-dal</artifactId>
             <version>${project.version}</version>
         </dependency>

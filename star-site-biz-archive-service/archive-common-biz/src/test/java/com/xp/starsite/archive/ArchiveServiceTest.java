@@ -9,9 +9,9 @@ import com.xp.starsite.archive.dto.DocumentSaveDTO;
 import com.xp.starsite.archive.entity.ArchiveAsset;
 import com.xp.starsite.archive.entity.AssetValuation;
 import com.xp.starsite.archive.entity.ArchiveDocument;
-import com.xp.starsite.archive.mapper.ArchiveAssetMapper;
-import com.xp.starsite.archive.mapper.ArchiveDocumentMapper;
-import com.xp.starsite.archive.mapper.AssetValuationMapper;
+import com.xp.starsite.archive.repository.ArchiveAssetRepository;
+import com.xp.starsite.archive.repository.ArchiveDocumentRepository;
+import com.xp.starsite.archive.repository.AssetValuationRepository;
 import com.xp.starsite.archive.service.impl.AssetServiceImpl;
 import com.xp.starsite.archive.service.impl.DocumentServiceImpl;
 import org.junit.jupiter.api.Test;
@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -50,11 +51,11 @@ class ArchiveServiceTest {
     private static final long FOREIGN_MEMBER = 99L;
 
     @Mock
-    private ArchiveDocumentMapper documentMapper;
+    private ArchiveDocumentRepository documentRepository;
     @Mock
-    private ArchiveAssetMapper assetMapper;
+    private ArchiveAssetRepository assetRepository;
     @Mock
-    private AssetValuationMapper valuationMapper;
+    private AssetValuationRepository valuationRepository;
     @Mock
     private FamilyOwnershipGuard ownershipGuard;
     @Mock
@@ -90,11 +91,11 @@ class ArchiveServiceTest {
             return null;
         }).when(eventPublisher).publishTransactional(anyString(), anyString(), anyString(), any(), any(), any());
         AtomicReference<ArchiveDocument> inserted = new AtomicReference<>();
-        when(documentMapper.insert(any(ArchiveDocument.class))).thenAnswer(inv -> {
+        when(documentRepository.save(any(ArchiveDocument.class))).thenAnswer(inv -> {
             inserted.set(inv.getArgument(0));
-            return 1;
+            return inv.getArgument(0);
         });
-        when(documentMapper.selectById(anyLong())).thenAnswer(inv -> inserted.get());
+        when(documentRepository.findById(anyLong())).thenAnswer(inv -> Optional.ofNullable(inserted.get()));
     }
 
     @Test
@@ -103,10 +104,10 @@ class ArchiveServiceTest {
                 .thenThrow(new BizException(403, "无权限访问该家庭成员的数据"));
 
         BizException e = assertThrows(BizException.class,
-                () -> new DocumentServiceImpl(documentMapper, ownershipGuard, eventPublisher, idGenerator)
+                () -> new DocumentServiceImpl(documentRepository, ownershipGuard, eventPublisher, idGenerator)
                         .create(ME, docDto(FOREIGN_MEMBER)));
         assertEquals(403, e.getCode());
-        verify(documentMapper, never()).insert(any(ArchiveDocument.class));
+        verify(documentRepository, never()).save(any(ArchiveDocument.class));
     }
 
     @Test
@@ -114,7 +115,7 @@ class ArchiveServiceTest {
         when(ownershipGuard.requireOwned(ME, MY_MEMBER)).thenReturn(snapshot(MY_MEMBER));
         mockTxAndReadback();
 
-        new DocumentServiceImpl(documentMapper, ownershipGuard, eventPublisher, idGenerator).create(ME, docDto(MY_MEMBER));
+        new DocumentServiceImpl(documentRepository, ownershipGuard, eventPublisher, idGenerator).create(ME, docDto(MY_MEMBER));
 
         ArgumentCaptor<Object> payload = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher).publishTransactional(
@@ -149,13 +150,13 @@ class ArchiveServiceTest {
             return null;
         }).when(eventPublisher).publishTransactional(anyString(), anyString(), anyString(), any(), any(), any());
         AtomicReference<ArchiveAsset> inserted = new AtomicReference<>();
-        when(assetMapper.insert(any(ArchiveAsset.class))).thenAnswer(inv -> {
+        when(assetRepository.save(any(ArchiveAsset.class))).thenAnswer(inv -> {
             inserted.set(inv.getArgument(0));
-            return 1;
+            return inv.getArgument(0);
         });
-        when(assetMapper.selectById(anyLong())).thenAnswer(inv -> inserted.get());
+        when(assetRepository.findById(anyLong())).thenAnswer(inv -> Optional.ofNullable(inserted.get()));
 
-        new AssetServiceImpl(assetMapper, valuationMapper, ownershipGuard, eventPublisher, idGenerator)
+        new AssetServiceImpl(assetRepository, valuationRepository, ownershipGuard, eventPublisher, idGenerator)
                 .create(ME, assetDto("vehicle", LocalDate.of(2027, 3, 10)));
 
         ArgumentCaptor<Object> payload = ArgumentCaptor.forClass(Object.class);
@@ -168,24 +169,24 @@ class ArchiveServiceTest {
         // 年检前 15 天，逐年重复
         assertEquals(LocalDate.of(2027, 2, 23), evt.getFirstRemindAt());
         assertEquals(com.xp.starsite.api.event.reminder.ReminderRepeatType.ANNUAL, evt.getRepeatType());
-        verify(assetMapper).insert(any(ArchiveAsset.class));
+        verify(assetRepository).save(any(ArchiveAsset.class));
         // 首次估值留痕
-        verify(valuationMapper).insert(any(AssetValuation.class));
+        verify(valuationRepository).save(any(AssetValuation.class));
     }
 
     @Test
     void depositWithoutInspectDateSkipsReminder() {
         when(ownershipGuard.requireOwned(ME, MY_MEMBER)).thenReturn(snapshot(MY_MEMBER));
-        when(assetMapper.insert(any(ArchiveAsset.class))).thenReturn(1);
-        when(assetMapper.selectById(any(Long.class))).thenAnswer(inv -> {
+        when(assetRepository.save(any(ArchiveAsset.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(assetRepository.findById(any(Long.class))).thenAnswer(inv -> {
             ArchiveAsset a = new ArchiveAsset();
             a.setId(1L);
             a.setName("存款");
             a.setAssetType("deposit");
-            return a;
+            return Optional.of(a);
         });
 
-        new AssetServiceImpl(assetMapper, valuationMapper, ownershipGuard, eventPublisher, idGenerator)
+        new AssetServiceImpl(assetRepository, valuationRepository, ownershipGuard, eventPublisher, idGenerator)
                 .create(ME, assetDto("deposit", null));
 
         verify(eventPublisher, never()).publishTransactional(any(), any(), any(), any(), any(), any());
@@ -201,14 +202,14 @@ class ArchiveServiceTest {
         existing.setAssetType("real_estate");
         existing.setCurrentValue(new BigDecimal("3000000"));
         existing.setValuedAt(LocalDate.of(2026, 1, 1).atStartOfDay());
-        when(assetMapper.selectById(5L)).thenReturn(existing);
+        when(assetRepository.findById(5L)).thenReturn(Optional.of(existing));
 
-        new AssetServiceImpl(assetMapper, valuationMapper, ownershipGuard, eventPublisher, idGenerator)
+        new AssetServiceImpl(assetRepository, valuationRepository, ownershipGuard, eventPublisher, idGenerator)
                 .update(ME, 5L, assetDto("real_estate", null));
 
-        verify(assetMapper).update(any(ArchiveAsset.class));
+        verify(assetRepository).update(any(ArchiveAsset.class));
         // 估值变更 → 追加一条历史
-        verify(valuationMapper, times(1)).insert(any(AssetValuation.class));
+        verify(valuationRepository, times(1)).save(any(AssetValuation.class));
     }
 
     @Test
@@ -216,10 +217,10 @@ class ArchiveServiceTest {
         ArchiveAsset foreign = new ArchiveAsset();
         foreign.setId(6L);
         foreign.setOwnerMemberId(2L);
-        when(assetMapper.selectById(6L)).thenReturn(foreign);
+        when(assetRepository.findById(6L)).thenReturn(Optional.of(foreign));
 
         BizException e = assertThrows(BizException.class,
-                () -> new AssetServiceImpl(assetMapper, valuationMapper, ownershipGuard, eventPublisher, idGenerator)
+                () -> new AssetServiceImpl(assetRepository, valuationRepository, ownershipGuard, eventPublisher, idGenerator)
                         .getDetail(ME, 6L));
         assertEquals(403, e.getCode());
     }

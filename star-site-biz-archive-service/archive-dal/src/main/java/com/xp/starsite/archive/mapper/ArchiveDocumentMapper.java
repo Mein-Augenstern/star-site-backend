@@ -1,6 +1,6 @@
 package com.xp.starsite.archive.mapper;
 
-import com.xp.starsite.archive.entity.ArchiveDocument;
+import com.xp.starsite.archive.dal.dataobject.ArchiveDocumentDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -18,13 +18,13 @@ import java.util.List;
 public interface ArchiveDocumentMapper {
 
     /** 新建证件（id 雪花，应用侧已赋值；created_at/updated_at 由 DB 默认值维护） */
-    int insert(ArchiveDocument document);
+    int insert(ArchiveDocumentDO document);
 
     /** 按 id 取证件（含逻辑删过滤，不存在返回 null） */
-    ArchiveDocument selectById(@Param("id") Long id);
+    ArchiveDocumentDO selectById(@Param("id") Long id);
 
     /** 显式更新证件全量业务列（updated_at 由 DB 维护） */
-    int update(ArchiveDocument document);
+    int update(ArchiveDocumentDO document);
 
     /** 逻辑删：deleted 置 1 */
     int markDeleted(@Param("id") Long id);
@@ -35,7 +35,7 @@ public interface ArchiveDocumentMapper {
                       @Param("docType") String docType);
 
     /** 证件分页：按有效期升序（长期/null 靠前，与原实现同序） */
-    List<ArchiveDocument> selectPage(@Param("ownerMemberId") Long ownerMemberId,
+    List<ArchiveDocumentDO> selectPage(@Param("ownerMemberId") Long ownerMemberId,
                                      @Param("holderMemberId") Long holderMemberId,
                                      @Param("docType") String docType,
                                      @Param("offset") long offset,

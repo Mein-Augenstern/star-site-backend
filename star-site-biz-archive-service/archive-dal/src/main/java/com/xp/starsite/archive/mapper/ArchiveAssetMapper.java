@@ -1,6 +1,6 @@
 package com.xp.starsite.archive.mapper;
 
-import com.xp.starsite.archive.entity.ArchiveAsset;
+import com.xp.starsite.archive.dal.dataobject.ArchiveAssetDO;
 import com.xp.starsite.archive.projection.AssetTypeSummary;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -20,13 +20,13 @@ import java.util.List;
 public interface ArchiveAssetMapper {
 
     /** 新建资产（id 雪花，应用侧已赋值；created_at/updated_at 由 DB 默认值维护） */
-    int insert(ArchiveAsset asset);
+    int insert(ArchiveAssetDO asset);
 
     /** 按 id 取资产（含逻辑删过滤，不存在返回 null） */
-    ArchiveAsset selectById(@Param("id") Long id);
+    ArchiveAssetDO selectById(@Param("id") Long id);
 
     /** 显式更新资产全量业务列（updated_at 由 DB 维护） */
-    int update(ArchiveAsset asset);
+    int update(ArchiveAssetDO asset);
 
     /** 逻辑删：deleted 置 1 */
     int markDeleted(@Param("id") Long id);
@@ -36,7 +36,7 @@ public interface ArchiveAssetMapper {
                       @Param("assetType") String assetType);
 
     /** 资产分页：按 id 倒序（最新录入在前，与原实现同序） */
-    List<ArchiveAsset> selectPage(@Param("ownerMemberId") Long ownerMemberId,
+    List<ArchiveAssetDO> selectPage(@Param("ownerMemberId") Long ownerMemberId,
                                   @Param("assetType") String assetType,
                                   @Param("offset") long offset,
                                   @Param("limit") int limit);

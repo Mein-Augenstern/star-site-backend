@@ -14,7 +14,7 @@
             (#{assetId}, #{value}, #{valuedAt})
     </insert>
 
-    <select id="selectByAssetId" resultType="com.xp.starsite.archive.entity.AssetValuation">
+    <select id="selectByAssetId" resultType="com.xp.starsite.archive.dal.dataobject.AssetValuationDO">
         SELECT <include refid="cols"/> FROM archive_asset_valuation
         WHERE asset_id = #{assetId}
         ORDER BY valued_at ASC, id ASC

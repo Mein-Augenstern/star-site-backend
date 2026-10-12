@@ -8,9 +8,9 @@ import com.xp.starsite.api.event.reminder.ReminderRepeatType;
 import com.xp.starsite.archive.dto.AssetSaveDTO;
 import com.xp.starsite.archive.entity.ArchiveAsset;
 import com.xp.starsite.archive.entity.AssetValuation;
-import com.xp.starsite.archive.mapper.ArchiveAssetMapper;
-import com.xp.starsite.archive.mapper.AssetValuationMapper;
 import com.xp.starsite.archive.projection.AssetTypeSummary;
+import com.xp.starsite.archive.repository.ArchiveAssetRepository;
+import com.xp.starsite.archive.repository.AssetValuationRepository;
 import com.xp.starsite.archive.service.AssetService;
 import com.xp.starsite.archive.vo.AssetSummaryVO;
 import com.xp.starsite.archive.vo.AssetVO;
@@ -42,8 +42,8 @@ import java.util.stream.Collectors;
  * 家庭资产实现。估值手动更新（季度节奏），每次变更自动追加历史留痕。
  * 车辆年检是资产域唯一提醒联动：年检日期非空 → ANNUAL 提醒（事务消息）。
  * <p>
- * 数据访问全部经 DAL（{@link ArchiveAssetMapper}/{@link AssetValuationMapper}）：
- * SQL 收敛在 mapper XML，业务层零 SQL 拼装；逻辑删（deleted=0 过滤 / UPDATE 置位）。
+ * 数据访问经仓储层（{@link ArchiveAssetRepository}/{@link AssetValuationRepository}，
+ * 实现位于 core-service、底层调用 dal DAO）；逻辑删（deleted=0 过滤 / UPDATE 置位）。
  * 主键为应用侧雪花 id（{@link IdGenerator}）——半消息载荷需在 insert 前拿到 id，
  * 该语义保持不变。
  *
@@ -62,8 +62,8 @@ public class AssetServiceImpl implements AssetService {
 
     private static final int INSPECT_ADVANCE_DAYS = 15;
 
-    private final ArchiveAssetMapper assetMapper;
-    private final AssetValuationMapper valuationMapper;
+    private final ArchiveAssetRepository assetRepository;
+    private final AssetValuationRepository valuationRepository;
     private final FamilyOwnershipGuard ownershipGuard;
     private final EventPublisher eventPublisher;
     /** 雪花 id（替代 MyBatis-Plus ASSIGN_ID）：事务消息载荷需 insert 前拿到 id */
@@ -86,25 +86,25 @@ public class AssetServiceImpl implements AssetService {
         if (asset.getNextInspectDate() != null) {
             // 年检提醒与落库原子：insert 放事务回调，半消息先发
             eventPublisher.publishTransactional(Topics.TOPIC_REMINDER, EventTypes.REMINDER_REGISTER,
-                    "asset", asset.getId(), inspectReminderOf(asset), () -> assetMapper.insert(asset));
+                    "asset", asset.getId(), inspectReminderOf(asset), () -> assetRepository.save(asset));
         } else {
-            assetMapper.insert(asset);
+            assetRepository.save(asset);
         }
         insertValuation(asset);
         log.info("创建资产: id={}, name={}, type={}", asset.getId(), asset.getName(), asset.getAssetType());
-        return toVO(assetMapper.selectById(asset.getId()));
+        return toVO(assetRepository.findById(asset.getId()).orElse(null));
     }
 
     @Override
     public PageVO<AssetVO> list(Long memberId, String assetType, long page, long size) {
         // 分页 count 先行：0 直接短路，不再取页
-        long total = assetMapper.countByOwner(memberId, StringUtils.hasText(assetType) ? assetType : null);
+        long total = assetRepository.countByOwner(memberId, StringUtils.hasText(assetType) ? assetType : null);
         if (total == 0) {
             return PageVO.of(List.of(), 0, page, size);
         }
         long offset = (page - 1) * size;
-        List<AssetVO> vos = assetMapper
-                .selectPage(memberId, StringUtils.hasText(assetType) ? assetType : null, offset, (int) size)
+        List<AssetVO> vos = assetRepository
+                .pageByOwner(memberId, StringUtils.hasText(assetType) ? assetType : null, offset, (int) size)
                 .stream().map(this::toVO).toList();
         return PageVO.of(vos, total, page, size);
     }
@@ -126,7 +126,7 @@ public class AssetServiceImpl implements AssetService {
         if (dto.getCurrentValue() != null && (oldValue == null || dto.getCurrentValue().compareTo(oldValue) != 0)) {
             asset.setValuedAt(LocalDateTime.now());
         }
-        assetMapper.update(asset);
+        assetRepository.update(asset);
         if (asset.getValuedAt() != null && (oldValue == null
                 || (asset.getCurrentValue() != null && asset.getCurrentValue().compareTo(oldValue) != 0))) {
             insertValuation(asset);
@@ -138,13 +138,13 @@ public class AssetServiceImpl implements AssetService {
         } else {
             publishCancel(asset);
         }
-        return toVO(assetMapper.selectById(id));
+        return toVO(assetRepository.findById(id).orElse(null));
     }
 
     @Override
     public void delete(Long memberId, Long id) {
         ArchiveAsset asset = requireOwnedAsset(memberId, id);
-        assetMapper.markDeleted(id);
+        assetRepository.markDeleted(id);
         publishCancel(asset);
         log.info("删除资产: id={}", id);
     }
@@ -152,7 +152,7 @@ public class AssetServiceImpl implements AssetService {
     @Override
     public List<ValuationPointVO> valuations(Long memberId, Long assetId) {
         requireOwnedAsset(memberId, assetId);
-        return valuationMapper.selectByAssetId(assetId)
+        return valuationRepository.findByAssetId(assetId)
                 .stream().map(v -> new ValuationPointVO(v.getValue(), v.getValuedAt())).toList();
     }
 
@@ -160,8 +160,8 @@ public class AssetServiceImpl implements AssetService {
     public AssetSummaryVO summary(Long memberId) {
         // 总估值与类型分组都在 DAL 聚合（SUM/GROUP BY），业务层只做类型排序
         AssetSummaryVO vo = new AssetSummaryVO();
-        vo.setTotalValue(assetMapper.selectTotalValue(memberId));
-        Map<String, AssetTypeSummary> byType = assetMapper.selectTypeSummaries(memberId)
+        vo.setTotalValue(assetRepository.totalValue(memberId));
+        Map<String, AssetTypeSummary> byType = assetRepository.typeSummaries(memberId)
                 .stream().collect(Collectors.toMap(AssetTypeSummary::getAssetType, Function.identity()));
         List<AssetSummaryVO.TypeSlice> slices = new ArrayList<>();
         for (String type : TYPE_ORDER) {
@@ -180,7 +180,7 @@ public class AssetServiceImpl implements AssetService {
     }
 
     private ArchiveAsset requireOwnedAsset(Long memberId, Long id) {
-        ArchiveAsset asset = assetMapper.selectById(id);
+        ArchiveAsset asset = assetRepository.findById(id).orElse(null);
         if (asset == null) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "资产不存在");
         }
@@ -211,7 +211,7 @@ public class AssetServiceImpl implements AssetService {
         v.setAssetId(asset.getId());
         v.setValue(asset.getCurrentValue());
         v.setValuedAt(asset.getValuedAt() == null ? LocalDateTime.now() : asset.getValuedAt());
-        valuationMapper.insert(v);
+        valuationRepository.save(v);
     }
 
     /** 年检提醒：年检日前 15 天，逐年重复（车辆一直开就一直检） */

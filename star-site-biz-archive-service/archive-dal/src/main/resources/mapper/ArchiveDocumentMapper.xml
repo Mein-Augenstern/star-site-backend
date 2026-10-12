@@ -19,7 +19,7 @@
              #{docType}, #{docNo}, #{issueDate}, #{expiryDate}, #{fileId}, #{remark})
     </insert>
 
-    <select id="selectById" resultType="com.xp.starsite.archive.entity.ArchiveDocument">
+    <select id="selectById" resultType="com.xp.starsite.archive.dal.dataobject.ArchiveDocumentDO">
         SELECT <include refid="cols"/> FROM archive_document
         WHERE id = #{id} AND deleted = 0
     </select>
@@ -49,7 +49,7 @@
         <if test="docType != null and docType != ''">AND doc_type = #{docType}</if>
     </select>
 
-    <select id="selectPage" resultType="com.xp.starsite.archive.entity.ArchiveDocument">
+    <select id="selectPage" resultType="com.xp.starsite.archive.dal.dataobject.ArchiveDocumentDO">
         SELECT <include refid="cols"/> FROM archive_document
         WHERE deleted = 0
           AND owner_member_id = #{ownerMemberId}

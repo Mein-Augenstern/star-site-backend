@@ -21,7 +21,7 @@
              #{nextInspectDate}, #{remark})
     </insert>
 
-    <select id="selectById" resultType="com.xp.starsite.archive.entity.ArchiveAsset">
+    <select id="selectById" resultType="com.xp.starsite.archive.dal.dataobject.ArchiveAssetDO">
         SELECT <include refid="cols"/> FROM archive_asset
         WHERE id = #{id} AND deleted = 0
     </select>
@@ -51,7 +51,7 @@
         <if test="assetType != null and assetType != ''">AND asset_type = #{assetType}</if>
     </select>
 
-    <select id="selectPage" resultType="com.xp.starsite.archive.entity.ArchiveAsset">
+    <select id="selectPage" resultType="com.xp.starsite.archive.dal.dataobject.ArchiveAssetDO">
         SELECT <include refid="cols"/> FROM archive_asset
         WHERE deleted = 0
           AND owner_member_id = #{ownerMemberId}
