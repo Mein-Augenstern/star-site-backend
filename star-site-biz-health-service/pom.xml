@@ -20,6 +20,7 @@
         <module>health-dal</module>
         <module>health-integration</module>
         <module>health-core-service</module>
+        <module>health-common-biz</module>
         <module>health-web</module>
         <module>health-start</module>
     </modules>

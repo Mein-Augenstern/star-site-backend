@@ -3,7 +3,6 @@ package com.xp.starsite.health.service.impl;
 import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
-import com.xp.starsite.health.converter.VisitConverter;
 import com.xp.starsite.health.dto.VisitCreateDTO;
 import com.xp.starsite.health.entity.VisitRecord;
 import com.xp.starsite.health.repository.VisitRecordRepository;
@@ -12,6 +11,7 @@ import com.xp.starsite.health.vo.PageVO;
 import com.xp.starsite.health.vo.VisitVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,8 +19,8 @@ import java.util.Set;
 
 /**
  * 就医记录服务实现。越权防线约定见 {@link com.xp.starsite.health.service.VisitService}。
- * 数据访问经仓储层（{@link VisitRecordRepository}，实现位于 core-service 内、底层调用 dal DAO），
- * service 只面向领域模型 Entity 编排。
+ * 数据访问经仓储层（{@link VisitRecordRepository}，实现位于 core-service、底层调用 dal DAO），
+ * service 只面向领域模型 Entity 编排；VO 映射属于本层（common-biz 出参契约）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -47,7 +47,7 @@ public class VisitServiceImpl implements VisitService {
         visit.setRemark(dto.getRemark());
         VisitRecord saved = visitRepository.save(visit);
         log.info("新建就医记录: id={}, member={}, date={}", saved.getId(), dto.getFamilyMemberId(), dto.getVisitDate());
-        return VisitConverter.toVO(saved);
+        return toVO(saved);
     }
 
     @Override
@@ -62,7 +62,7 @@ public class VisitServiceImpl implements VisitService {
         }
         long offset = (page - 1) * size;
         List<VisitVO> vos = visitRepository.pageByScope(scope, offset, (int) size)
-                .stream().map(VisitConverter::toVO).toList();
+                .stream().map(VisitServiceImpl::toVO).toList();
         return PageVO.of(vos, total, page, size);
     }
 
@@ -72,6 +72,13 @@ public class VisitServiceImpl implements VisitService {
                 .orElseThrow(() -> new BizException(ResultCode.BAD_REQUEST.getCode(), "就医记录不存在"));
         ownershipGuard.requireOwned(memberId, visit.getFamilyMemberId());
         visitRepository.markDeleted(id);
+    }
+
+    /** 领域模型 → 接入层视图 */
+    private static VisitVO toVO(VisitRecord v) {
+        VisitVO vo = new VisitVO();
+        BeanUtils.copyProperties(v, vo);
+        return vo;
     }
 
     /** 列表/搜索的数据范围（指定成员单查，否则全家收口），与报告服务同语义 */
