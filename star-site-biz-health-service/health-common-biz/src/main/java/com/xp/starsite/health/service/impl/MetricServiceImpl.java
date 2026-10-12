@@ -5,7 +5,7 @@ import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
 import com.xp.starsite.health.dto.MetricBatchDTO;
 import com.xp.starsite.health.entity.DailyMetric;
-import com.xp.starsite.health.mapper.DailyMetricMapper;
+import com.xp.starsite.health.repository.DailyMetricRepository;
 import com.xp.starsite.health.service.MetricService;
 import com.xp.starsite.health.vo.MetricTrendPoint;
 import com.xp.starsite.health.vo.MetricVO;
@@ -22,7 +22,8 @@ import java.util.Set;
 
 /**
  * 日常指标服务实现。越权防线约定见 {@link com.xp.starsite.health.service.MetricService}。
- * 数据访问全部经 DAL（{@link DailyMetricMapper}），SQL 收敛在 mapper XML。
+ * 数据访问经仓储层（{@link DailyMetricRepository}，实现位于 core-service、底层调用 dal DAO），
+ * service 只面向领域模型 Entity 编排。
  *
  * @author xiaopu
  * @since 2026-10
@@ -32,7 +33,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class MetricServiceImpl implements MetricService {
 
-    private final DailyMetricMapper metricMapper;
+    private final DailyMetricRepository metricRepository;
     private final FamilyOwnershipGuard ownershipGuard;
 
     @Override
@@ -49,7 +50,7 @@ public class MetricServiceImpl implements MetricService {
             m.setMetricType(item.getMetricType());
             m.setValueNum(item.getValueNum());
             m.setRemark(item.getRemark());
-            metricMapper.insert(m);
+            metricRepository.save(m);
             result.add(toVO(m));
         }
         log.info("录入日常指标: {} 条", dto.getItems().size());
@@ -63,30 +64,28 @@ public class MetricServiceImpl implements MetricService {
             return PageVO.of(List.of(), 0, page, size);
         }
         String type = StringUtils.hasText(metricType) ? metricType : null;
-        long total = metricMapper.countByScope(scope, type);
+        long total = metricRepository.countByScope(scope, type);
         if (total == 0) {
             return PageVO.of(List.of(), 0, page, size);
         }
         long offset = (page - 1) * size;
-        List<MetricVO> vos = metricMapper.selectPage(scope, type, offset, (int) size)
+        List<MetricVO> vos = metricRepository.pageByScope(scope, type, offset, (int) size)
                 .stream().map(this::toVO).toList();
         return PageVO.of(vos, total, page, size);
     }
 
     @Override
     public void deleteMetric(Long memberId, Long id) {
-        DailyMetric m = metricMapper.selectById(id);
-        if (m == null) {
-            throw new BizException(ResultCode.BAD_REQUEST.getCode(), "指标记录不存在");
-        }
+        DailyMetric m = metricRepository.findById(id)
+                .orElseThrow(() -> new BizException(ResultCode.BAD_REQUEST.getCode(), "指标记录不存在"));
         ownershipGuard.requireOwned(memberId, m.getFamilyMemberId());
-        metricMapper.markDeleted(id);
+        metricRepository.markDeleted(id);
     }
 
     @Override
     public List<MetricTrendPoint> metricTrends(Long memberId, Long familyMemberId, String metricType) {
         ownershipGuard.requireOwned(memberId, familyMemberId);
-        return metricMapper.selectTrend(familyMemberId, metricType)
+        return metricRepository.selectTrend(familyMemberId, metricType)
                 .stream()
                 .map(m -> new MetricTrendPoint(m.getMetricDate(), m.getValueNum()))
                 .toList();

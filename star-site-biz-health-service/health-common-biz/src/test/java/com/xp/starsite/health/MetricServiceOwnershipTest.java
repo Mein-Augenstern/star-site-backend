@@ -4,16 +4,17 @@ import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.health.dto.MetricBatchDTO;
 import com.xp.starsite.health.entity.DailyMetric;
-import com.xp.starsite.health.mapper.DailyMetricMapper;
+import com.xp.starsite.health.repository.DailyMetricRepository;
 import com.xp.starsite.health.service.impl.MetricServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -29,12 +30,12 @@ class MetricServiceOwnershipTest {
     private static final long FOREIGN_FAMILY_MEMBER = 99L;
 
     @Mock
-    private DailyMetricMapper metricMapper;
+    private DailyMetricRepository metricRepository;
     @Mock
     private FamilyOwnershipGuard ownershipGuard;
 
     private MetricServiceImpl newService() {
-        return new MetricServiceImpl(metricMapper, ownershipGuard);
+        return new MetricServiceImpl(metricRepository, ownershipGuard);
     }
 
     @Test
@@ -58,11 +59,10 @@ class MetricServiceOwnershipTest {
         DailyMetric foreign = new DailyMetric();
         foreign.setId(20L);
         foreign.setFamilyMemberId(FOREIGN_FAMILY_MEMBER);
-        when(metricMapper.selectById(20L)).thenReturn(foreign);
+        when(metricRepository.findById(20L)).thenReturn(Optional.of(foreign));
         when(ownershipGuard.requireOwned(ME, FOREIGN_FAMILY_MEMBER))
                 .thenThrow(new BizException(403, "无权限访问该家庭成员的数据"));
 
         assertThrows(BizException.class, () -> newService().deleteMetric(ME, 20L));
-        verify(metricMapper).selectById(20L);
     }
 }
