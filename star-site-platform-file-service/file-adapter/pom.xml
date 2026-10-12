@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>file-app</artifactId>
+            <artifactId>file-core-service</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

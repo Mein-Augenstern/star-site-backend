@@ -10,7 +10,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>finance-biz-service</artifactId>
+    <artifactId>finance-core-service</artifactId>
     <name>finance-biz-service</name>
     <description>财务域业务层：service 编排、AI 诊断、账单导入解析、DTO/VO 契约（M 层）</description>
 

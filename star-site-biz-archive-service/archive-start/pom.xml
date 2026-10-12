@@ -22,7 +22,7 @@
         </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>archive-biz-service</artifactId>
+            <artifactId>archive-core-service</artifactId>
             <version>${project.version}</version>
         </dependency>
 

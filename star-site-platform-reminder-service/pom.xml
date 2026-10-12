@@ -20,7 +20,7 @@
         <module>reminder-facade</module>
         <module>reminder-domain</module>
         <module>reminder-dal</module>
-        <module>reminder-app</module>
+        <module>reminder-core-service</module>
         <module>reminder-adapter</module>
         <module>reminder-start</module>
     </modules>

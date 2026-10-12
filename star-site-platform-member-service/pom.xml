@@ -19,7 +19,7 @@
         <module>member-facade</module>
         <module>member-domain</module>
         <module>member-dal</module>
-        <module>member-app</module>
+        <module>member-core-service</module>
         <module>member-adapter</module>
         <module>member-start</module>
     </modules>

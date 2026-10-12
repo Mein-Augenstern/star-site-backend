@@ -10,7 +10,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>insurance-biz-service</artifactId>
+    <artifactId>insurance-core-service</artifactId>
     <name>insurance-biz-service</name>
     <description>保单域业务层：service 编排、DTO/VO 契约（M 层）</description>
 

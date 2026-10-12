@@ -20,7 +20,7 @@
         <module>file-facade</module>
         <module>file-domain</module>
         <module>file-dal</module>
-        <module>file-app</module>
+        <module>file-core-service</module>
         <module>file-adapter</module>
         <module>file-start</module>
     </modules>
