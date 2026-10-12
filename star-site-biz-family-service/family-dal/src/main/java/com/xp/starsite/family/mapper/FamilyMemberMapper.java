@@ -1,6 +1,6 @@
 package com.xp.starsite.family.mapper;
 
-import com.xp.starsite.family.entity.FamilyMember;
+import com.xp.starsite.family.dal.dataobject.FamilyMemberDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -18,19 +18,19 @@ import java.util.List;
 public interface FamilyMemberMapper {
 
     /** 新建成员档案（useGeneratedKeys 回填 id） */
-    int insert(FamilyMember member);
+    int insert(FamilyMemberDO member);
 
     /** 按 id 取成员（含逻辑删过滤，不存在返回 null） */
-    FamilyMember selectById(@Param("id") Long id);
+    FamilyMemberDO selectById(@Param("id") Long id);
 
     /** 某家庭全部成员（按 id 升序：建档顺序即列表顺序） */
-    List<FamilyMember> selectByFamilyId(@Param("familyId") Long familyId);
+    List<FamilyMemberDO> selectByFamilyId(@Param("familyId") Long familyId);
 
     /**
      * 成员档案编辑：仅更新非空字段（name/relation/gender/birthDate/phone/avatarFileId/
      * linkedMemberId/remark，与原 MyBatis-Plus updateById 的"null 字段不更新"语义一致）。
      */
-    int update(FamilyMember member);
+    int update(FamilyMemberDO member);
 
     /** 逻辑删：deleted 置 1 */
     int markDeleted(@Param("id") Long id);

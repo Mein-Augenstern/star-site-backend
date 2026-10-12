@@ -12,7 +12,7 @@
 
     <artifactId>family-core-service</artifactId>
     <name>family-core-service</name>
-    <description>家庭域业务层：service 编排、DTO/VO 契约（M 层）</description>
+    <description>家庭域仓储层：Repository 接口+实现、DO↔Entity 转换（对上层屏蔽 DO 与 SQL 细节，底层调用 dal DAO）</description>
 
     <dependencies>
         <dependency>
@@ -22,26 +22,21 @@
         </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>star-site-common</artifactId>
-        </dependency>
-        <!-- 对外契约：FamilyMemberSnapshotDTO（internal 接口返回） -->
-                <dependency>
-            <groupId>com.xp.starsite</groupId>
-            <artifactId>family-facade</artifactId>
+            <artifactId>family-core-model</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>star-site-common</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

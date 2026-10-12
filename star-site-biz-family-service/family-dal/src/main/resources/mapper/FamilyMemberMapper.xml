@@ -15,12 +15,12 @@
             (#{familyId}, #{name}, #{relation}, #{gender}, #{birthDate}, #{phone}, #{avatarFileId}, #{linkedMemberId}, #{remark})
     </insert>
 
-    <select id="selectById" resultType="com.xp.starsite.family.entity.FamilyMember">
+    <select id="selectById" resultType="com.xp.starsite.family.dal.dataobject.FamilyMemberDO">
         SELECT <include refid="cols"/> FROM family_member
         WHERE id = #{id} AND deleted = 0
     </select>
 
-    <select id="selectByFamilyId" resultType="com.xp.starsite.family.entity.FamilyMember">
+    <select id="selectByFamilyId" resultType="com.xp.starsite.family.dal.dataobject.FamilyMemberDO">
         SELECT <include refid="cols"/> FROM family_member
         WHERE family_id = #{familyId} AND deleted = 0
         ORDER BY id ASC
