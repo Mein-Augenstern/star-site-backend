@@ -3,6 +3,7 @@ package com.xp.starsite.member.controller;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.member.controller.actions.MemberActions;
 import com.xp.starsite.member.dto.LoginDTO;
 import com.xp.starsite.member.dto.RegisterDTO;
 import com.xp.starsite.member.service.MemberService;
@@ -42,7 +43,7 @@ public class AuthController {
      */
     @PostMapping("/register")
     public R<Void> register(@Valid @RequestBody RegisterDTO dto) {
-        return writeTemplate.write("member.auth.register", () -> memberService.register(dto));
+        return writeTemplate.write(MemberActions.AUTH_REGISTER, () -> memberService.register(dto));
     }
 
     /**
@@ -53,6 +54,6 @@ public class AuthController {
      */
     @PostMapping("/login")
     public R<LoginVO> login(@Valid @RequestBody LoginDTO dto) {
-        return queryTemplate.query("member.auth.login", () -> memberService.login(dto));
+        return queryTemplate.query(MemberActions.AUTH_LOGIN, () -> memberService.login(dto));
     }
 }

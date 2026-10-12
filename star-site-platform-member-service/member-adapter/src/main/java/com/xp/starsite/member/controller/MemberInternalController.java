@@ -3,6 +3,7 @@ package com.xp.starsite.member.controller;
 import com.xp.starsite.api.dto.MemberContactDTO;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
+import com.xp.starsite.member.controller.actions.MemberActions;
 import com.xp.starsite.member.service.MemberService;
 import com.xp.starsite.member.vo.MemberVO;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class MemberInternalController {
      */
     @GetMapping("/{id}/contact")
     public R<MemberContactDTO> contact(@PathVariable Long id) {
-        return queryTemplate.query("member.internal.contact", () -> {
+        return queryTemplate.query(MemberActions.INTERNAL_CONTACT, () -> {
             MemberVO member = memberService.getById(id);
             if (member == null) {
                 return null;

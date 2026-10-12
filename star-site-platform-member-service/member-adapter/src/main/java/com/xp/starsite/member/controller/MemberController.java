@@ -4,6 +4,7 @@ import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import com.xp.starsite.member.controller.actions.MemberActions;
 import com.xp.starsite.member.dto.MemberUpdateDTO;
 import com.xp.starsite.member.dto.PasswordUpdateDTO;
 import com.xp.starsite.member.service.MemberService;
@@ -43,7 +44,7 @@ public class MemberController {
      */
     @GetMapping("/me")
     public R<MemberVO> me(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId) {
-        return queryTemplate.query("member.profile.get", () -> memberService.getById(memberId));
+        return queryTemplate.query(MemberActions.PROFILE_GET, () -> memberService.getById(memberId));
     }
 
     /**
@@ -56,7 +57,7 @@ public class MemberController {
     @PutMapping("/me")
     public R<MemberVO> updateMe(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                 @Valid @RequestBody MemberUpdateDTO dto) {
-        return writeTemplate.write("member.profile.update",
+        return writeTemplate.write(MemberActions.PROFILE_UPDATE,
                 () -> memberService.updateProfile(memberId, dto));
     }
 
@@ -70,7 +71,7 @@ public class MemberController {
     @PutMapping("/me/password")
     public R<Void> changePassword(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                                   @Valid @RequestBody PasswordUpdateDTO dto) {
-        return writeTemplate.write("member.profile.changePassword",
+        return writeTemplate.write(MemberActions.PROFILE_CHANGE_PASSWORD,
                 () -> memberService.changePassword(memberId, dto));
     }
 }
