@@ -21,19 +21,19 @@
         DELETE FROM health_indicator WHERE report_id = #{reportId}
     </delete>
 
-    <select id="selectByReportId" resultType="com.xp.starsite.health.dal.dataobject.HealthIndicator">
+    <select id="selectByReportId" resultType="com.xp.starsite.health.dal.dataobject.HealthIndicatorDO">
         SELECT <include refid="cols"/> FROM health_indicator
         WHERE report_id = #{reportId}
         ORDER BY sort_no ASC, id ASC
     </select>
 
-    <select id="selectTrend" resultType="com.xp.starsite.health.dal.dataobject.HealthIndicator">
+    <select id="selectTrend" resultType="com.xp.starsite.health.dal.dataobject.HealthIndicatorDO">
         SELECT <include refid="cols"/> FROM health_indicator
         WHERE family_member_id = #{familyMemberId} AND item_name = #{itemName}
         ORDER BY report_year ASC
     </select>
 
-    <select id="selectByKeywordLike" resultType="com.xp.starsite.health.dal.dataobject.HealthIndicator">
+    <select id="selectByKeywordLike" resultType="com.xp.starsite.health.dal.dataobject.HealthIndicatorDO">
         SELECT id, report_id FROM health_indicator
         WHERE item_name LIKE CONCAT('%', #{keyword}, '%')
     </select>

@@ -8,8 +8,8 @@ import com.xp.starsite.health.dto.IndicatorDTO;
 import com.xp.starsite.health.dto.ReportCreateDTO;
 import com.xp.starsite.health.entity.HealthIndicator;
 import com.xp.starsite.health.entity.HealthReport;
-import com.xp.starsite.health.mapper.HealthIndicatorMapper;
-import com.xp.starsite.health.mapper.HealthReportMapper;
+import com.xp.starsite.health.repository.HealthIndicatorRepository;
+import com.xp.starsite.health.repository.HealthReportRepository;
 import com.xp.starsite.health.service.ReportService;
 import com.xp.starsite.health.vo.HealthIndicatorVO;
 import com.xp.starsite.health.vo.HealthReportVO;
@@ -24,7 +24,6 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * 体检报告服务实现。
@@ -32,8 +31,8 @@ import java.util.stream.Collectors;
  * 越权防线：凡带 familyMemberId 的入参先经 {@link FamilyOwnershipGuard} 校验归属；
  * 列表/搜索不传 familyMemberId 时强制收口在「自己家庭的成员集合」内；
  * fail-closed：family 服务不可用即拒绝请求。
- * 数据访问全部经 DAL（{@link HealthReportMapper}/{@link HealthIndicatorMapper}），
- * SQL 收敛在 mapper XML，业务层零 SQL 拼装。
+ * 数据访问经仓储层（{@link HealthReportRepository}/{@link HealthIndicatorRepository}，
+ * 实现位于 core-service、底层调用 dal DAO），业务层只见领域模型、零 DAO 依赖。
  *
  * @author xiaopu
  * @since 2026-10
@@ -43,8 +42,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ReportServiceImpl implements ReportService {
 
-    private final HealthReportMapper reportMapper;
-    private final HealthIndicatorMapper indicatorMapper;
+    private final HealthReportRepository reportRepository;
+    private final HealthIndicatorRepository indicatorRepository;
     private final FamilyOwnershipGuard ownershipGuard;
 
     @Override
@@ -61,7 +60,7 @@ public class ReportServiceImpl implements ReportService {
         report.setSummary(dto.getSummary());
         report.setFileId(dto.getFileId());
         report.setRemark(dto.getRemark());
-        reportMapper.insert(report);
+        reportRepository.save(report);
         log.info("上传体检报告: id={}, member={}, year={}", report.getId(), dto.getFamilyMemberId(), dto.getReportYear());
         return toVO(report, null);
     }
@@ -72,12 +71,12 @@ public class ReportServiceImpl implements ReportService {
         if (scope.isEmpty()) {
             return PageVO.of(List.of(), 0, page, size);
         }
-        long total = reportMapper.countByScope(scope, year);
+        long total = reportRepository.countByScope(scope, year);
         if (total == 0) {
             return PageVO.of(List.of(), 0, page, size);
         }
         long offset = (page - 1) * size;
-        List<HealthReportVO> vos = reportMapper.selectPage(scope, year, offset, (int) size)
+        List<HealthReportVO> vos = reportRepository.pageByScope(scope, year, offset, (int) size)
                 .stream().map(r -> toVO(r, null)).toList();
         return PageVO.of(vos, total, page, size);
     }
@@ -85,7 +84,7 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public HealthReportVO getDetail(Long memberId, Long id) {
         HealthReport report = requireOwnedReport(memberId, id);
-        List<HealthIndicatorVO> indicators = indicatorMapper.selectByReportId(id)
+        List<HealthIndicatorVO> indicators = indicatorRepository.findByReportId(id)
                 .stream().map(this::toIndicatorVO).toList();
         return toVO(report, indicators);
     }
@@ -95,7 +94,7 @@ public class ReportServiceImpl implements ReportService {
     public void addIndicators(Long memberId, Long reportId, IndicatorBatchDTO dto) {
         HealthReport report = requireOwnedReport(memberId, reportId);
         // 重录覆盖：先清掉该报告旧指标
-        indicatorMapper.deleteByReportId(reportId);
+        indicatorRepository.deleteByReportId(reportId);
         int sort = 0;
         for (IndicatorDTO i : dto.getIndicators()) {
             HealthIndicator indicator = new HealthIndicator();
@@ -111,7 +110,7 @@ public class ReportServiceImpl implements ReportService {
             indicator.setRefHigh(i.getRefHigh());
             indicator.setAbnormalFlag(judgeAbnormal(i));
             indicator.setSortNo(i.getSortNo() != null ? i.getSortNo() : sort);
-            indicatorMapper.insert(indicator);
+            indicatorRepository.save(indicator);
             sort++;
         }
         log.info("录入指标: reportId={}, count={}", reportId, dto.getIndicators().size());
@@ -120,7 +119,7 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public void deleteReport(Long memberId, Long id) {
         requireOwnedReport(memberId, id);
-        reportMapper.markDeleted(id);
+        reportRepository.markDeleted(id);
     }
 
     @Override
@@ -134,21 +133,20 @@ public class ReportServiceImpl implements ReportService {
         }
         String kw = keyword.trim();
         // 命中指标名的报告 id（指标名命中也算报告命中）
-        Set<Long> reportIds = indicatorMapper.selectByKeywordLike(kw)
-                .stream().map(HealthIndicator::getReportId).collect(Collectors.toSet());
-        return reportMapper.search(scope, kw, reportIds).stream().map(r -> toVO(r, null)).toList();
+        List<Long> reportIds = indicatorRepository.findReportIdsByKeywordLike(kw);
+        return reportRepository.search(scope, kw, reportIds).stream().map(r -> toVO(r, null)).toList();
     }
 
     @Override
     public List<TrendPointVO> trends(Long memberId, Long familyMemberId, String itemName) {
         ownershipGuard.requireOwned(memberId, familyMemberId);
-        return indicatorMapper.selectTrend(familyMemberId, itemName)
+        return indicatorRepository.trendByItem(familyMemberId, itemName)
                 .stream().map(this::toTrendVO).toList();
     }
 
     /** 按 id 取报告并校验归属：不存在报 400，非本人家庭成员报 403 */
     private HealthReport requireOwnedReport(Long memberId, Long id) {
-        HealthReport report = reportMapper.selectById(id);
+        HealthReport report = reportRepository.findById(id).orElse(null);
         if (report == null) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "报告不存在");
         }

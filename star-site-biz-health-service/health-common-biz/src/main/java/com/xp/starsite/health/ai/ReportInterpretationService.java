@@ -6,8 +6,8 @@ import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.common.result.ResultCode;
 import com.xp.starsite.health.entity.HealthIndicator;
 import com.xp.starsite.health.entity.HealthReport;
-import com.xp.starsite.health.mapper.HealthIndicatorMapper;
-import com.xp.starsite.health.mapper.HealthReportMapper;
+import com.xp.starsite.health.repository.HealthIndicatorRepository;
+import com.xp.starsite.health.repository.HealthReportRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -38,8 +38,8 @@ public class ReportInterpretationService {
             4. 最后必须声明：以上分析仅供参考，不构成医疗诊断，异常指标请遵医嘱就诊。
             全文 300 字以内，不要使用 Markdown 标记。""";
 
-    private final HealthReportMapper reportMapper;
-    private final HealthIndicatorMapper indicatorMapper;
+    private final HealthReportRepository reportRepository;
+    private final HealthIndicatorRepository indicatorRepository;
     private final FamilyOwnershipGuard ownershipGuard;
     private final ObjectProvider<LlmClient> llmClient;
 
@@ -49,7 +49,7 @@ public class ReportInterpretationService {
      * @param force true = 已解读过也重新调 LLM
      */
     public InterpretationResult interpret(Long memberId, Long reportId, boolean force) {
-        HealthReport report = reportMapper.selectById(reportId);
+        HealthReport report = reportRepository.findById(reportId).orElse(null);
         if (report == null) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "报告不存在");
         }
@@ -59,7 +59,7 @@ public class ReportInterpretationService {
             return new InterpretationResult(report.getInterpretation(),
                     report.getInterpretedAt() == null ? null : report.getInterpretedAt().toString(), true);
         }
-        List<HealthIndicator> indicators = indicatorMapper.selectByReportId(reportId);
+        List<HealthIndicator> indicators = indicatorRepository.findByReportId(reportId);
 
         LlmClient client = llmClient.getIfAvailable();
         if (client == null) {
@@ -96,7 +96,7 @@ public class ReportInterpretationService {
             throw new BizException(503, "AI 服务暂不可用，请稍后再试");
         }
 
-        reportMapper.updateInterpretation(reportId, text, LocalDateTime.now());
+        reportRepository.updateInterpretation(reportId, text, LocalDateTime.now());
         log.info("AI 解读完成: report={}, len={}", reportId, text.length());
         return new InterpretationResult(text, report.getInterpretedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), false);
     }

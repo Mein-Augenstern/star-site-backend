@@ -1,6 +1,6 @@
 package com.xp.starsite.health.mapper;
 
-import com.xp.starsite.health.dal.dataobject.HealthIndicatorDODO;
+import com.xp.starsite.health.dal.dataobject.HealthIndicatorDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -13,7 +13,7 @@ import java.util.List;
  * @since 2026-10
  */
 @Mapper
-public interface HealthIndicatorDOMapper {
+public interface HealthIndicatorMapper {
 
     /** 单条指标插入（报告重录时由业务层循环调用） */
     int insert(HealthIndicatorDO indicator);

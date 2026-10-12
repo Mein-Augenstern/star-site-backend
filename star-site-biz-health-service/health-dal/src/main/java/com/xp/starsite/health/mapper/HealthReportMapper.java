@@ -1,6 +1,6 @@
 package com.xp.starsite.health.mapper;
 
-import com.xp.starsite.health.dal.dataobject.HealthReportDODO;
+import com.xp.starsite.health.dal.dataobject.HealthReportDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -17,7 +17,7 @@ import java.util.List;
  * @since 2026-10
  */
 @Mapper
-public interface HealthReportDOMapper {
+public interface HealthReportMapper {
 
     /** 新建报告（业务列插入；created_at/updated_at 由 DB 默认值维护） */
     int insert(HealthReportDO report);

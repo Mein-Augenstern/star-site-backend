@@ -4,8 +4,8 @@ import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.health.dto.ReportCreateDTO;
 import com.xp.starsite.health.entity.HealthReport;
-import com.xp.starsite.health.mapper.HealthIndicatorMapper;
-import com.xp.starsite.health.mapper.HealthReportMapper;
+import com.xp.starsite.health.repository.HealthIndicatorRepository;
+import com.xp.starsite.health.repository.HealthReportRepository;
 import com.xp.starsite.health.service.impl.ReportServiceImpl;
 import com.xp.starsite.health.vo.PageVO;
 import org.junit.jupiter.api.Test;
@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -36,14 +37,14 @@ class ReportServiceOwnershipTest {
     private static final long FOREIGN_FAMILY_MEMBER = 99L;
 
     @Mock
-    private HealthReportMapper reportMapper;
+    private HealthReportRepository reportRepository;
     @Mock
-    private HealthIndicatorMapper indicatorMapper;
+    private HealthIndicatorRepository indicatorRepository;
     @Mock
     private FamilyOwnershipGuard ownershipGuard;
 
     private ReportServiceImpl newService() {
-        return new ReportServiceImpl(reportMapper, indicatorMapper, ownershipGuard);
+        return new ReportServiceImpl(reportRepository, indicatorRepository, ownershipGuard);
     }
 
     private HealthReport report(long id, long familyMemberId) {
@@ -72,7 +73,7 @@ class ReportServiceOwnershipTest {
     @Test
     void detailRejectsForeignReport() {
         // 报告属于别人的家庭成员：归属校验必须被触发
-        when(reportMapper.selectById(7L)).thenReturn(report(7L, FOREIGN_FAMILY_MEMBER));
+        when(reportRepository.findById(7L)).thenReturn(Optional.of(report(7L, FOREIGN_FAMILY_MEMBER)));
         when(ownershipGuard.requireOwned(ME, FOREIGN_FAMILY_MEMBER))
                 .thenThrow(new BizException(403, "无权限访问该家庭成员的数据"));
 
@@ -82,9 +83,9 @@ class ReportServiceOwnershipTest {
 
     @Test
     void detailAllowsOwnReport() {
-        when(reportMapper.selectById(7L)).thenReturn(report(7L, MY_FAMILY_MEMBER));
+        when(reportRepository.findById(7L)).thenReturn(Optional.of(report(7L, MY_FAMILY_MEMBER)));
         when(ownershipGuard.requireOwned(ME, MY_FAMILY_MEMBER)).thenReturn(null);
-        when(indicatorMapper.selectByReportId(7L)).thenReturn(List.of());
+        when(indicatorRepository.findByReportId(7L)).thenReturn(List.of());
 
         assertEquals(7L, newService().getDetail(ME, 7L).getId());
     }
@@ -101,11 +102,11 @@ class ReportServiceOwnershipTest {
 
     @Test
     void deleteRejectsForeignReport() {
-        when(reportMapper.selectById(8L)).thenReturn(report(8L, FOREIGN_FAMILY_MEMBER));
+        when(reportRepository.findById(8L)).thenReturn(Optional.of(report(8L, FOREIGN_FAMILY_MEMBER)));
         when(ownershipGuard.requireOwned(ME, FOREIGN_FAMILY_MEMBER))
                 .thenThrow(new BizException(403, "无权限访问该家庭成员的数据"));
 
         assertThrows(BizException.class, () -> newService().deleteReport(ME, 8L));
-        verify(reportMapper).selectById(8L);
+        verify(reportRepository).findById(8L);
     }
 }
