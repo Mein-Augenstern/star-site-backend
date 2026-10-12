@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>reminder-domain</artifactId>
+            <artifactId>reminder-core-model</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

@@ -17,7 +17,7 @@
 
     <modules>
         <module>member-facade</module>
-        <module>member-domain</module>
+        <module>member-core-model</module>
         <module>member-dal</module>
         <module>member-core-service</module>
         <module>member-adapter</module>

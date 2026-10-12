@@ -10,7 +10,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>reminder-domain</artifactId>
+    <artifactId>reminder-core-model</artifactId>
     <name>reminder-domain</name>
     <description>提醒域领域模型：ReminderRule/ReminderOccurrence/Notification（不依赖应用层）</description>
 

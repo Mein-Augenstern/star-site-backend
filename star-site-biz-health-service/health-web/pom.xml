@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>health-biz-service</artifactId>
+            <artifactId>health-core-service</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

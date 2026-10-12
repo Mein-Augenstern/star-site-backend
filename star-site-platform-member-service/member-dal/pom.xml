@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>member-domain</artifactId>
+            <artifactId>member-core-model</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

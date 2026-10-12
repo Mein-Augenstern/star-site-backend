@@ -10,7 +10,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>member-domain</artifactId>
+    <artifactId>member-core-model</artifactId>
     <name>member-domain</name>
     <description>会员域领域模型：Member/MemberIdentity（不依赖 Web/应用层，保持纯 POJO 无框架依赖）</description>
 

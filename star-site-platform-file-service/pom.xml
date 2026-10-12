@@ -18,7 +18,7 @@
     <!-- 六边形：domain 定义 FileStorage 端口，file-dal 放 Local/OSS 适配器 -->
     <modules>
         <module>file-facade</module>
-        <module>file-domain</module>
+        <module>file-core-model</module>
         <module>file-dal</module>
         <module>file-core-service</module>
         <module>file-adapter</module>
