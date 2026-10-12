@@ -10,7 +10,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>reminder-core-service</artifactId>
+    <artifactId>reminder-common-biz</artifactId>
     <name>reminder-app</name>
     <description>提醒域应用层：规则注册/取消、到期扫描、通知触达用例编排 + DTO/VO 契约</description>
 

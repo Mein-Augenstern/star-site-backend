@@ -22,7 +22,7 @@
         </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>finance-core-service</artifactId>
+            <artifactId>finance-common-biz</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!-- MQ 入站适配器（FinanceMqConfig + FileUploadedConsumer） -->

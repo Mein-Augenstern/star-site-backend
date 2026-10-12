@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.xp.starsite</groupId>
+        <artifactId>star-site-platform-reminder-service</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>reminder-common-biz</artifactId>
+    <name>reminder-core-service</name>
+    <description>提醒域应用层：规则注册/取消、到期扫描、通知触达用例编排 + DTO/VO 契约</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>reminder-dal</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- 本服务 facade：ReminderRuleDTO / 提醒领域事件（reminder-app 消费落规则） -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>reminder-facade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- 归属校验门卫与成员快照（family-facade 契约） -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>family-facade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>star-site-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

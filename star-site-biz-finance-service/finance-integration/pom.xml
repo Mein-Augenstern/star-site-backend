@@ -18,7 +18,7 @@
         <!-- 入站适配器：消费外部事件后调用业务用例，允许 integration → biz-service 单向依赖 -->
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>finance-core-service</artifactId>
+            <artifactId>finance-common-biz</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

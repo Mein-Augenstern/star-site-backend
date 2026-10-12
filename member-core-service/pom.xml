@@ -10,7 +10,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>member-core-service</artifactId>
+    <artifactId>member-common-biz</artifactId>
     <name>member-app</name>
     <description>会员域应用层：登录/注册/绑定/资料用例编排 + DTO/VO 契约</description>
 

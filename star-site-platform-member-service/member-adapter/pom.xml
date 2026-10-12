@@ -17,7 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>member-core-service</artifactId>
+            <artifactId>member-common-biz</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!-- internal 接口返回跨服务契约 DTO -->

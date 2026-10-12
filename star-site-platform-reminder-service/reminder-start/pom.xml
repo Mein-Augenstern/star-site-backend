@@ -22,7 +22,7 @@
         </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>reminder-core-service</artifactId>
+            <artifactId>reminder-common-biz</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
