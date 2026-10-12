@@ -6,8 +6,8 @@ import com.xp.starsite.common.util.IdGenerator;
 import com.xp.starsite.finance.dto.TransactionSaveDTO;
 import com.xp.starsite.finance.entity.FinanceAccount;
 import com.xp.starsite.finance.entity.FinanceTransaction;
-import com.xp.starsite.finance.mapper.FinanceAccountMapper;
-import com.xp.starsite.finance.mapper.FinanceTransactionMapper;
+import com.xp.starsite.finance.repository.FinanceAccountRepository;
+import com.xp.starsite.finance.repository.FinanceTransactionRepository;
 import com.xp.starsite.finance.service.TransactionService;
 import com.xp.starsite.finance.vo.PageVO;
 import com.xp.starsite.finance.vo.TransactionVO;
@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * 记账流水实现。不变式：流水与账户余额在同一数据库事务内变更，任何一笔流水
  * 都能由 balance_after 快照对账。删除回滚余额；转账整组回滚。
- * 余额维护走 DAL 显式 updateBalance（不整行 update）；雪花 id 应用侧 insert 前赋值。
+ * 余额走仓储原子增量（不整行 update）；雪花 id 应用侧 save 前赋值。
  *
  * @author xiaopu
  * @since 2026-10
@@ -41,8 +41,8 @@ public class TransactionServiceImpl implements TransactionService {
     private static final int DIR_TRANSFER = 3;
     private static final int DIR_ADJUST = 4;
 
-    private final FinanceAccountMapper accountMapper;
-    private final FinanceTransactionMapper transactionMapper;
+    private final FinanceAccountRepository accountRepository;
+    private final FinanceTransactionRepository transactionRepository;
     private final IdGenerator idGenerator;
 
     @Override
@@ -67,13 +67,13 @@ public class TransactionServiceImpl implements TransactionService {
         YearMonth ym = YearMonth.of(y, m);
         LocalDateTime start = ym.atDay(1).atStartOfDay();
         LocalDateTime end = ym.plusMonths(1).atDay(1).atStartOfDay();
-        long total = transactionMapper.countByCondition(memberId, accountId, direction, start, end);
+        long total = transactionRepository.countByOwner(memberId, accountId, direction, start, end);
         if (total == 0) {
             return PageVO.of(List.of(), 0, page, size);
         }
         long offset = (page - 1) * size;
-        List<TransactionVO> vos = transactionMapper
-                .selectPage(memberId, accountId, direction, start, end, offset, (int) size)
+        List<TransactionVO> vos = transactionRepository
+                .pageByOwner(memberId, accountId, direction, start, end, offset, (int) size)
                 .stream().map(this::toVO).toList();
         return PageVO.of(vos, total, page, size);
     }
@@ -89,16 +89,16 @@ public class TransactionServiceImpl implements TransactionService {
         FinanceTransaction t = requireOwnedTransaction(memberId, id);
         if (t.getDirection() == DIR_TRANSFER) {
             // 转账整组回滚（防删一半导致两账户账实失衡）
-            List<FinanceTransaction> group = transactionMapper.selectByTransferGroupId(t.getTransferGroupId());
+            List<FinanceTransaction> group = transactionRepository.findByTransferGroupId(t.getTransferGroupId());
             for (FinanceTransaction leg : group) {
                 rollbackOne(leg);
-                transactionMapper.markDeleted(leg.getId());
+                transactionRepository.markDeleted(leg.getId());
             }
             log.info("删除转账组: group={}, legs={}", t.getTransferGroupId(), group.size());
             return;
         }
         rollbackOne(t);
-        transactionMapper.markDeleted(id);
+        transactionRepository.markDeleted(id);
         log.info("删除流水: id={}, direction={}", id, t.getDirection());
     }
 
@@ -113,7 +113,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         FinanceTransaction t = baseTransaction(memberId, account, dto, direction, amount);
         t.setBalanceAfter(account.getBalance());
-        transactionMapper.insert(t);
+        transactionRepository.save(t);
         return toVO(t);
     }
 
@@ -128,7 +128,7 @@ public class TransactionServiceImpl implements TransactionService {
         t.setBalanceAfter(account.getBalance());
         t.setRemark(dto.getRemark() == null || dto.getRemark().isBlank()
                 ? "余额校准" : dto.getRemark());
-        transactionMapper.insert(t);
+        transactionRepository.save(t);
         return toVO(t);
     }
 
@@ -154,13 +154,13 @@ public class TransactionServiceImpl implements TransactionService {
         out.setTransferGroupId(groupId);
         out.setBalanceAfter(from.getBalance());
         out.setCounterparty(to.getName());
-        transactionMapper.insert(out);
+        transactionRepository.save(out);
 
         FinanceTransaction in = baseTransaction(memberId, to, dto, DIR_TRANSFER, dto.getAmount());
         in.setTransferGroupId(groupId);
         in.setBalanceAfter(to.getBalance());
         in.setCounterparty(from.getName());
-        transactionMapper.insert(in);
+        transactionRepository.save(in);
         log.info("转账: {} -> {}, amount={}", from.getName(), to.getName(), dto.getAmount());
         return toVO(out);
     }
@@ -170,7 +170,7 @@ public class TransactionServiceImpl implements TransactionService {
         if (t.getBalanceAfter() == null) {
             return;
         }
-        FinanceAccount account = accountMapper.selectById(t.getAccountId());
+        FinanceAccount account = accountRepository.findById(t.getAccountId()).orElse(null);
         if (account == null) {
             return;
         }
@@ -186,10 +186,12 @@ public class TransactionServiceImpl implements TransactionService {
      * 并发记账/导入下不丢更新；随后重读取新值，供 balance_after 快照与内存同步。
      */
     private BigDecimal applyBalanceDelta(FinanceAccount account, BigDecimal delta) {
-        if (accountMapper.updateBalanceDelta(account.getId(), delta) == 0) {
+        if (!accountRepository.updateBalanceDelta(account.getId(), delta)) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "账户不存在或已注销");
         }
-        BigDecimal newBalance = accountMapper.selectById(account.getId()).getBalance();
+        BigDecimal newBalance = accountRepository.findById(account.getId())
+                .map(FinanceAccount::getBalance)
+                .orElseThrow(() -> new BizException(ResultCode.BAD_REQUEST.getCode(), "账户不存在或已注销"));
         account.setBalance(newBalance);
         return newBalance;
     }
@@ -215,7 +217,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private FinanceAccount requireOwnedAccount(Long memberId, Long id) {
-        FinanceAccount account = accountMapper.selectById(id);
+        FinanceAccount account = accountRepository.findById(id).orElse(null);
         if (account == null) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "账户不存在");
         }
@@ -226,7 +228,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private FinanceTransaction requireOwnedTransaction(Long memberId, Long id) {
-        FinanceTransaction t = transactionMapper.selectById(id);
+        FinanceTransaction t = transactionRepository.findById(id).orElse(null);
         if (t == null) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "流水不存在");
         }

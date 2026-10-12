@@ -1,6 +1,6 @@
 package com.xp.starsite.finance.mapper;
 
-import com.xp.starsite.finance.entity.FinanceNetWorthSnapshot;
+import com.xp.starsite.finance.dal.dataobject.FinanceNetWorthSnapshotDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -18,15 +18,15 @@ import java.util.List;
 public interface FinanceNetWorthSnapshotMapper {
 
     /** 插入快照（id 由 DB 自增，useGeneratedKeys 回填） */
-    int insert(FinanceNetWorthSnapshot snapshot);
+    int insert(FinanceNetWorthSnapshotDO snapshot);
 
     /** 某账号某日快照（幂等判存用，XML LIMIT 1） */
-    FinanceNetWorthSnapshot selectByOwnerAndDate(@Param("ownerMemberId") Long ownerMemberId,
+    FinanceNetWorthSnapshotDO selectByOwnerAndDate(@Param("ownerMemberId") Long ownerMemberId,
                                                  @Param("snapDate") LocalDate snapDate);
 
     /** 更新快照金额（按 id，覆盖当日三项合计） */
-    int update(FinanceNetWorthSnapshot snapshot);
+    int update(FinanceNetWorthSnapshotDO snapshot);
 
     /** 某账号净资产曲线（按快照日期升序） */
-    List<FinanceNetWorthSnapshot> selectByOwner(@Param("ownerMemberId") Long ownerMemberId);
+    List<FinanceNetWorthSnapshotDO> selectByOwner(@Param("ownerMemberId") Long ownerMemberId);
 }

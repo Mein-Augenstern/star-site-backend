@@ -17,7 +17,7 @@
              #{deadline}, #{remark})
     </insert>
 
-    <select id="selectById" resultType="com.xp.starsite.finance.entity.FinanceGoal">
+    <select id="selectById" resultType="com.xp.starsite.finance.dal.dataobject.FinanceGoalDO">
         SELECT <include refid="cols"/> FROM finance_goal
         WHERE id = #{id} AND deleted = 0
     </select>
@@ -33,7 +33,7 @@
         UPDATE finance_goal SET deleted = 1 WHERE id = #{id} AND deleted = 0
     </update>
 
-    <select id="selectByOwner" resultType="com.xp.starsite.finance.entity.FinanceGoal">
+    <select id="selectByOwner" resultType="com.xp.starsite.finance.dal.dataobject.FinanceGoalDO">
         SELECT <include refid="cols"/> FROM finance_goal
         WHERE deleted = 0 AND owner_member_id = #{ownerMemberId}
         ORDER BY deadline ASC, id ASC

@@ -15,12 +15,12 @@
             (#{id}, #{familyId}, #{ownerMemberId}, #{category}, #{period}, #{amount})
     </insert>
 
-    <select id="selectById" resultType="com.xp.starsite.finance.entity.FinanceBudget">
+    <select id="selectById" resultType="com.xp.starsite.finance.dal.dataobject.FinanceBudgetDO">
         SELECT <include refid="cols"/> FROM finance_budget
         WHERE id = #{id} AND deleted = 0
     </select>
 
-    <select id="selectByOwnerCategoryPeriod" resultType="com.xp.starsite.finance.entity.FinanceBudget">
+    <select id="selectByOwnerCategoryPeriod" resultType="com.xp.starsite.finance.dal.dataobject.FinanceBudgetDO">
         SELECT <include refid="cols"/> FROM finance_budget
         WHERE deleted = 0
           AND owner_member_id = #{ownerMemberId}
@@ -39,7 +39,7 @@
         UPDATE finance_budget SET deleted = 1 WHERE id = #{id} AND deleted = 0
     </update>
 
-    <select id="selectByOwnerPeriod" resultType="com.xp.starsite.finance.entity.FinanceBudget">
+    <select id="selectByOwnerPeriod" resultType="com.xp.starsite.finance.dal.dataobject.FinanceBudgetDO">
         SELECT <include refid="cols"/> FROM finance_budget
         WHERE deleted = 0 AND owner_member_id = #{ownerMemberId} AND period = #{period}
         ORDER BY amount DESC

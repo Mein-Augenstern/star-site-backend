@@ -18,6 +18,7 @@
     <modules>
         <module>finance-core-model</module>
         <module>finance-dal</module>
+        <module>finance-core-service</module>
         <module>finance-integration</module>
         <module>finance-common-biz</module>
         <module>finance-web</module>

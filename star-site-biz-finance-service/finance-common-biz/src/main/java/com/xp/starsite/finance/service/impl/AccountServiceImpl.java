@@ -7,8 +7,8 @@ import com.xp.starsite.finance.FinanceCategories;
 import com.xp.starsite.finance.dto.AccountSaveDTO;
 import com.xp.starsite.finance.entity.FinanceAccount;
 import com.xp.starsite.finance.entity.FinanceTransaction;
-import com.xp.starsite.finance.mapper.FinanceAccountMapper;
-import com.xp.starsite.finance.mapper.FinanceTransactionMapper;
+import com.xp.starsite.finance.repository.FinanceAccountRepository;
+import com.xp.starsite.finance.repository.FinanceTransactionRepository;
 import com.xp.starsite.finance.service.AccountService;
 import com.xp.starsite.finance.vo.AccountVO;
 import lombok.RequiredArgsConstructor;
@@ -41,8 +41,8 @@ public class AccountServiceImpl implements AccountService {
 
     private static final Set<String> LIABILITY_TYPES = Set.of("credit", "loan");
 
-    private final FinanceAccountMapper accountMapper;
-    private final FinanceTransactionMapper transactionMapper;
+    private final FinanceAccountRepository accountRepository;
+    private final FinanceTransactionRepository transactionRepository;
     private final IdGenerator idGenerator;
 
     @Override
@@ -61,19 +61,19 @@ public class AccountServiceImpl implements AccountService {
         account.setOwnerMemberId(memberId);
         // family_id：V1 单人记账，建户时若已有家庭则冗余（多人协作后按 family 聚合）
         account.setFamilyId(resolveFamilyId(memberId));
-        accountMapper.insert(account);
+        accountRepository.save(account);
 
         // 初始余额 > 0 记调整流水留痕（可溯）
         if (account.getInitialBalance().compareTo(BigDecimal.ZERO) != 0) {
             insertAdjustTransaction(account, account.getInitialBalance(), "建户初始余额");
         }
         log.info("建户: id={}, name={}, initial={}", account.getId(), account.getName(), account.getInitialBalance());
-        return toVO(accountMapper.selectById(account.getId()));
+        return toVO(accountRepository.findById(account.getId()).orElse(null));
     }
 
     @Override
     public List<AccountVO> list(Long memberId) {
-        return accountMapper.selectByOwner(memberId).stream().map(this::toVO).toList();
+        return accountRepository.listByOwner(memberId).stream().map(this::toVO).toList();
     }
 
     @Override
@@ -89,7 +89,7 @@ public class AccountServiceImpl implements AccountService {
         account.setAccountType(dto.getAccountType());
         account.setInstitution(dto.getInstitution());
         account.setRemark(dto.getRemark());
-        accountMapper.update(account);
+        accountRepository.update(account);
         return toVO(account);
     }
 
@@ -100,12 +100,12 @@ public class AccountServiceImpl implements AccountService {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(),
                     "账户余额不为 0（当前 " + account.getBalance() + "），请先转账或调整至 0 再注销");
         }
-        accountMapper.markDeleted(id);
+        accountRepository.markDeleted(id);
         log.info("注销账户: id={}", id);
     }
 
     private FinanceAccount requireOwnedAccount(Long memberId, Long id) {
-        FinanceAccount account = accountMapper.selectById(id);
+        FinanceAccount account = accountRepository.findById(id).orElse(null);
         if (account == null) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "账户不存在");
         }
@@ -135,7 +135,7 @@ public class AccountServiceImpl implements AccountService {
         t.setBalanceAfter(account.getBalance());
         t.setSource(1);
         t.setRemark(reason);
-        transactionMapper.insert(t);
+        transactionRepository.save(t);
     }
 
     Long resolveFamilyId(Long memberId) {

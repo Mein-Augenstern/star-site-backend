@@ -7,9 +7,9 @@ import com.xp.starsite.common.result.R;
 import com.xp.starsite.finance.entity.FinanceAccount;
 import com.xp.starsite.finance.entity.FinanceNetWorthSnapshot;
 import com.xp.starsite.finance.entity.FinanceTransaction;
-import com.xp.starsite.finance.mapper.FinanceAccountMapper;
-import com.xp.starsite.finance.mapper.FinanceNetWorthSnapshotMapper;
-import com.xp.starsite.finance.mapper.FinanceTransactionMapper;
+import com.xp.starsite.finance.repository.FinanceAccountRepository;
+import com.xp.starsite.finance.repository.FinanceNetWorthSnapshotRepository;
+import com.xp.starsite.finance.repository.FinanceTransactionRepository;
 import com.xp.starsite.finance.service.impl.ReportServiceImpl;
 import com.xp.starsite.finance.vo.BalanceSheetVO;
 import com.xp.starsite.finance.vo.IncomeExpenseVO;
@@ -24,6 +24,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -47,16 +48,16 @@ class ReportServiceTest {
     private static final long ME = 1L;
 
     @Mock
-    private FinanceAccountMapper accountMapper;
+    private FinanceAccountRepository accountRepository;
     @Mock
-    private FinanceTransactionMapper transactionMapper;
+    private FinanceTransactionRepository transactionRepository;
     @Mock
-    private FinanceNetWorthSnapshotMapper snapshotMapper;
+    private FinanceNetWorthSnapshotRepository snapshotRepository;
     @Mock
     private ArchiveApi archiveApi;
 
     private ReportServiceImpl service() {
-        return new ReportServiceImpl(accountMapper, transactionMapper, snapshotMapper, archiveApi);
+        return new ReportServiceImpl(accountRepository, transactionRepository, snapshotRepository, archiveApi);
     }
 
     private FinanceAccount account(long id, String type, String balance) {
@@ -71,7 +72,7 @@ class ReportServiceTest {
 
     @Test
     void balanceSheetAggregatesAccountsAndArchive() {
-        when(accountMapper.selectByOwner(ME)).thenReturn(List.of(
+        when(accountRepository.listByOwner(ME)).thenReturn(List.of(
                 account(1, "wechat", "5000"),
                 account(2, "bank", "100000"),
                 account(3, "credit", "8000")));
@@ -90,7 +91,7 @@ class ReportServiceTest {
 
     @Test
     void balanceSheetFailsOpenWhenArchiveDown() {
-        when(accountMapper.selectByOwner(ME)).thenReturn(List.of(account(1, "wechat", "5000")));
+        when(accountRepository.listByOwner(ME)).thenReturn(List.of(account(1, "wechat", "5000")));
         when(archiveApi.assetSummary(ME)).thenThrow(new BizException(500, "archive 不可用"));
 
         BalanceSheetVO vo = service().balanceSheet(ME);
@@ -103,9 +104,9 @@ class ReportServiceTest {
 
     @Test
     void incomeExpenseOnlyCountsDirection12() {
-        when(transactionMapper.selectByDirectionAndPeriod(eq(ME), eq(1), any(), any(), any()))
+        when(transactionRepository.listByDirectionAndPeriod(eq(ME), eq(1), any(), any(), any()))
                 .thenReturn(List.of(tx(1, "10000"), tx(1, "2000")));
-        when(transactionMapper.selectByDirectionAndPeriod(eq(ME), eq(2), any(), any(), any()))
+        when(transactionRepository.listByDirectionAndPeriod(eq(ME), eq(2), any(), any(), any()))
                 .thenReturn(List.of(tx(2, "3000"), tx(2, "1000")));
 
         IncomeExpenseVO vo = service().incomeExpense(ME, 2026, 10);
@@ -119,34 +120,34 @@ class ReportServiceTest {
 
     @Test
     void snapshotIsIdempotentPerDay() {
-        when(accountMapper.selectByOwner(ME)).thenReturn(List.of(account(1, "wechat", "5000")));
+        when(accountRepository.listByOwner(ME)).thenReturn(List.of(account(1, "wechat", "5000")));
         when(archiveApi.assetSummary(ME)).thenReturn(R.ok(new AssetSummaryDTO(BigDecimal.ZERO)));
-        when(snapshotMapper.selectByOwnerAndDate(eq(ME), any())).thenReturn(null);
+        when(snapshotRepository.findByOwnerAndDate(eq(ME), any())).thenReturn(Optional.empty());
 
         service().snapshotToday(ME);
 
         ArgumentCaptor<FinanceNetWorthSnapshot> cap =
                 ArgumentCaptor.forClass(FinanceNetWorthSnapshot.class);
-        verify(snapshotMapper).insert(cap.capture());
+        verify(snapshotRepository).save(cap.capture());
         assertEquals(LocalDate.now(), cap.getValue().getSnapDate());
         assertEquals(0, cap.getValue().getNetWorth().compareTo(new BigDecimal("5000")));
     }
 
     @Test
     void snapshotDuplicateDaySkipsInsert() {
-        when(accountMapper.selectByOwner(ME)).thenReturn(List.of(account(1, "wechat", "5000")));
+        when(accountRepository.listByOwner(ME)).thenReturn(List.of(account(1, "wechat", "5000")));
         when(archiveApi.assetSummary(ME)).thenReturn(R.ok(new AssetSummaryDTO(BigDecimal.ZERO)));
         // 当日快照已存在
         FinanceNetWorthSnapshot exist = new FinanceNetWorthSnapshot();
         exist.setOwnerMemberId(ME);
         exist.setSnapDate(LocalDate.now());
-        when(snapshotMapper.selectByOwnerAndDate(eq(ME), any())).thenReturn(exist);
+        when(snapshotRepository.findByOwnerAndDate(eq(ME), any())).thenReturn(Optional.of(exist));
 
         service().snapshotToday(ME);
 
-        // 已有则 update 而非 insert
-        verify(snapshotMapper).update(any(FinanceNetWorthSnapshot.class));
-        verify(snapshotMapper, never()).insert(any(FinanceNetWorthSnapshot.class));
+        // 已有则 update 而非 save
+        verify(snapshotRepository).update(any(FinanceNetWorthSnapshot.class));
+        verify(snapshotRepository, never()).save(any(FinanceNetWorthSnapshot.class));
     }
 
     private FinanceTransaction tx(int direction, String amount) {
@@ -164,7 +165,7 @@ class ReportServiceTest {
         List<FinanceTransaction> rows = List.of(tx(2, "60"), tx(2, "40"), tx(2, "20"));
         rows.get(2).setCategory("CAR");
         rows.get(2).setCategoryName("用车");
-        when(transactionMapper.selectByDirectionAndPeriod(eq(ME), eq(2), any(), any(), any()))
+        when(transactionRepository.listByDirectionAndPeriod(eq(ME), eq(2), any(), any(), any()))
                 .thenReturn(rows);
 
         var shares = service().categoryShare(ME, 2026, 10);
@@ -178,7 +179,7 @@ class ReportServiceTest {
 
     @Test
     void monthlyTrendFillsEmptyMonths() {
-        when(transactionMapper.selectIncomeExpensePeriod(eq(ME), any(), any()))
+        when(transactionRepository.listIncomeExpensePeriod(eq(ME), any(), any()))
                 .thenReturn(List.of(tx(1, "10000"), tx(2, "3000")));
 
         var trend = service().monthlyTrend(ME);
@@ -193,20 +194,21 @@ class ReportServiceTest {
 
     @Test
     void snapshotNowPersistsAndReturns() {
-        when(accountMapper.selectByOwner(ME)).thenReturn(List.of(account(1, "wechat", "5000")));
+        when(accountRepository.listByOwner(ME)).thenReturn(List.of(account(1, "wechat", "5000")));
         when(archiveApi.assetSummary(ME)).thenReturn(R.ok(new AssetSummaryDTO(BigDecimal.ZERO)));
-        // 首次查询（snapshotToday 内）无快照，insert 后（返回值查询）有
+        // 首次查询（snapshotToday 内）无快照，save 后（返回值查询）有
         java.util.concurrent.atomic.AtomicReference<FinanceNetWorthSnapshot> inserted =
                 new java.util.concurrent.atomic.AtomicReference<>();
-        when(snapshotMapper.insert(any(FinanceNetWorthSnapshot.class))).thenAnswer(inv -> {
+        when(snapshotRepository.save(any(FinanceNetWorthSnapshot.class))).thenAnswer(inv -> {
             inserted.set(inv.getArgument(0));
-            return 1;
+            return inv.getArgument(0);
         });
-        when(snapshotMapper.selectByOwnerAndDate(eq(ME), any())).thenAnswer(inv -> inserted.get());
+        when(snapshotRepository.findByOwnerAndDate(eq(ME), any()))
+                .thenAnswer(inv -> Optional.ofNullable(inserted.get()));
 
         var point = service().snapshotNow(ME);
 
-        verify(snapshotMapper).insert(any(FinanceNetWorthSnapshot.class));
+        verify(snapshotRepository).save(any(FinanceNetWorthSnapshot.class));
         assertEquals(LocalDate.now(), point.getDate());
         assertEquals(0, point.getNetWorth().compareTo(new BigDecimal("5000")));
     }

@@ -9,7 +9,7 @@ import com.xp.starsite.common.mq.EnvelopeDecoder;
 import com.xp.starsite.common.mq.event.EventEnvelope;
 import com.xp.starsite.common.mq.event.EventTypes;
 import com.xp.starsite.finance.entity.FinanceImportLog;
-import com.xp.starsite.finance.mapper.FinanceImportLogMapper;
+import com.xp.starsite.finance.repository.FinanceImportLogRepository;
 import com.xp.starsite.finance.service.ImportService;
 import com.xp.starsite.finance.service.ImportResult;
 import lombok.extern.slf4j.Slf4j;
@@ -38,14 +38,14 @@ public class FileUploadedConsumer extends AbstractIdempotentConsumer implements 
 
     private final FileApi fileApi;
     private final ImportService importService;
-    private final FinanceImportLogMapper importLogMapper;
+    private final FinanceImportLogRepository importLogRepository;
 
     public FileUploadedConsumer(JdbcTemplate jdbcTemplate, FileApi fileApi,
-                                ImportService importService, FinanceImportLogMapper importLogMapper) {
+                                ImportService importService, FinanceImportLogRepository importLogRepository) {
         super(jdbcTemplate, "G_finance_file");
         this.fileApi = fileApi;
         this.importService = importService;
-        this.importLogMapper = importLogMapper;
+        this.importLogRepository = importLogRepository;
     }
 
     @Override
@@ -104,7 +104,7 @@ public class FileUploadedConsumer extends AbstractIdempotentConsumer implements 
             logRow.setError(truncate(e.getMessage(), 255));
             log.error("异步账单导入失败: file={}, err={}", fileId, e.getMessage());
         }
-        importLogMapper.insert(logRow);
+        importLogRepository.save(logRow);
     }
 
     private static Long parseLong(String s) {

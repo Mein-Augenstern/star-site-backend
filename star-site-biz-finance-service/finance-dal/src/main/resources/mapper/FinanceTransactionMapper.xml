@@ -22,7 +22,7 @@
              #{balanceAfter}, #{source}, #{externalId}, #{fileId}, #{remark})
     </insert>
 
-    <select id="selectById" resultType="com.xp.starsite.finance.entity.FinanceTransaction">
+    <select id="selectById" resultType="com.xp.starsite.finance.dal.dataobject.FinanceTransactionDO">
         SELECT <include refid="cols"/> FROM finance_transaction
         WHERE id = #{id} AND deleted = 0
     </select>
@@ -31,7 +31,7 @@
         UPDATE finance_transaction SET deleted = 1 WHERE id = #{id} AND deleted = 0
     </update>
 
-    <select id="selectByTransferGroupId" resultType="com.xp.starsite.finance.entity.FinanceTransaction">
+    <select id="selectByTransferGroupId" resultType="com.xp.starsite.finance.dal.dataobject.FinanceTransactionDO">
         SELECT <include refid="cols"/> FROM finance_transaction
         WHERE transfer_group_id = #{transferGroupId} AND deleted = 0
         ORDER BY id ASC
@@ -46,7 +46,7 @@
         <if test="endTime != null">AND trans_time &lt; #{endTime}</if>
     </sql>
 
-    <select id="selectPage" resultType="com.xp.starsite.finance.entity.FinanceTransaction">
+    <select id="selectPage" resultType="com.xp.starsite.finance.dal.dataobject.FinanceTransactionDO">
         SELECT <include refid="cols"/> FROM finance_transaction
         <include refid="pageWhere"/>
         ORDER BY trans_time DESC, id DESC
@@ -58,7 +58,7 @@
         <include refid="pageWhere"/>
     </select>
 
-    <select id="selectByDirectionAndPeriod" resultType="com.xp.starsite.finance.entity.FinanceTransaction">
+    <select id="selectByDirectionAndPeriod" resultType="com.xp.starsite.finance.dal.dataobject.FinanceTransactionDO">
         SELECT <include refid="cols"/> FROM finance_transaction
         WHERE deleted = 0
           AND owner_member_id = #{ownerMemberId}
@@ -68,7 +68,7 @@
         <if test="category != null and category != ''">AND category = #{category}</if>
     </select>
 
-    <select id="selectIncomeExpensePeriod" resultType="com.xp.starsite.finance.entity.FinanceTransaction">
+    <select id="selectIncomeExpensePeriod" resultType="com.xp.starsite.finance.dal.dataobject.FinanceTransactionDO">
         SELECT <include refid="cols"/> FROM finance_transaction
         WHERE deleted = 0
           AND owner_member_id = #{ownerMemberId}

@@ -5,9 +5,9 @@ import com.xp.starsite.api.dto.AssetSummaryDTO;
 import com.xp.starsite.finance.entity.FinanceAccount;
 import com.xp.starsite.finance.entity.FinanceNetWorthSnapshot;
 import com.xp.starsite.finance.entity.FinanceTransaction;
-import com.xp.starsite.finance.mapper.FinanceAccountMapper;
-import com.xp.starsite.finance.mapper.FinanceNetWorthSnapshotMapper;
-import com.xp.starsite.finance.mapper.FinanceTransactionMapper;
+import com.xp.starsite.finance.repository.FinanceAccountRepository;
+import com.xp.starsite.finance.repository.FinanceNetWorthSnapshotRepository;
+import com.xp.starsite.finance.repository.FinanceTransactionRepository;
 import com.xp.starsite.finance.service.ReportService;
 import com.xp.starsite.finance.vo.BalanceSheetVO;
 import com.xp.starsite.finance.vo.CashFlowVO;
@@ -38,7 +38,7 @@ import java.util.Set;
  *   archive 不可用时 fail-open（archiveAsset=null + archiveAvailable=false），与归属校验的 fail-closed 区分。
  * - 收支：仅 direction 1/2 计入；转账/调整不计。
  * - 快照：每日 02:30 落一行（uk(owner,date) 幂等），曲线由此出。
- * 数据访问全部经 DAL，SQL 收敛在 mapper XML。
+ * 数据访问经仓储层（{@link FinanceAccountRepository} 等，实现位于 core-service、底层调用 dal DAO）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -52,9 +52,9 @@ public class ReportServiceImpl implements ReportService {
     private static final int DIR_INCOME = 1;
     private static final int DIR_EXPENSE = 2;
 
-    private final FinanceAccountMapper accountMapper;
-    private final FinanceTransactionMapper transactionMapper;
-    private final FinanceNetWorthSnapshotMapper snapshotMapper;
+    private final FinanceAccountRepository accountRepository;
+    private final FinanceTransactionRepository transactionRepository;
+    private final FinanceNetWorthSnapshotRepository snapshotRepository;
     private final ArchiveApi archiveApi;
 
     @Value("${finance.snapshot-cron:0 30 2 * * ?}")
@@ -96,9 +96,9 @@ public class ReportServiceImpl implements ReportService {
             start = LocalDate.of(year, 1, 1).atStartOfDay();
             end = LocalDate.of(year + 1, 1, 1).atStartOfDay();
         }
-        List<FinanceTransaction> txs = transactionMapper.selectByDirectionAndPeriod(
+        List<FinanceTransaction> txs = transactionRepository.listByDirectionAndPeriod(
                 memberId, DIR_INCOME, start, end, null);
-        List<FinanceTransaction> expenses = transactionMapper.selectByDirectionAndPeriod(
+        List<FinanceTransaction> expenses = transactionRepository.listByDirectionAndPeriod(
                 memberId, DIR_EXPENSE, start, end, null);
 
         BigDecimal income = txs.stream().map(FinanceTransaction::getAmount)
@@ -126,7 +126,7 @@ public class ReportServiceImpl implements ReportService {
 
         // 近 12 个月月均支出（不设时间上界）
         LocalDateTime start = LocalDate.now().minusMonths(12).withDayOfMonth(1).atStartOfDay();
-        BigDecimal yearExpense = transactionMapper.selectByDirectionAndPeriod(
+        BigDecimal yearExpense = transactionRepository.listByDirectionAndPeriod(
                         memberId, DIR_EXPENSE, start, null, null).stream()
                 .map(FinanceTransaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -143,7 +143,7 @@ public class ReportServiceImpl implements ReportService {
 
     @Override
     public List<NetWorthPointVO> netWorthTrend(Long memberId) {
-        return snapshotMapper.selectByOwner(memberId).stream().map(s -> {
+        return snapshotRepository.listByOwner(memberId).stream().map(s -> {
             NetWorthPointVO p = new NetWorthPointVO();
             p.setDate(s.getSnapDate());
             p.setNetWorth(s.getNetWorth());
@@ -155,7 +155,7 @@ public class ReportServiceImpl implements ReportService {
     public void snapshotToday(Long memberId) {
         BalanceSheetVO sheet = balanceSheet(memberId);
         LocalDate today = LocalDate.now();
-        FinanceNetWorthSnapshot exist = snapshotMapper.selectByOwnerAndDate(memberId, today);
+        FinanceNetWorthSnapshot exist = snapshotRepository.findByOwnerAndDate(memberId, today).orElse(null);
         FinanceNetWorthSnapshot s = exist == null ? new FinanceNetWorthSnapshot() : exist;
         if (exist == null) {
             s.setOwnerMemberId(memberId);
@@ -167,9 +167,9 @@ public class ReportServiceImpl implements ReportService {
         s.setNetWorth(sheet.getNetWorth());
         try {
             if (exist == null) {
-                snapshotMapper.insert(s);
+                snapshotRepository.save(s);
             } else {
-                snapshotMapper.update(s);
+                snapshotRepository.update(s);
             }
         } catch (DuplicateKeyException e) {
             log.debug("快照已存在，跳过: owner={}, date={}", memberId, today);
@@ -181,8 +181,8 @@ public class ReportServiceImpl implements ReportService {
         YearMonth ym = YearMonth.of(year, month);
         LocalDateTime start = ym.atDay(1).atStartOfDay();
         LocalDateTime end = ym.plusMonths(1).atDay(1).atStartOfDay();
-        Map<String, BigDecimal> byCategory = transactionMapper
-                .selectByDirectionAndPeriod(memberId, DIR_EXPENSE, start, end, null).stream()
+        Map<String, BigDecimal> byCategory = transactionRepository
+                .listByDirectionAndPeriod(memberId, DIR_EXPENSE, start, end, null).stream()
                 .filter(t -> t.getCategory() != null)
                 .collect(java.util.stream.Collectors.groupingBy(
                         FinanceTransaction::getCategory,
@@ -200,7 +200,7 @@ public class ReportServiceImpl implements ReportService {
         LocalDate startMonth = LocalDate.now().minusMonths(11).withDayOfMonth(1);
         LocalDateTime start = startMonth.atStartOfDay();
         LocalDateTime end = LocalDate.now().plusMonths(1).withDayOfMonth(1).atStartOfDay();
-        List<FinanceTransaction> txs = transactionMapper.selectIncomeExpensePeriod(memberId, start, end);
+        List<FinanceTransaction> txs = transactionRepository.listIncomeExpensePeriod(memberId, start, end);
         // YYYY-MM -> [income, expense]
         Map<String, BigDecimal[]> byMonth = new java.util.LinkedHashMap<>();
         for (FinanceTransaction t : txs) {
@@ -222,7 +222,8 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public NetWorthPointVO snapshotNow(Long memberId) {
         snapshotToday(memberId);
-        FinanceNetWorthSnapshot s = snapshotMapper.selectByOwnerAndDate(memberId, LocalDate.now());
+        FinanceNetWorthSnapshot s = snapshotRepository
+                .findByOwnerAndDate(memberId, LocalDate.now()).orElse(null);
         NetWorthPointVO vo = new NetWorthPointVO();
         vo.setDate(LocalDate.now());
         vo.setNetWorth(s.getNetWorth());
@@ -232,7 +233,7 @@ public class ReportServiceImpl implements ReportService {
     /** 每日快照：对全部有账户的 owner 各落一行（当前单实例 @Scheduled，多实例时再引锁——技术雷达后置项） */
     @Scheduled(cron = "${finance.snapshot-cron:0 30 2 * * ?}")
     public void dailySnapshot() {
-        List<Long> owners = accountMapper.selectDistinctOwnerIds();
+        List<Long> owners = accountRepository.listDistinctOwnerIds();
         for (Long owner : owners) {
             try {
                 snapshotToday(owner);
@@ -245,7 +246,7 @@ public class ReportServiceImpl implements ReportService {
     }
 
     private List<FinanceAccount> accountsOf(Long memberId) {
-        return accountMapper.selectByOwner(memberId);
+        return accountRepository.listByOwner(memberId);
     }
 
     private BigDecimal sumNonLiability(List<FinanceAccount> accounts) {

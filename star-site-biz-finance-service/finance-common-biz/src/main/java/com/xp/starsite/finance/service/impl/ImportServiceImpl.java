@@ -7,8 +7,9 @@ import com.xp.starsite.finance.entity.FinanceAccount;
 import com.xp.starsite.finance.entity.FinanceTransaction;
 import com.xp.starsite.finance.importer.BillParseResult;
 import com.xp.starsite.finance.importer.BillParserRegistry;
-import com.xp.starsite.finance.mapper.FinanceAccountMapper;
-import com.xp.starsite.finance.mapper.FinanceTransactionMapper;
+import com.xp.starsite.finance.repository.FinanceAccountRepository;
+import com.xp.starsite.finance.repository.FinanceImportLogRepository;
+import com.xp.starsite.finance.repository.FinanceTransactionRepository;
 import com.xp.starsite.finance.service.ImportService;
 import com.xp.starsite.finance.service.ImportResult;
 import lombok.RequiredArgsConstructor;
@@ -37,9 +38,9 @@ import java.util.List;
 public class ImportServiceImpl implements ImportService {
 
     private final BillParserRegistry parserRegistry;
-    private final FinanceAccountMapper accountMapper;
-    private final com.xp.starsite.finance.mapper.FinanceImportLogMapper importLogMapper;
-    private final FinanceTransactionMapper transactionMapper;
+    private final FinanceAccountRepository accountRepository;
+    private final FinanceImportLogRepository importLogRepository;
+    private final FinanceTransactionRepository transactionRepository;
     private final IdGenerator idGenerator;
 
     @Override
@@ -55,7 +56,7 @@ public class ImportServiceImpl implements ImportService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ImportResult doImport(Long memberId, Long accountId, String content) {
-        FinanceAccount account = accountMapper.selectById(accountId);
+        FinanceAccount account = accountRepository.findById(accountId).orElse(null);
         if (account == null) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "账户不存在");
         }
@@ -72,7 +73,7 @@ public class ImportServiceImpl implements ImportService {
             t.setRemark(t.getRemark() == null ? "" : t.getRemark());
             t.setId(idGenerator.nextId());
             try {
-                transactionMapper.insert(t);
+                transactionRepository.save(t);
                 imported++;
                 // 收入加、支出减（金额恒正）
                 delta = delta.add(t.getDirection() == 1 ? t.getAmount() : t.getAmount().negate());
@@ -82,7 +83,7 @@ public class ImportServiceImpl implements ImportService {
         }
         if (delta.signum() != 0) {
             // 原子增量（一锁二判三更新）：并发导入/记账下不丢更新
-            accountMapper.updateBalanceDelta(account.getId(), delta);
+            accountRepository.updateBalanceDelta(account.getId(), delta);
             account.setBalance(account.getBalance().add(delta));
         }
         log.info("账单导入: channel={}, parsed={}, imported={}, dup={}, skipped={}, delta={}",
@@ -94,11 +95,11 @@ public class ImportServiceImpl implements ImportService {
 
     @Override
     public java.util.List<com.xp.starsite.finance.entity.FinanceImportLog> logs(Long memberId, Long fileId) {
-        return importLogMapper.selectByOwner(memberId, fileId);
+        return importLogRepository.listByOwner(memberId, fileId);
     }
 
     private FinanceAccount requireOwnedAccount(Long memberId, Long accountId) {
-        FinanceAccount account = accountMapper.selectById(accountId);
+        FinanceAccount account = accountRepository.findById(accountId).orElse(null);
         if (account == null || !account.getOwnerMemberId().equals(memberId)) {
             throw new BizException(ResultCode.FORBIDDEN);
         }

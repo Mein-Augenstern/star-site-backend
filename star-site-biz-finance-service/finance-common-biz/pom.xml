@@ -17,6 +17,11 @@
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
+            <artifactId>finance-core-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
             <artifactId>finance-dal</artifactId>
             <version>${project.version}</version>
         </dependency>

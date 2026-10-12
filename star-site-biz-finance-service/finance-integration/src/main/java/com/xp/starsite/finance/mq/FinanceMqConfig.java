@@ -1,7 +1,7 @@
 package com.xp.starsite.finance.mq;
 
 import com.xp.starsite.api.client.FileApi;
-import com.xp.starsite.finance.mapper.FinanceImportLogMapper;
+import com.xp.starsite.finance.repository.FinanceImportLogRepository;
 import com.xp.starsite.finance.service.ImportService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -25,7 +25,7 @@ public class FinanceMqConfig {
     public FileUploadedConsumer fileUploadedConsumer(JdbcTemplate jdbcTemplate,
                                                      FileApi fileApi,
                                                      ImportService importService,
-                                                     FinanceImportLogMapper importLogMapper) {
-        return new FileUploadedConsumer(jdbcTemplate, fileApi, importService, importLogMapper);
+                                                     FinanceImportLogRepository importLogRepository) {
+        return new FileUploadedConsumer(jdbcTemplate, fileApi, importService, importLogRepository);
     }
 }

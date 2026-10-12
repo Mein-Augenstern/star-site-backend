@@ -17,7 +17,7 @@
              #{parsed}, #{imported}, #{duplicates}, #{skipped}, #{status}, #{error})
     </insert>
 
-    <select id="selectByOwner" resultType="com.xp.starsite.finance.entity.FinanceImportLog">
+    <select id="selectByOwner" resultType="com.xp.starsite.finance.dal.dataobject.FinanceImportLogDO">
         SELECT <include refid="cols"/> FROM finance_import_log
         WHERE owner_member_id = #{ownerMemberId}
         <if test="fileId != null">AND file_id = #{fileId}</if>

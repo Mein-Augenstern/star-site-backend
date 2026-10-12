@@ -3,9 +3,8 @@ package com.xp.starsite.finance.ai;
 import com.xp.starsite.api.client.ArchiveApi;
 import com.xp.starsite.common.llm.LlmClient;
 import com.xp.starsite.finance.entity.FinanceAccount;
-import com.xp.starsite.finance.entity.FinanceTransaction;
-import com.xp.starsite.finance.mapper.FinanceAccountMapper;
-import com.xp.starsite.finance.mapper.FinanceTransactionMapper;
+import com.xp.starsite.finance.repository.FinanceAccountRepository;
+import com.xp.starsite.finance.repository.FinanceTransactionRepository;
 import com.xp.starsite.finance.service.ReportService;
 import com.xp.starsite.finance.vo.BalanceSheetVO;
 import com.xp.starsite.finance.vo.CashFlowVO;
@@ -40,8 +39,8 @@ public class FinanceDiagnosisService {
             4. 语气务实温和，不推销任何金融产品，最后声明仅供参考。
             全文 350 字以内，不要使用 Markdown 标记。""";
 
-    private final FinanceAccountMapper accountMapper;
-    private final FinanceTransactionMapper transactionMapper;
+    private final FinanceAccountRepository accountRepository;
+    private final FinanceTransactionRepository transactionRepository;
     private final ReportService reportService;
     private final ArchiveApi archiveApi;
     private final ObjectProvider<LlmClient> llmClient;
@@ -58,7 +57,7 @@ public class FinanceDiagnosisService {
                 LocalDateTime.now().minusMonths(1).getYear(),
                 LocalDateTime.now().minusMonths(1).getMonthValue());
         CashFlowVO cash = reportService.cashFlow(memberId);
-        List<FinanceAccount> accounts = accountMapper.selectByOwner(memberId);
+        List<FinanceAccount> accounts = accountRepository.listByOwner(memberId);
 
         StringBuilder user = new StringBuilder("家庭财务数据：\n");
         user.append("- 总资产：").append(sheet.getTotalAsset()).append("（其中档案资产估值 ")

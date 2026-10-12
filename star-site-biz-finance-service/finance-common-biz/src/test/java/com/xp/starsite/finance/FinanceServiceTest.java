@@ -6,8 +6,8 @@ import com.xp.starsite.finance.dto.AccountSaveDTO;
 import com.xp.starsite.finance.dto.TransactionSaveDTO;
 import com.xp.starsite.finance.entity.FinanceAccount;
 import com.xp.starsite.finance.entity.FinanceTransaction;
-import com.xp.starsite.finance.mapper.FinanceAccountMapper;
-import com.xp.starsite.finance.mapper.FinanceTransactionMapper;
+import com.xp.starsite.finance.repository.FinanceAccountRepository;
+import com.xp.starsite.finance.repository.FinanceTransactionRepository;
 import com.xp.starsite.finance.service.impl.AccountServiceImpl;
 import com.xp.starsite.finance.service.impl.TransactionServiceImpl;
 import org.junit.jupiter.api.Test;
@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -45,19 +46,19 @@ class FinanceServiceTest {
     private static final long OTHER = 2L;
 
     @Mock
-    private FinanceAccountMapper accountMapper;
+    private FinanceAccountRepository accountRepository;
     @Mock
-    private FinanceTransactionMapper transactionMapper;
+    private FinanceTransactionRepository transactionRepository;
     @Mock
     private IdGenerator idGenerator;
 
     /** EventPublisher 在 F1 财务域未使用（AccountServiceImpl 不依赖），占位满足构造 */
     private AccountServiceImpl accountService() {
-        return new AccountServiceImpl(accountMapper, transactionMapper, idGenerator);
+        return new AccountServiceImpl(accountRepository, transactionRepository, idGenerator);
     }
 
     private TransactionServiceImpl txService() {
-        return new TransactionServiceImpl(accountMapper, transactionMapper, idGenerator);
+        return new TransactionServiceImpl(accountRepository, transactionRepository, idGenerator);
     }
 
     private FinanceAccount account(long id, BigDecimal balance) {
@@ -83,15 +84,15 @@ class FinanceServiceTest {
         return dto;
     }
 
-    /** 模拟 DAL 原子增量（一锁二判三更新）：余额在「库」里加 delta，重查可见；账户不存在返回 0 行 */
+    /** 模拟仓储余额原子增量（一锁二判三更新）：余额在「库」里加 delta，重查可见；账户不存在返回 false */
     private void atomicBalanceStub() {
-        when(accountMapper.updateBalanceDelta(anyLong(), any(BigDecimal.class))).thenAnswer(inv -> {
-            FinanceAccount a = accountMapper.selectById(inv.getArgument(0, Long.class));
+        when(accountRepository.updateBalanceDelta(anyLong(), any(BigDecimal.class))).thenAnswer(inv -> {
+            FinanceAccount a = accountRepository.findById(inv.getArgument(0, Long.class)).orElse(null);
             if (a == null) {
-                return 0;
+                return false;
             }
             a.setBalance(a.getBalance().add(inv.getArgument(1, BigDecimal.class)));
-            return 1;
+            return true;
         });
     }
 
@@ -100,21 +101,21 @@ class FinanceServiceTest {
     @Test
     void incomeIncreasesBalanceWithSnapshot() {
         FinanceAccount acc = account(11L, new BigDecimal("100"));
-        when(accountMapper.selectById(11L)).thenReturn(acc);
+        when(accountRepository.findById(11L)).thenReturn(Optional.of(acc));
         atomicBalanceStub();
 
         txService().create(ME, dto(1, 11L, "50"));
 
         assertEquals(0, acc.getBalance().compareTo(new BigDecimal("150")));
         ArgumentCaptor<FinanceTransaction> cap = ArgumentCaptor.forClass(FinanceTransaction.class);
-        verify(transactionMapper).insert(cap.capture());
+        verify(transactionRepository).save(cap.capture());
         assertEquals(0, cap.getValue().getBalanceAfter().compareTo(new BigDecimal("150")));
     }
 
     @Test
     void expenseDecreasesBalance() {
         FinanceAccount acc = account(11L, new BigDecimal("100"));
-        when(accountMapper.selectById(11L)).thenReturn(acc);
+        when(accountRepository.findById(11L)).thenReturn(Optional.of(acc));
         atomicBalanceStub();
 
         txService().create(ME, dto(2, 11L, "30"));
@@ -124,10 +125,10 @@ class FinanceServiceTest {
 
     @Test
     void nonPositiveAmountRejected() {
-        when(accountMapper.selectById(11L)).thenReturn(account(11L, new BigDecimal("100")));
+        when(accountRepository.findById(11L)).thenReturn(Optional.of(account(11L, new BigDecimal("100"))));
 
         assertThrows(BizException.class, () -> txService().create(ME, dto(2, 11L, "0")));
-        verify(transactionMapper, never()).insert(any(FinanceTransaction.class));
+        verify(transactionRepository, never()).save(any(FinanceTransaction.class));
     }
 
     /* ===== 转账 ===== */
@@ -138,8 +139,8 @@ class FinanceServiceTest {
         FinanceAccount to = account(22L, new BigDecimal("0"));
         to.setName("招商银行卡");
         to.setAccountType("bank");
-        when(accountMapper.selectById(11L)).thenReturn(from);
-        when(accountMapper.selectById(22L)).thenReturn(to);
+        when(accountRepository.findById(11L)).thenReturn(Optional.of(from));
+        when(accountRepository.findById(22L)).thenReturn(Optional.of(to));
         atomicBalanceStub();
 
         TransactionSaveDTO dto = dto(3, 11L, "40");
@@ -150,14 +151,14 @@ class FinanceServiceTest {
         assertEquals(0, to.getBalance().compareTo(new BigDecimal("40")));
         // 出+入两笔流水
         ArgumentCaptor<FinanceTransaction> cap = ArgumentCaptor.forClass(FinanceTransaction.class);
-        verify(transactionMapper, times(2)).insert(cap.capture());
+        verify(transactionRepository, times(2)).save(cap.capture());
         List<FinanceTransaction> legs = cap.getAllValues();
         assertEquals(legs.get(0).getTransferGroupId(), legs.get(1).getTransferGroupId());
     }
 
     @Test
     void transferToSameAccountRejected() {
-        when(accountMapper.selectById(11L)).thenReturn(account(11L, new BigDecimal("100")));
+        when(accountRepository.findById(11L)).thenReturn(Optional.of(account(11L, new BigDecimal("100"))));
 
         TransactionSaveDTO dto = dto(3, 11L, "40");
         dto.setToAccountId(11L);
@@ -175,16 +176,16 @@ class FinanceServiceTest {
         t.setDirection(2);
         t.setAmount(new BigDecimal("30"));
         t.setBalanceAfter(new BigDecimal("70"));
-        when(transactionMapper.selectById(5L)).thenReturn(t);
+        when(transactionRepository.findById(5L)).thenReturn(Optional.of(t));
         FinanceAccount acc = account(11L, new BigDecimal("70"));
-        when(accountMapper.selectById(11L)).thenReturn(acc);
+        when(accountRepository.findById(11L)).thenReturn(Optional.of(acc));
         atomicBalanceStub();
 
         txService().delete(ME, 5L);
 
         // 支出删除 → 余额回加
         assertEquals(0, acc.getBalance().compareTo(new BigDecimal("100")));
-        verify(transactionMapper).markDeleted(5L);
+        verify(transactionRepository).markDeleted(5L);
     }
 
     @Test
@@ -206,19 +207,19 @@ class FinanceServiceTest {
         leg2.setAmount(new BigDecimal("40"));
         leg2.setBalanceAfter(new BigDecimal("40"));
         leg2.setTransferGroupId(999L);
-        when(transactionMapper.selectById(6L)).thenReturn(leg1);
-        when(transactionMapper.selectByTransferGroupId(999L)).thenReturn(List.of(leg1, leg2));
+        when(transactionRepository.findById(6L)).thenReturn(Optional.of(leg1));
+        when(transactionRepository.findByTransferGroupId(999L)).thenReturn(List.of(leg1, leg2));
         FinanceAccount from = account(11L, new BigDecimal("60"));
         FinanceAccount to = account(22L, new BigDecimal("40"));
         to.setOwnerMemberId(ME);
-        when(accountMapper.selectById(11L)).thenReturn(from);
-        when(accountMapper.selectById(22L)).thenReturn(to);
+        when(accountRepository.findById(11L)).thenReturn(Optional.of(from));
+        when(accountRepository.findById(22L)).thenReturn(Optional.of(to));
         atomicBalanceStub();
 
         txService().delete(ME, 6L);
 
         // 两腿都删 + 双账户回滚
-        verify(transactionMapper, times(2)).markDeleted(anyLong());
+        verify(transactionRepository, times(2)).markDeleted(anyLong());
         assertEquals(0, from.getBalance().compareTo(new BigDecimal("100")));
         assertEquals(0, to.getBalance().compareTo(new BigDecimal("0")));
     }
@@ -229,7 +230,7 @@ class FinanceServiceTest {
     void foreignAccountThrows403() {
         FinanceAccount foreign = account(11L, new BigDecimal("100"));
         foreign.setOwnerMemberId(OTHER);
-        when(accountMapper.selectById(11L)).thenReturn(foreign);
+        when(accountRepository.findById(11L)).thenReturn(Optional.of(foreign));
 
         BizException e = assertThrows(BizException.class,
                 () -> txService().create(ME, dto(2, 11L, "10")));
@@ -241,7 +242,7 @@ class FinanceServiceTest {
         FinanceTransaction foreign = new FinanceTransaction();
         foreign.setId(9L);
         foreign.setOwnerMemberId(OTHER);
-        when(transactionMapper.selectById(9L)).thenReturn(foreign);
+        when(transactionRepository.findById(9L)).thenReturn(Optional.of(foreign));
 
         BizException e = assertThrows(BizException.class, () -> txService().delete(ME, 9L));
         assertEquals(403, e.getCode());
@@ -251,14 +252,14 @@ class FinanceServiceTest {
 
     @Test
     void listDefaultsToCurrentYearMonthWhenParamsAbsent() {
-        when(transactionMapper.countByCondition(eq(ME), isNull(), isNull(),
+        when(transactionRepository.countByOwner(eq(ME), isNull(), isNull(),
                 any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(0L);
 
         txService().list(ME, null, null, null, null, 1, 20);
 
         ArgumentCaptor<LocalDateTime> start = ArgumentCaptor.forClass(LocalDateTime.class);
         ArgumentCaptor<LocalDateTime> end = ArgumentCaptor.forClass(LocalDateTime.class);
-        verify(transactionMapper).countByCondition(eq(ME), isNull(), isNull(), start.capture(), end.capture());
+        verify(transactionRepository).countByOwner(eq(ME), isNull(), isNull(), start.capture(), end.capture());
         YearMonth now = YearMonth.now();
         assertEquals(now.atDay(1).atStartOfDay(), start.getValue());
         assertEquals(now.plusMonths(1).atDay(1).atStartOfDay(), end.getValue());
@@ -266,14 +267,14 @@ class FinanceServiceTest {
 
     @Test
     void listUsesExplicitYearMonthWhenProvided() {
-        when(transactionMapper.countByCondition(eq(ME), isNull(), isNull(),
+        when(transactionRepository.countByOwner(eq(ME), isNull(), isNull(),
                 any(LocalDateTime.class), any(LocalDateTime.class))).thenReturn(0L);
 
         txService().list(ME, null, null, 2026, 1, 1, 20);
 
         ArgumentCaptor<LocalDateTime> start = ArgumentCaptor.forClass(LocalDateTime.class);
         ArgumentCaptor<LocalDateTime> end = ArgumentCaptor.forClass(LocalDateTime.class);
-        verify(transactionMapper).countByCondition(eq(ME), isNull(), isNull(), start.capture(), end.capture());
+        verify(transactionRepository).countByOwner(eq(ME), isNull(), isNull(), start.capture(), end.capture());
         assertEquals(LocalDateTime.of(2026, 1, 1, 0, 0), start.getValue());
         assertEquals(LocalDateTime.of(2026, 2, 1, 0, 0), end.getValue());
     }
@@ -284,11 +285,11 @@ class FinanceServiceTest {
     void createAccountWithInitialBalanceRecordsAdjust() {
         java.util.concurrent.atomic.AtomicReference<FinanceAccount> inserted =
                 new java.util.concurrent.atomic.AtomicReference<>();
-        when(accountMapper.insert(any(FinanceAccount.class))).thenAnswer(inv -> {
+        when(accountRepository.save(any(FinanceAccount.class))).thenAnswer(inv -> {
             inserted.set(inv.getArgument(0));
-            return 1;
+            return inv.getArgument(0);
         });
-        when(accountMapper.selectById(any(Long.class))).thenAnswer(inv -> inserted.get());
+        when(accountRepository.findById(any(Long.class))).thenAnswer(inv -> Optional.ofNullable(inserted.get()));
 
         AccountSaveDTO dto = new AccountSaveDTO();
         dto.setName("公积金");
@@ -298,7 +299,7 @@ class FinanceServiceTest {
 
         // 初始余额非 0 → 自动记一笔调整流水留痕
         ArgumentCaptor<FinanceTransaction> cap = ArgumentCaptor.forClass(FinanceTransaction.class);
-        verify(transactionMapper).insert(cap.capture());
+        verify(transactionRepository).save(cap.capture());
         assertEquals(4, cap.getValue().getDirection());
         assertEquals(0, cap.getValue().getAmount().compareTo(new BigDecimal("80000")));
     }

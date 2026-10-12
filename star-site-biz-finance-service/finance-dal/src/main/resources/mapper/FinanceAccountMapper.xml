@@ -18,7 +18,7 @@
              #{liabilityFlag}, #{institution}, #{remark})
     </insert>
 
-    <select id="selectById" resultType="com.xp.starsite.finance.entity.FinanceAccount">
+    <select id="selectById" resultType="com.xp.starsite.finance.dal.dataobject.FinanceAccountDO">
         SELECT <include refid="cols"/> FROM finance_account
         WHERE id = #{id} AND deleted = 0
     </select>
@@ -41,7 +41,7 @@
         UPDATE finance_account SET deleted = 1 WHERE id = #{id} AND deleted = 0
     </update>
 
-    <select id="selectByOwner" resultType="com.xp.starsite.finance.entity.FinanceAccount">
+    <select id="selectByOwner" resultType="com.xp.starsite.finance.dal.dataobject.FinanceAccountDO">
         SELECT <include refid="cols"/> FROM finance_account
         WHERE deleted = 0 AND owner_member_id = #{ownerMemberId}
         ORDER BY id ASC

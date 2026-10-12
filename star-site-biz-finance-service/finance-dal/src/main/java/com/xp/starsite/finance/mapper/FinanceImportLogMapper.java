@@ -1,6 +1,6 @@
 package com.xp.starsite.finance.mapper;
 
-import com.xp.starsite.finance.entity.FinanceImportLog;
+import com.xp.starsite.finance.dal.dataobject.FinanceImportLogDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -16,9 +16,9 @@ import java.util.List;
 public interface FinanceImportLogMapper {
 
     /** 插入导入记录（id 由 DB 自增，useGeneratedKeys 回填） */
-    int insert(FinanceImportLog importLog);
+    int insert(FinanceImportLogDO importLog);
 
     /** 导入记录列表：限定 owner + 可选文件，按 id 倒序（前端轮询导入进度） */
-    List<FinanceImportLog> selectByOwner(@Param("ownerMemberId") Long ownerMemberId,
+    List<FinanceImportLogDO> selectByOwner(@Param("ownerMemberId") Long ownerMemberId,
                                          @Param("fileId") Long fileId);
 }

@@ -10,14 +10,13 @@ import com.xp.starsite.finance.entity.FinanceTransaction;
 import com.xp.starsite.finance.importer.BillParseResult;
 import com.xp.starsite.finance.importer.BillParserRegistry;
 import com.xp.starsite.finance.importer.WechatBillParser;
-import com.xp.starsite.finance.mapper.FinanceBudgetMapper;
-import com.xp.starsite.finance.mapper.FinanceGoalMapper;
-import com.xp.starsite.finance.mapper.FinanceTransactionMapper;
+import com.xp.starsite.finance.repository.FinanceBudgetRepository;
+import com.xp.starsite.finance.repository.FinanceGoalRepository;
+import com.xp.starsite.finance.repository.FinanceTransactionRepository;
 import com.xp.starsite.finance.service.impl.BudgetServiceImpl;
 import com.xp.starsite.finance.service.impl.GoalServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ClassPathResource;
@@ -28,13 +27,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -49,11 +48,11 @@ class BudgetGoalParserTest {
     private static final long ME = 1L;
 
     @Mock
-    private FinanceBudgetMapper budgetMapper;
+    private FinanceBudgetRepository budgetRepository;
     @Mock
-    private FinanceGoalMapper goalMapper;
+    private FinanceGoalRepository goalRepository;
     @Mock
-    private FinanceTransactionMapper transactionMapper;
+    private FinanceTransactionRepository transactionRepository;
     @Mock
     private IdGenerator idGenerator;
 
@@ -62,16 +61,16 @@ class BudgetGoalParserTest {
     @Test
     void budgetUsageRateReflectsSpent() {
         // 当月 FOOD 支出 60，预算 100 → 使用率 0.6，剩余 40
-        when(transactionMapper.selectByDirectionAndPeriod(any(), anyInt(), any(), any(), any()))
+        when(transactionRepository.listByDirectionAndPeriod(any(), anyInt(), any(), any(), any()))
                 .thenReturn(List.of(txExpense("60"), txExpense("30")));
-        when(budgetMapper.selectByOwnerCategoryPeriod(any(), any(), any())).thenReturn(null);
+        when(budgetRepository.findByOwnerCategoryPeriod(any(), any(), any())).thenReturn(Optional.empty());
 
         BudgetSaveDTO dto = new BudgetSaveDTO();
         dto.setCategory("FOOD");
         dto.setPeriod("2026-10");
         dto.setAmount(new BigDecimal("100"));
         com.xp.starsite.finance.vo.BudgetVO vo =
-                new BudgetServiceImpl(budgetMapper, transactionMapper, idGenerator).save(ME, dto);
+                new BudgetServiceImpl(budgetRepository, transactionRepository, idGenerator).save(ME, dto);
 
         assertEquals(0, vo.getSpent().compareTo(new BigDecimal("90")));
         assertEquals(0, vo.getRemaining().compareTo(new BigDecimal("10")));
@@ -80,7 +79,7 @@ class BudgetGoalParserTest {
 
     @Test
     void budgetOverspendAllowsNegativeRemaining() {
-        when(transactionMapper.selectByDirectionAndPeriod(any(), anyInt(), any(), any(), any()))
+        when(transactionRepository.listByDirectionAndPeriod(any(), anyInt(), any(), any(), any()))
                 .thenReturn(List.of(txExpense("150")));
         FinanceBudget exist = new FinanceBudget();
         exist.setId(7L);
@@ -88,14 +87,14 @@ class BudgetGoalParserTest {
         exist.setCategory("FOOD");
         exist.setPeriod("2026-10");
         exist.setAmount(new BigDecimal("100"));
-        when(budgetMapper.selectByOwnerCategoryPeriod(any(), any(), any())).thenReturn(exist);
+        when(budgetRepository.findByOwnerCategoryPeriod(any(), any(), any())).thenReturn(Optional.of(exist));
 
         BudgetSaveDTO dto = new BudgetSaveDTO();
         dto.setCategory("FOOD");
         dto.setPeriod("2026-10");
         dto.setAmount(new BigDecimal("100"));
         com.xp.starsite.finance.vo.BudgetVO vo =
-                new BudgetServiceImpl(budgetMapper, transactionMapper, idGenerator).save(ME, dto);
+                new BudgetServiceImpl(budgetRepository, transactionRepository, idGenerator).save(ME, dto);
 
         // 超支：remaining 为负、usageRate > 1
         assertEquals(0, vo.getRemaining().compareTo(new BigDecimal("-50")));
@@ -109,21 +108,21 @@ class BudgetGoalParserTest {
         dto.setPeriod("2026-10");
         dto.setAmount(new BigDecimal("100"));
         assertThrows(BizException.class,
-                () -> new BudgetServiceImpl(budgetMapper, transactionMapper, idGenerator).save(ME, dto));
+                () -> new BudgetServiceImpl(budgetRepository, transactionRepository, idGenerator).save(ME, dto));
     }
 
     /* ===== 目标 ===== */
 
     @Test
     void goalProgressComputed() {
-        when(goalMapper.insert(any(FinanceGoal.class))).thenReturn(1);
+        when(goalRepository.save(any(FinanceGoal.class))).thenAnswer(inv -> inv.getArgument(0));
 
         GoalSaveDTO dto = new GoalSaveDTO();
         dto.setName("教育金");
         dto.setTargetAmount(new BigDecimal("200000"));
         dto.setCurrentAmount(new BigDecimal("50000"));
         com.xp.starsite.finance.vo.GoalVO vo =
-                new GoalServiceImpl(goalMapper, idGenerator).create(ME, dto);
+                new GoalServiceImpl(goalRepository, idGenerator).create(ME, dto);
 
         assertEquals(0, vo.getProgress().compareTo(new BigDecimal("0.2500")));
     }
@@ -133,13 +132,13 @@ class BudgetGoalParserTest {
         FinanceGoal foreign = new FinanceGoal();
         foreign.setId(3L);
         foreign.setOwnerMemberId(OTHER);
-        when(goalMapper.selectById(3L)).thenReturn(foreign);
+        when(goalRepository.findById(3L)).thenReturn(Optional.of(foreign));
 
         GoalSaveDTO dto = new GoalSaveDTO();
         dto.setName("x");
         dto.setTargetAmount(new BigDecimal("1"));
         BizException e = assertThrows(BizException.class,
-                () -> new GoalServiceImpl(goalMapper, idGenerator).update(ME, 3L, dto));
+                () -> new GoalServiceImpl(goalRepository, idGenerator).update(ME, 3L, dto));
         assertEquals(403, e.getCode());
     }
 

@@ -6,8 +6,8 @@ import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.llm.LlmClient;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.finance.ai.FinanceDiagnosisService;
-import com.xp.starsite.finance.mapper.FinanceAccountMapper;
-import com.xp.starsite.finance.mapper.FinanceTransactionMapper;
+import com.xp.starsite.finance.repository.FinanceAccountRepository;
+import com.xp.starsite.finance.repository.FinanceTransactionRepository;
 import com.xp.starsite.finance.service.ReportService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,9 +37,9 @@ class FinanceDiagnosisTest {
     private static final long ME = 1L;
 
     @Mock
-    private FinanceAccountMapper accountMapper;
+    private FinanceAccountRepository accountRepository;
     @Mock
-    private FinanceTransactionMapper transactionMapper;
+    private FinanceTransactionRepository transactionRepository;
     @Mock
     private ReportService reportService;
     @Mock
@@ -58,19 +58,19 @@ class FinanceDiagnosisTest {
 
     private FinanceDiagnosisService service() {
         when(llmProvider.getIfAvailable()).thenReturn(llmClient);
-        return new FinanceDiagnosisService(accountMapper, transactionMapper, reportService, archiveApi, llmProvider);
+        return new FinanceDiagnosisService(accountRepository, transactionRepository, reportService, archiveApi, llmProvider);
     }
 
     private FinanceDiagnosisService serviceWithoutLlm() {
         when(llmProvider.getIfAvailable()).thenReturn(null);
-        return new FinanceDiagnosisService(accountMapper, transactionMapper, reportService, archiveApi, llmProvider);
+        return new FinanceDiagnosisService(accountRepository, transactionRepository, reportService, archiveApi, llmProvider);
     }
 
     private void stubReports() {
         when(reportService.balanceSheet(ME)).thenReturn(sheet("2105000", "8000"));
         when(reportService.incomeExpense(ME, 2026, 9)).thenReturn(ie("12000", "4000"));
         when(reportService.cashFlow(ME)).thenReturn(new com.xp.starsite.finance.vo.CashFlowVO());
-        when(accountMapper.selectByOwner(ME)).thenReturn(List.of());
+        when(accountRepository.listByOwner(ME)).thenReturn(List.of());
     }
 
     private com.xp.starsite.finance.vo.BalanceSheetVO sheet(String asset, String liability) {

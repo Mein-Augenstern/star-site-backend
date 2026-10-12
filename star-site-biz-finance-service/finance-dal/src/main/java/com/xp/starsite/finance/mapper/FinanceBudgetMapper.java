@@ -1,6 +1,6 @@
 package com.xp.starsite.finance.mapper;
 
-import com.xp.starsite.finance.entity.FinanceBudget;
+import com.xp.starsite.finance.dal.dataobject.FinanceBudgetDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -17,23 +17,23 @@ import java.util.List;
 public interface FinanceBudgetMapper {
 
     /** 新建预算（雪花 id 由业务层 insert 前赋值） */
-    int insert(FinanceBudget budget);
+    int insert(FinanceBudgetDO budget);
 
     /** 按 id 取预算（含逻辑删过滤，不存在返回 null） */
-    FinanceBudget selectById(@Param("id") Long id);
+    FinanceBudgetDO selectById(@Param("id") Long id);
 
     /** 「账号 × 分类 × 月份」唯一预算（upsert 判存用，XML LIMIT 1） */
-    FinanceBudget selectByOwnerCategoryPeriod(@Param("ownerMemberId") Long ownerMemberId,
+    FinanceBudgetDO selectByOwnerCategoryPeriod(@Param("ownerMemberId") Long ownerMemberId,
                                               @Param("category") String category,
                                               @Param("period") String period);
 
     /** 更新预算金额（按 id，只更新业务变更列） */
-    int update(FinanceBudget budget);
+    int update(FinanceBudgetDO budget);
 
     /** 逻辑删：deleted 置 1 */
     int markDeleted(@Param("id") Long id);
 
     /** 某账号某月份全部预算（按金额倒序展示） */
-    List<FinanceBudget> selectByOwnerPeriod(@Param("ownerMemberId") Long ownerMemberId,
+    List<FinanceBudgetDO> selectByOwnerPeriod(@Param("ownerMemberId") Long ownerMemberId,
                                             @Param("period") String period);
 }

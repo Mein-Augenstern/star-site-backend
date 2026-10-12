@@ -7,8 +7,8 @@ import com.xp.starsite.finance.FinanceCategories;
 import com.xp.starsite.finance.dto.BudgetSaveDTO;
 import com.xp.starsite.finance.entity.FinanceBudget;
 import com.xp.starsite.finance.entity.FinanceTransaction;
-import com.xp.starsite.finance.mapper.FinanceBudgetMapper;
-import com.xp.starsite.finance.mapper.FinanceTransactionMapper;
+import com.xp.starsite.finance.repository.FinanceBudgetRepository;
+import com.xp.starsite.finance.repository.FinanceTransactionRepository;
 import com.xp.starsite.finance.service.BudgetService;
 import com.xp.starsite.finance.vo.BudgetVO;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +32,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BudgetServiceImpl implements BudgetService {
 
-    private final FinanceBudgetMapper budgetMapper;
-    private final FinanceTransactionMapper transactionMapper;
+    private final FinanceBudgetRepository budgetRepository;
+    private final FinanceTransactionRepository transactionRepository;
     private final IdGenerator idGenerator;
 
     @Override
@@ -46,8 +46,9 @@ public class BudgetServiceImpl implements BudgetService {
         }
         YearMonth.parse(dto.getPeriod()); // 格式校验（非法抛 DateTimeParseException → 500 兜底）
 
-        FinanceBudget budget = budgetMapper.selectByOwnerCategoryPeriod(
-                memberId, dto.getCategory(), dto.getPeriod());
+        FinanceBudget budget = budgetRepository
+                .findByOwnerCategoryPeriod(memberId, dto.getCategory(), dto.getPeriod())
+                .orElse(null);
         if (budget == null) {
             budget = new FinanceBudget();
             budget.setId(idGenerator.nextId());
@@ -58,27 +59,27 @@ public class BudgetServiceImpl implements BudgetService {
         }
         budget.setAmount(dto.getAmount());
         if (budget.getCreatedAt() == null) {
-            budgetMapper.insert(budget);
+            budgetRepository.save(budget);
         } else {
-            budgetMapper.update(budget);
+            budgetRepository.update(budget);
         }
         return toVO(budget, spentOf(memberId, dto.getCategory(), dto.getPeriod()));
     }
 
     @Override
     public List<BudgetVO> list(Long memberId, String period) {
-        return budgetMapper.selectByOwnerPeriod(memberId, period).stream()
+        return budgetRepository.listByOwnerPeriod(memberId, period).stream()
                 .map(b -> toVO(b, spentOf(memberId, b.getCategory(), period)))
                 .toList();
     }
 
     @Override
     public void delete(Long memberId, Long id) {
-        FinanceBudget budget = budgetMapper.selectById(id);
+        FinanceBudget budget = budgetRepository.findById(id).orElse(null);
         if (budget == null || !budget.getOwnerMemberId().equals(memberId)) {
             throw new BizException(ResultCode.FORBIDDEN);
         }
-        budgetMapper.markDeleted(id);
+        budgetRepository.markDeleted(id);
     }
 
     /** 当月某分类支出合计（支出流水按月聚合） */
@@ -86,7 +87,7 @@ public class BudgetServiceImpl implements BudgetService {
         YearMonth ym = YearMonth.parse(period);
         LocalDateTime start = ym.atDay(1).atStartOfDay();
         LocalDateTime end = ym.plusMonths(1).atDay(1).atStartOfDay();
-        return transactionMapper.selectByDirectionAndPeriod(memberId, 2, start, end, category).stream()
+        return transactionRepository.listByDirectionAndPeriod(memberId, 2, start, end, category).stream()
                 .map(FinanceTransaction::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }

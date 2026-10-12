@@ -5,7 +5,7 @@ import com.xp.starsite.common.result.ResultCode;
 import com.xp.starsite.common.util.IdGenerator;
 import com.xp.starsite.finance.dto.GoalSaveDTO;
 import com.xp.starsite.finance.entity.FinanceGoal;
-import com.xp.starsite.finance.mapper.FinanceGoalMapper;
+import com.xp.starsite.finance.repository.FinanceGoalRepository;
 import com.xp.starsite.finance.service.GoalService;
 import com.xp.starsite.finance.vo.GoalVO;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GoalServiceImpl implements GoalService {
 
-    private final FinanceGoalMapper goalMapper;
+    private final FinanceGoalRepository goalRepository;
     private final IdGenerator idGenerator;
 
     @Override
@@ -37,32 +37,32 @@ public class GoalServiceImpl implements GoalService {
         goal.setOwnerMemberId(memberId);
         goal.setFamilyId(0L);
         applyDto(goal, dto);
-        goalMapper.insert(goal);
+        goalRepository.save(goal);
         log.info("创建目标: id={}, name={}", goal.getId(), goal.getName());
         return toVO(goal);
     }
 
     @Override
     public List<GoalVO> list(Long memberId) {
-        return goalMapper.selectByOwner(memberId).stream().map(this::toVO).toList();
+        return goalRepository.listByOwner(memberId).stream().map(this::toVO).toList();
     }
 
     @Override
     public GoalVO update(Long memberId, Long id, GoalSaveDTO dto) {
         FinanceGoal goal = requireOwnedGoal(memberId, id);
         applyDto(goal, dto);
-        goalMapper.update(goal);
+        goalRepository.update(goal);
         return toVO(goal);
     }
 
     @Override
     public void delete(Long memberId, Long id) {
         requireOwnedGoal(memberId, id);
-        goalMapper.markDeleted(id);
+        goalRepository.markDeleted(id);
     }
 
     private FinanceGoal requireOwnedGoal(Long memberId, Long id) {
-        FinanceGoal goal = goalMapper.selectById(id);
+        FinanceGoal goal = goalRepository.findById(id).orElse(null);
         if (goal == null) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "目标不存在");
         }

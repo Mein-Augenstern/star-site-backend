@@ -1,6 +1,6 @@
 package com.xp.starsite.finance.mapper;
 
-import com.xp.starsite.finance.entity.FinanceAccount;
+import com.xp.starsite.finance.dal.dataobject.FinanceAccountDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -20,13 +20,13 @@ import java.util.List;
 public interface FinanceAccountMapper {
 
     /** 新建账户（雪花 id 由业务层 insert 前赋值；余额=期初余额一并落库） */
-    int insert(FinanceAccount account);
+    int insert(FinanceAccountDO account);
 
     /** 按 id 取账户（含逻辑删过滤，不存在返回 null） */
-    FinanceAccount selectById(@Param("id") Long id);
+    FinanceAccountDO selectById(@Param("id") Long id);
 
     /** 编辑账户资料（按 id，只更新业务变更列：名称/类型/机构/备注，不动余额） */
-    int update(FinanceAccount account);
+    int update(FinanceAccountDO account);
 
     /**
      * 余额原子增量（delta 可正可负）。
@@ -39,7 +39,7 @@ public interface FinanceAccountMapper {
     int markDeleted(@Param("id") Long id);
 
     /** 某账号全部账户（按 id 升序，建户顺序展示） */
-    List<FinanceAccount> selectByOwner(@Param("ownerMemberId") Long ownerMemberId);
+    List<FinanceAccountDO> selectByOwner(@Param("ownerMemberId") Long ownerMemberId);
 
     /** 全部有账户的 owner id 去重集合（每日净资产快照调度用） */
     List<Long> selectDistinctOwnerIds();

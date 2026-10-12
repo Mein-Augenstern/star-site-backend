@@ -14,7 +14,7 @@
             (#{familyId}, #{ownerMemberId}, #{snapDate}, #{totalAsset}, #{totalLiability}, #{netWorth})
     </insert>
 
-    <select id="selectByOwnerAndDate" resultType="com.xp.starsite.finance.entity.FinanceNetWorthSnapshot">
+    <select id="selectByOwnerAndDate" resultType="com.xp.starsite.finance.dal.dataobject.FinanceNetWorthSnapshotDO">
         SELECT <include refid="cols"/> FROM finance_net_worth_snapshot
         WHERE owner_member_id = #{ownerMemberId} AND snap_date = #{snapDate}
         LIMIT 1
@@ -26,7 +26,7 @@
         WHERE id = #{id}
     </update>
 
-    <select id="selectByOwner" resultType="com.xp.starsite.finance.entity.FinanceNetWorthSnapshot">
+    <select id="selectByOwner" resultType="com.xp.starsite.finance.dal.dataobject.FinanceNetWorthSnapshotDO">
         SELECT <include refid="cols"/> FROM finance_net_worth_snapshot
         WHERE owner_member_id = #{ownerMemberId}
         ORDER BY snap_date ASC
