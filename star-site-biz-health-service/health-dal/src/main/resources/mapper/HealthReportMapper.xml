@@ -15,7 +15,7 @@
             (#{familyMemberId}, #{reportYear}, #{checkupDate}, #{hospital}, #{title}, #{summary}, #{fileId}, #{remark})
     </insert>
 
-    <select id="selectById" resultType="com.xp.starsite.health.entity.HealthReport">
+    <select id="selectById" resultType="com.xp.starsite.health.dal.dataobject.HealthReport">
         SELECT <include refid="cols"/> FROM health_report
         WHERE id = #{id} AND deleted = 0
     </select>
@@ -24,7 +24,7 @@
         UPDATE health_report SET deleted = 1 WHERE id = #{id} AND deleted = 0
     </update>
 
-    <select id="selectPage" resultType="com.xp.starsite.health.entity.HealthReport">
+    <select id="selectPage" resultType="com.xp.starsite.health.dal.dataobject.HealthReport">
         SELECT <include refid="cols"/> FROM health_report
         WHERE deleted = 0
           AND family_member_id IN
@@ -42,7 +42,7 @@
         <if test="year != null">AND report_year = #{year}</if>
     </select>
 
-    <select id="search" resultType="com.xp.starsite.health.entity.HealthReport">
+    <select id="search" resultType="com.xp.starsite.health.dal.dataobject.HealthReport">
         SELECT <include refid="cols"/> FROM health_report
         WHERE deleted = 0
           AND family_member_id IN

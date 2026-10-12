@@ -1,6 +1,6 @@
 package com.xp.starsite.health.mapper;
 
-import com.xp.starsite.health.entity.HealthReport;
+import com.xp.starsite.health.dal.dataobject.HealthReportDODO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -17,19 +17,19 @@ import java.util.List;
  * @since 2026-10
  */
 @Mapper
-public interface HealthReportMapper {
+public interface HealthReportDOMapper {
 
     /** 新建报告（业务列插入；created_at/updated_at 由 DB 默认值维护） */
-    int insert(HealthReport report);
+    int insert(HealthReportDO report);
 
     /** 按 id 取报告（含逻辑删过滤，不存在返回 null） */
-    HealthReport selectById(@Param("id") Long id);
+    HealthReportDO selectById(@Param("id") Long id);
 
     /** 逻辑删：deleted 置 1 */
     int markDeleted(@Param("id") Long id);
 
     /** 报告分页：限定成员范围（必填）+ 可选年份，按体检日期倒序 */
-    List<HealthReport> selectPage(@Param("scopeIds") Collection<Long> scopeIds,
+    List<HealthReportDO> selectPage(@Param("scopeIds") Collection<Long> scopeIds,
                                   @Param("year") Integer year,
                                   @Param("offset") long offset,
                                   @Param("limit") int limit);
@@ -43,7 +43,7 @@ public interface HealthReportMapper {
      *
      * @param reportIds 指标名命中的报告 id 集合（可为空集合，此时不按指标命中）
      */
-    List<HealthReport> search(@Param("scopeIds") Collection<Long> scopeIds,
+    List<HealthReportDO> search(@Param("scopeIds") Collection<Long> scopeIds,
                               @Param("keyword") String keyword,
                               @Param("reportIds") Collection<Long> reportIds);
 
