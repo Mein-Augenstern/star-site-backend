@@ -70,6 +70,7 @@ public class FamilyOwnershipGuard {
 
     @FunctionalInterface
     private interface FeignCall<T> {
+        /** 执行 Feign 调用返回原始 R（异常语义由 invoke 统一翻译，fail-closed） */
         R<T> get();
     }
 }

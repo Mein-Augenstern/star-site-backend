@@ -16,15 +16,19 @@ public interface BillParser {
 
     /**
      * 是否能解析该账单文本（格式探测：按头部特征行判断）
+     *
+     * @param content 账单全文（UTF-8 文本）
+     * @return true=本解析器可处理该渠道账单
      */
     boolean supports(String content);
 
     /**
      * 解析账单文本。
      *
-     * @param content  账单全文（已按 UTF-8 读出；真实微信导出为 GBK，前端上传后由后端统一转码探测）
+     * @param content   账单全文（已按 UTF-8 读出；真实微信导出为 GBK，前端上传后由后端统一转码探测）
      * @param accountId 导入目标账户（流水挂此账户）
-     * @param context  解析上下文（transTime 等公共填充）
+     * @param context   解析上下文（transTime 等公共填充）
+     * @return 解析结果（流水草稿列表 + 账户余额线索；解析失败抛业务异常）
      */
     BillParseResult parse(String content, Long accountId, Map<String, Object> context);
 }

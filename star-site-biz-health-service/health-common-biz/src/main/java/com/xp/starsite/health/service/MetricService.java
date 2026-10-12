@@ -21,6 +21,8 @@ public interface MetricService {
     /**
      * 批量录入日常指标（血压一次产生高压+低压两条记录）
      *
+     * @param memberId 当前登录账号
+     * @param dto      指标批次（类型/数值/测量时间等）
      * @return 落库后的指标视图列表（含 id，供前端回填）
      * @throws com.xp.starsite.common.exception.BizException 403 批次内任一家庭成员不归属当前账号
      */
@@ -29,13 +31,21 @@ public interface MetricService {
     /**
      * 日常指标分页列表（按测量日期倒序）
      *
-     * @param metricType 可选，指标类型过滤（bp_sys/bp_dia/weight/glucose...）
+     * @param memberId       当前登录账号
+     * @param familyMemberId 可选，指定成员则单查（校验归属）；不传=全家范围
+     * @param metricType     可选，指标类型过滤（bp_sys/bp_dia/weight/glucose...）
+     * @param page           页码（1 起）
+     * @param size           页大小
+     * @return 指标分页
+     * @throws com.xp.starsite.common.exception.BizException 403 家庭成员不归属当前账号
      */
     PageVO<MetricVO> listMetrics(Long memberId, Long familyMemberId, String metricType, long page, long size);
 
     /**
      * 删除日常指标（逻辑删，先校验归属）
      *
+     * @param memberId 当前登录账号
+     * @param id       记录 id
      * @throws com.xp.starsite.common.exception.BizException 400 记录不存在；403 非本人家庭成员的记录
      */
     void deleteMetric(Long memberId, Long id);
@@ -43,6 +53,10 @@ public interface MetricService {
     /**
      * 日常指标趋势（按测量日期升序，孕期体重曲线等场景）
      *
+     * @param memberId       当前登录账号
+     * @param familyMemberId 目标家庭成员
+     * @param metricType     指标类型（bp_sys/bp_dia/weight/glucose...）
+     * @return 趋势点列表（测量时间升序）
      * @throws com.xp.starsite.common.exception.BizException 403 家庭成员不归属当前账号
      */
     List<MetricTrendPoint> metricTrends(Long memberId, Long familyMemberId, String metricType);

@@ -17,7 +17,9 @@ public interface ReportInsightService {
     /**
      * 同步 AI 解读报告（结果落库缓存）
      *
-     * @param force true 强制重新解读（忽略已有缓存）
+     * @param memberId 当前登录账号
+     * @param reportId 报告 id
+     * @param force    true 强制重新解读（忽略已有缓存）
      * @return 解读结果（文本 + 摘要）
      */
     ReportInterpretationService.InterpretationResult interpret(Long memberId, Long reportId, boolean force);
@@ -25,12 +27,19 @@ public interface ReportInsightService {
     /**
      * 异步 AI 解读：落幂等命令后立即返回。
      *
+     * @param memberId 当前登录账号
+     * @param reportId 报告 id
+     * @param force    true 强制重新解读（忽略已有缓存）
      * @return true=命令已受理；未配置 LLM_API_KEY 时抛 400 业务异常
      */
     boolean interpretAsync(Long memberId, Long reportId, boolean force);
 
     /**
      * 拍照识别报告 → 结构化草稿（预填表单，人工确认后另行提交落库，本方法不写库）
+     *
+     * @param memberId 当前登录账号
+     * @param fileId   报告文件 id（file 服务上传）
+     * @return 结构化草稿（医院/日期/指标列表）
      */
     ReportOcrService.OcrDraft ocr(Long memberId, Long fileId);
 }
