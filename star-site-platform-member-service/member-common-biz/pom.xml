@@ -11,10 +11,20 @@
     </parent>
 
     <artifactId>member-common-biz</artifactId>
-    <name>member-app</name>
-    <description>会员域应用层：登录/注册/绑定/资料用例编排 + DTO/VO 契约</description>
+    <name>member-common-biz</name>
+    <description>会员域应用层：登录/注册/绑定/资料用例编排 + DTO/VO 契约（依赖 core-service 仓储，零 DAO）</description>
 
     <dependencies>
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>member-core-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>member-core-model</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>member-dal</artifactId>

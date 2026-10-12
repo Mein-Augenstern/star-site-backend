@@ -12,8 +12,8 @@ import com.xp.starsite.member.dto.ProfileCompleteDTO;
 import com.xp.starsite.member.dto.RegisterDTO;
 import com.xp.starsite.member.entity.Member;
 import com.xp.starsite.member.entity.MemberIdentity;
-import com.xp.starsite.member.mapper.MemberIdentityMapper;
-import com.xp.starsite.member.mapper.MemberMapper;
+import com.xp.starsite.member.repository.MemberIdentityRepository;
+import com.xp.starsite.member.repository.MemberRepository;
 import com.xp.starsite.member.service.MemberService;
 import com.xp.starsite.member.vo.IdentityVO;
 import com.xp.starsite.member.vo.LoginVO;
@@ -30,8 +30,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 会员服务实现。数据访问全部经 DAL（{@link MemberMapper}/{@link MemberIdentityMapper}），
- * 条件与 SQL 下沉到 mapper XML；分页不存在（会员主表无列表场景）。
+ * 会员服务实现。数据访问经仓储层（{@link MemberRepository}/{@link MemberIdentityRepository}，
+ * 实现位于 core-service、底层调用 dal DAO），业务层只见领域模型、零 DAO 依赖。
  *
  * @author xiaopu
  * @since 2026-10
@@ -41,14 +41,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MemberServiceImpl implements MemberService {
 
-    private final MemberMapper memberMapper;
-    private final MemberIdentityMapper identityMapper;
+    private final MemberRepository memberRepository;
+    private final MemberIdentityRepository identityRepository;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder passwordEncoder;
 
     @Override
     public void register(RegisterDTO dto) {
-        if (memberMapper.countByUsername(dto.getUsername()) > 0) {
+        if (memberRepository.countByUsername(dto.getUsername()) > 0) {
             throw new BizException(ResultCode.USERNAME_EXISTS);
         }
         Member member = new Member();
@@ -57,13 +57,13 @@ public class MemberServiceImpl implements MemberService {
         member.setNickname(StringUtils.hasText(dto.getNickname()) ? dto.getNickname() : dto.getUsername());
         member.setGender(Gender.UNKNOWN);
         member.setStatus(MemberStatus.ACTIVE);
-        memberMapper.insert(member);
+        memberRepository.save(member);
         log.info("新会员注册: id={}, username={}", member.getId(), member.getUsername());
     }
 
     @Override
     public LoginVO login(LoginDTO dto) {
-        Member member = memberMapper.selectByUsername(dto.getUsername());
+        Member member = memberRepository.findByUsername(dto.getUsername()).orElse(null);
         if (member == null || !passwordEncoder.matches(dto.getPassword(), member.getPassword())) {
             throw new BizException(ResultCode.USERNAME_OR_PASSWORD_ERROR);
         }
@@ -105,7 +105,7 @@ public class MemberServiceImpl implements MemberService {
             member.setBio(dto.getBio());
         }
         // 非空字段才更新（动态 SQL 语义同原 MyBatis-Plus updateById）
-        memberMapper.updateProfile(member);
+        memberRepository.updateProfile(member);
         // 回读，拿到数据库维护的 updated_at
         return toVO(requireMember(id));
     }
@@ -116,12 +116,12 @@ public class MemberServiceImpl implements MemberService {
         if (!passwordEncoder.matches(dto.getOldPassword(), member.getPassword())) {
             throw new BizException(ResultCode.OLD_PASSWORD_ERROR);
         }
-        memberMapper.updatePassword(id, passwordEncoder.encode(dto.getNewPassword()));
+        memberRepository.updatePassword(id, passwordEncoder.encode(dto.getNewPassword()));
     }
 
     @Override
     public List<IdentityVO> listIdentities(Long memberId) {
-        return identityMapper.selectByMemberId(memberId)
+        return identityRepository.findByMemberId(memberId)
                 .stream().map(i -> new IdentityVO(i.getId(), i.getIdentityType(),
                         mask(i.getIdentityType(), i.getIdentifier()), i.getCreatedAt() == null ? null : i.getCreatedAt().toString()))
                 .toList();
@@ -129,19 +129,19 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public void unbindIdentity(Long memberId, Long id) {
-        MemberIdentity identity = identityMapper.selectById(id);
+        MemberIdentity identity = identityRepository.findById(id).orElse(null);
         if (identity == null || !identity.getMemberId().equals(memberId)) {
             throw new BizException(404, "绑定关系不存在");
         }
-        if (identityMapper.countByMemberId(memberId) <= 1) {
+        if (identityRepository.countByMemberId(memberId) <= 1) {
             throw new BizException(400, "至少保留一种登录方式，无法解绑");
         }
-        identityMapper.markDeleted(id);
+        identityRepository.markDeleted(id);
     }
 
     @Override
     public MemberVO completeProfile(Long memberId, ProfileCompleteDTO dto) {
-        Member member = memberMapper.selectById(memberId);
+        Member member = memberRepository.findById(memberId).orElse(null);
         if (member == null) {
             throw new BizException(404, "账号不存在");
         }
@@ -151,7 +151,7 @@ public class MemberServiceImpl implements MemberService {
         if (dto.getAvatar() != null) {
             member.setAvatar(dto.getAvatar());
         }
-        memberMapper.updateProfile(member);
+        memberRepository.updateProfile(member);
         return getById(memberId);
     }
 
@@ -160,7 +160,7 @@ public class MemberServiceImpl implements MemberService {
         if (email == null || !email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
             throw new BizException(400, "邮箱格式不正确");
         }
-        if (identityMapper.countByIdentity("EMAIL", email) > 0) {
+        if (identityRepository.countByIdentity("EMAIL", email) > 0) {
             throw new BizException(400, "该邮箱已被其他账号绑定");
         }
         String code = String.valueOf(100000 + new java.security.SecureRandom().nextInt(900000));
@@ -176,18 +176,18 @@ public class MemberServiceImpl implements MemberService {
         if (saved == null || !saved.equals(email + ":" + code)) {
             throw new BizException(400, "验证码错误或已过期");
         }
-        if (identityMapper.countByIdentity("EMAIL", email) > 0) {
+        if (identityRepository.countByIdentity("EMAIL", email) > 0) {
             throw new BizException(400, "该邮箱已被其他账号绑定");
         }
         MemberIdentity identity = new MemberIdentity();
         identity.setMemberId(memberId);
         identity.setIdentityType("EMAIL");
         identity.setIdentifier(email);
-        identityMapper.insert(identity);
-        Member member = memberMapper.selectById(memberId);
+        identityRepository.save(identity);
+        Member member = memberRepository.findById(memberId).orElse(null);
         if (member != null && member.getEmail() == null) {
             member.setEmail(email);
-            memberMapper.updateProfile(member);
+            memberRepository.updateProfile(member);
         }
         CodeStore.remove("EMAIL:" + memberId);
     }
@@ -236,7 +236,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     private Member requireMember(Long id) {
-        Member member = memberMapper.selectById(id);
+        Member member = memberRepository.findById(id).orElse(null);
         if (member == null) {
             throw new BizException(ResultCode.USERNAME_OR_PASSWORD_ERROR);
         }

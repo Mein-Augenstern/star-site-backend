@@ -16,12 +16,12 @@
             (#{username}, #{password}, #{nickname}, #{avatar}, #{email}, #{phone}, #{gender}, #{bio}, #{status})
     </insert>
 
-    <select id="selectById" resultType="com.xp.starsite.member.entity.Member">
+    <select id="selectById" resultType="com.xp.starsite.member.dal.dataobject.MemberDO">
         SELECT <include refid="cols"/> FROM member
         WHERE id = #{id} AND deleted = 0
     </select>
 
-    <select id="selectByUsername" resultType="com.xp.starsite.member.entity.Member">
+    <select id="selectByUsername" resultType="com.xp.starsite.member.dal.dataobject.MemberDO">
         SELECT <include refid="cols"/> FROM member
         WHERE username = #{username} AND deleted = 0
         LIMIT 1

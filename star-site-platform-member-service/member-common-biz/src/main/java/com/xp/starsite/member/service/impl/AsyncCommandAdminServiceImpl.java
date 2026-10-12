@@ -4,8 +4,8 @@ import com.xp.starsite.common.async.AsyncCommand;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.member.constant.MemberStatus;
 import com.xp.starsite.member.entity.Member;
-import com.xp.starsite.member.mapper.AsyncCommandAdminMapper;
-import com.xp.starsite.member.mapper.MemberMapper;
+import com.xp.starsite.member.repository.AsyncCommandAdminRepository;
+import com.xp.starsite.member.repository.MemberRepository;
 import com.xp.starsite.member.service.AsyncCommandAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,9 +18,10 @@ import java.util.Map;
 
 /**
  * 异步命令管控实现（管理员运维）。
- * 管控查询/处置 SQL 收敛在 DAL（{@link AsyncCommandAdminMapper}）；执行链路仍走 common 的 AsyncCommandMapper。
+ * 管控查询/处置经仓储层（{@link AsyncCommandAdminRepository}，实现位于 core-service、底层调用 dal DAO）；
+ * 执行链路仍走 common 的 AsyncCommandMapper。
  * 管理员校验：ADMIN_MEMBER_IDS 白名单为角色来源（member 表无 role 列），
- * 白名单命中后经 {@link MemberMapper} 核验账号仍存在且未禁用——防已注销/禁用账号凭残留 JWT 冒用管理员身份；
+ * 白名单命中后经 {@link MemberRepository} 核验账号仍存在且未禁用——防已注销/禁用账号凭残留 JWT 冒用管理员身份；
  * 白名单未配置=开发态放行所有登录用户（与原控制器语义一致）。
  *
  * @author xiaopu
@@ -30,8 +31,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AsyncCommandAdminServiceImpl implements AsyncCommandAdminService {
 
-    private final AsyncCommandAdminMapper mapper;
-    private final MemberMapper memberMapper;
+    private final AsyncCommandAdminRepository adminRepository;
+    private final MemberRepository memberRepository;
 
     @Value("${admin.member-ids:}")
     private String adminMemberIds;
@@ -41,12 +42,12 @@ public class AsyncCommandAdminServiceImpl implements AsyncCommandAdminService {
         requireAdmin(memberId);
         Map<String, Object> out = new HashMap<>();
         for (String st : List.of("PENDING", "RUNNING", "SUCCESS", "DEAD")) {
-            out.put(st.toLowerCase(), mapper.countByStatus(st));
+            out.put(st.toLowerCase(), adminRepository.countByStatus(st));
         }
-        out.put("backlogDue", mapper.countBacklogDue(LocalDateTime.now()));
+        out.put("backlogDue", adminRepository.countBacklogDue(LocalDateTime.now()));
         // 按类型聚合（近 500 条内的分布，够运维肉眼判断）
         Map<String, Long> byType = new HashMap<>();
-        for (AsyncCommand c : mapper.selectRecent(500)) {
+        for (AsyncCommand c : adminRepository.recent(500)) {
             byType.merge(c.getCmdType(), 1L, Long::sum);
         }
         out.put("byType", byType);
@@ -57,9 +58,9 @@ public class AsyncCommandAdminServiceImpl implements AsyncCommandAdminService {
     public Map<String, Object> list(Long memberId, String status, String cmdType, long page, long size) {
         requireAdmin(memberId);
         // 分页 count 先行，空结果不打查询
-        long total = mapper.countPage(status, cmdType);
+        long total = adminRepository.countPage(status, cmdType);
         List<AsyncCommand> records = total == 0 ? List.of()
-                : mapper.selectPage(status, cmdType, (page - 1) * size, size);
+                : adminRepository.page(status, cmdType, (page - 1) * size, size);
         Map<String, Object> out = new HashMap<>();
         out.put("records", records);
         out.put("total", total);
@@ -82,7 +83,7 @@ public class AsyncCommandAdminServiceImpl implements AsyncCommandAdminService {
         cmd.setRetryCount(0);
         cmd.setNextRunAt(LocalDateTime.now());
         cmd.setClaimToken(null);
-        mapper.updateState(cmd);
+        adminRepository.updateState(cmd);
     }
 
     @Override
@@ -95,7 +96,7 @@ public class AsyncCommandAdminServiceImpl implements AsyncCommandAdminService {
         cmd.setStatus("PENDING");
         cmd.setClaimToken(null);
         cmd.setNextRunAt(LocalDateTime.now());
-        mapper.updateState(cmd);
+        adminRepository.updateState(cmd);
     }
 
     @Override
@@ -108,7 +109,7 @@ public class AsyncCommandAdminServiceImpl implements AsyncCommandAdminService {
         cmd.setStatus("DEAD");
         cmd.setClaimToken(null);
         cmd.setLastError("MANUAL_KILL by member " + memberId);
-        mapper.updateState(cmd);
+        adminRepository.updateState(cmd);
     }
 
     /** 管理员白名单校验（未配置=放行，本地开发态；命中后核验账号角色/状态） */
@@ -119,7 +120,7 @@ public class AsyncCommandAdminServiceImpl implements AsyncCommandAdminService {
         for (String id : adminMemberIds.split(",")) {
             if (String.valueOf(memberId).equals(id.trim())) {
                 // 白名单命中 → 查角色：账号必须仍存在且未禁用（防注销/禁用账号残留 JWT 越权）
-                Member member = memberMapper.selectById(memberId);
+                Member member = memberRepository.findById(memberId).orElse(null);
                 if (member == null || member.getStatus() == null
                         || member.getStatus() != MemberStatus.ACTIVE) {
                     throw new BizException(403, "无管理员权限");
@@ -131,7 +132,7 @@ public class AsyncCommandAdminServiceImpl implements AsyncCommandAdminService {
     }
 
     private AsyncCommand requireCmd(Long id) {
-        AsyncCommand cmd = mapper.selectById(id);
+        AsyncCommand cmd = adminRepository.findById(id).orElse(null);
         if (cmd == null) {
             throw new BizException(404, "命令不存在");
         }

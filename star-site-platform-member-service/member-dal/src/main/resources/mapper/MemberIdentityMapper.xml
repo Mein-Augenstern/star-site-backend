@@ -15,13 +15,13 @@
             (#{memberId}, #{identityType}, #{identifier}, #{credential}, #{unionid})
     </insert>
 
-    <select id="selectById" resultType="com.xp.starsite.member.entity.MemberIdentity">
+    <select id="selectById" resultType="com.xp.starsite.member.dal.dataobject.MemberIdentityDO">
         SELECT <include refid="cols"/> FROM member_identity
         WHERE id = #{id} AND deleted = 0
     </select>
 
     <!-- (identity_type, identifier) 唯一键精确命中；id 升序仅作确定性兜底 -->
-    <select id="selectByIdentity" resultType="com.xp.starsite.member.entity.MemberIdentity">
+    <select id="selectByIdentity" resultType="com.xp.starsite.member.dal.dataobject.MemberIdentityDO">
         SELECT <include refid="cols"/> FROM member_identity
         WHERE identity_type = #{identityType} AND identifier = #{identifier} AND deleted = 0
         ORDER BY id ASC
@@ -29,7 +29,7 @@
     </select>
 
     <!-- unionid 跨端归一：同主体其他端已注册 → 认回同一账号 -->
-    <select id="selectByUnionid" resultType="com.xp.starsite.member.entity.MemberIdentity">
+    <select id="selectByUnionid" resultType="com.xp.starsite.member.dal.dataobject.MemberIdentityDO">
         SELECT <include refid="cols"/> FROM member_identity
         WHERE identity_type = #{identityType} AND unionid = #{unionid} AND deleted = 0
         ORDER BY id ASC
@@ -41,7 +41,7 @@
         WHERE identity_type = #{identityType} AND identifier = #{identifier} AND deleted = 0
     </select>
 
-    <select id="selectByMemberId" resultType="com.xp.starsite.member.entity.MemberIdentity">
+    <select id="selectByMemberId" resultType="com.xp.starsite.member.dal.dataobject.MemberIdentityDO">
         SELECT <include refid="cols"/> FROM member_identity
         WHERE member_id = #{memberId} AND deleted = 0
         ORDER BY id ASC

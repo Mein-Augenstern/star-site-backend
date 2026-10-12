@@ -17,11 +17,6 @@
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>member-core-model</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.xp.starsite</groupId>
             <artifactId>star-site-common</artifactId>
         </dependency>
         <!-- MyBatis 官方 starter（替代 MyBatis-Plus）：版本由根 pom 统一管理 -->

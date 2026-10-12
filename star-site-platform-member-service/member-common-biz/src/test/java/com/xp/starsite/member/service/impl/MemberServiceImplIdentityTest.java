@@ -5,8 +5,8 @@ import com.xp.starsite.common.util.JwtUtil;
 import com.xp.starsite.member.dto.ProfileCompleteDTO;
 import com.xp.starsite.member.entity.Member;
 import com.xp.starsite.member.entity.MemberIdentity;
-import com.xp.starsite.member.mapper.MemberIdentityMapper;
-import com.xp.starsite.member.mapper.MemberMapper;
+import com.xp.starsite.member.repository.MemberIdentityRepository;
+import com.xp.starsite.member.repository.MemberRepository;
 import com.xp.starsite.member.vo.IdentityVO;
 import com.xp.starsite.member.vo.MemberVO;
 import org.junit.jupiter.api.AfterEach;
@@ -20,6 +20,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -42,9 +43,9 @@ class MemberServiceImplIdentityTest {
     private static final long ME = 7L;
 
     @Mock
-    private MemberMapper memberMapper;
+    private MemberRepository memberRepository;
     @Mock
-    private MemberIdentityMapper identityMapper;
+    private MemberIdentityRepository identityRepository;
     @Mock
     private JwtUtil jwtUtil;
     @Mock
@@ -54,7 +55,7 @@ class MemberServiceImplIdentityTest {
 
     @BeforeEach
     void setUp() {
-        service = new MemberServiceImpl(memberMapper, identityMapper, jwtUtil, passwordEncoder);
+        service = new MemberServiceImpl(memberRepository, identityRepository, jwtUtil, passwordEncoder);
     }
 
     @AfterEach
@@ -83,7 +84,7 @@ class MemberServiceImplIdentityTest {
 
     @Test
     void listIdentitiesMasksIdentifierButKeepsPasswordPlain() {
-        when(identityMapper.selectByMemberId(ME)).thenReturn(List.of(
+        when(identityRepository.findByMemberId(ME)).thenReturn(List.of(
                 identity(1L, ME, "PASSWORD", "tom"),
                 identity(2L, ME, "EMAIL", "tom@example.com")));
 
@@ -101,17 +102,17 @@ class MemberServiceImplIdentityTest {
 
     @Test
     void unbindForeignOrMissingIdentityThrows404() {
-        when(identityMapper.selectById(5L)).thenReturn(null);
+        when(identityRepository.findById(5L)).thenReturn(Optional.empty());
 
         BizException e = assertThrows(BizException.class, () -> service.unbindIdentity(ME, 5L));
         assertEquals(404, e.getCode());
-        verify(identityMapper, never()).markDeleted(any());
+        verify(identityRepository, never()).markDeleted(any());
     }
 
     @Test
     void unbindLastIdentityRejected() {
-        when(identityMapper.selectById(5L)).thenReturn(identity(5L, ME, "EMAIL", "tom@example.com"));
-        when(identityMapper.countByMemberId(ME)).thenReturn(1L);
+        when(identityRepository.findById(5L)).thenReturn(Optional.of(identity(5L, ME, "EMAIL", "tom@example.com")));
+        when(identityRepository.countByMemberId(ME)).thenReturn(1L);
 
         BizException e = assertThrows(BizException.class, () -> service.unbindIdentity(ME, 5L));
         assertEquals(400, e.getCode());
@@ -120,19 +121,19 @@ class MemberServiceImplIdentityTest {
 
     @Test
     void unbindMarksDeletedWhenMoreThanOneLeft() {
-        when(identityMapper.selectById(5L)).thenReturn(identity(5L, ME, "EMAIL", "tom@example.com"));
-        when(identityMapper.countByMemberId(ME)).thenReturn(2L);
+        when(identityRepository.findById(5L)).thenReturn(Optional.of(identity(5L, ME, "EMAIL", "tom@example.com")));
+        when(identityRepository.countByMemberId(ME)).thenReturn(2L);
 
         service.unbindIdentity(ME, 5L);
 
-        verify(identityMapper).markDeleted(5L);
+        verify(identityRepository).markDeleted(5L);
     }
 
     /* ===== 资料完善（非空字段才生效） ===== */
 
     @Test
     void completeProfileSkipsBlankNicknameButAppliesAvatar() {
-        when(memberMapper.selectById(ME)).thenReturn(member(ME));
+        when(memberRepository.findById(ME)).thenReturn(Optional.of(member(ME)));
         ProfileCompleteDTO dto = new ProfileCompleteDTO();
         dto.setNickname("   ");
         dto.setAvatar("https://cdn/a.png");
@@ -141,14 +142,14 @@ class MemberServiceImplIdentityTest {
 
         assertEquals("旧昵称", vo.getNickname());
         ArgumentCaptor<Member> cap = ArgumentCaptor.forClass(Member.class);
-        verify(memberMapper).updateProfile(cap.capture());
+        verify(memberRepository).updateProfile(cap.capture());
         assertEquals("旧昵称", cap.getValue().getNickname());
         assertEquals("https://cdn/a.png", cap.getValue().getAvatar());
     }
 
     @Test
     void completeProfileMissingAccountThrows404() {
-        when(memberMapper.selectById(ME)).thenReturn(null);
+        when(memberRepository.findById(ME)).thenReturn(Optional.empty());
 
         BizException e = assertThrows(BizException.class,
                 () -> service.completeProfile(ME, new ProfileCompleteDTO()));
@@ -167,7 +168,7 @@ class MemberServiceImplIdentityTest {
 
     @Test
     void sendEmailCodeRejectsAlreadyBoundEmail() {
-        when(identityMapper.countByIdentity("EMAIL", "tom@example.com")).thenReturn(1L);
+        when(identityRepository.countByIdentity("EMAIL", "tom@example.com")).thenReturn(1L);
 
         BizException e = assertThrows(BizException.class, () -> service.sendEmailCode(ME, "tom@example.com"));
         assertEquals(400, e.getCode());
@@ -176,7 +177,7 @@ class MemberServiceImplIdentityTest {
 
     @Test
     void sendEmailCodeStoresCodeUnderMemberKey() {
-        when(identityMapper.countByIdentity("EMAIL", "tom@example.com")).thenReturn(0L);
+        when(identityRepository.countByIdentity("EMAIL", "tom@example.com")).thenReturn(0L);
 
         service.sendEmailCode(ME, "tom@example.com");
 
@@ -191,37 +192,37 @@ class MemberServiceImplIdentityTest {
                 () -> service.bindEmail(ME, "tom@example.com", "000000"));
         assertEquals(400, e.getCode());
         assertEquals("验证码错误或已过期", e.getMessage());
-        verify(identityMapper, never()).insert(any());
+        verify(identityRepository, never()).save(any());
     }
 
     @Test
     void bindEmailRejectsAlreadyBoundEmailAfterCodeCheck() {
         MemberServiceImpl.CodeStore.put("EMAIL:" + ME, "tom@example.com:123456", 300);
-        when(identityMapper.countByIdentity("EMAIL", "tom@example.com")).thenReturn(1L);
+        when(identityRepository.countByIdentity("EMAIL", "tom@example.com")).thenReturn(1L);
 
         BizException e = assertThrows(BizException.class,
                 () -> service.bindEmail(ME, "tom@example.com", "123456"));
         assertEquals(400, e.getCode());
-        verify(identityMapper, never()).insert(any());
+        verify(identityRepository, never()).save(any());
     }
 
     @Test
     void bindEmailInsertsIdentityBackfillsEmptyEmailAndConsumesCode() {
         MemberServiceImpl.CodeStore.put("EMAIL:" + ME, "tom@example.com:123456", 300);
-        when(identityMapper.countByIdentity("EMAIL", "tom@example.com")).thenReturn(0L);
+        when(identityRepository.countByIdentity("EMAIL", "tom@example.com")).thenReturn(0L);
         Member m = member(ME);
-        when(memberMapper.selectById(ME)).thenReturn(m);
+        when(memberRepository.findById(ME)).thenReturn(Optional.of(m));
 
         service.bindEmail(ME, "tom@example.com", "123456");
 
         ArgumentCaptor<MemberIdentity> cap = ArgumentCaptor.forClass(MemberIdentity.class);
-        verify(identityMapper).insert(cap.capture());
+        verify(identityRepository).save(cap.capture());
         assertEquals(ME, cap.getValue().getMemberId());
         assertEquals("EMAIL", cap.getValue().getIdentityType());
         assertEquals("tom@example.com", cap.getValue().getIdentifier());
         // 账号邮箱为空 → 回填
         assertEquals("tom@example.com", m.getEmail());
-        verify(memberMapper).updateProfile(m);
+        verify(memberRepository).updateProfile(m);
         // 验证码一次性：绑定后销毁
         assertNull(MemberServiceImpl.CodeStore.get("EMAIL:" + ME));
     }
@@ -229,14 +230,14 @@ class MemberServiceImplIdentityTest {
     @Test
     void bindEmailKeepsExistingEmailUnchanged() {
         MemberServiceImpl.CodeStore.put("EMAIL:" + ME, "new@example.com:123456", 300);
-        when(identityMapper.countByIdentity("EMAIL", "new@example.com")).thenReturn(0L);
+        when(identityRepository.countByIdentity("EMAIL", "new@example.com")).thenReturn(0L);
         Member m = member(ME);
         m.setEmail("old@example.com");
-        when(memberMapper.selectById(ME)).thenReturn(m);
+        when(memberRepository.findById(ME)).thenReturn(Optional.of(m));
 
         service.bindEmail(ME, "new@example.com", "123456");
 
         assertEquals("old@example.com", m.getEmail());
-        verify(memberMapper, never()).updateProfile(any());
+        verify(memberRepository, never()).updateProfile(any());
     }
 }

@@ -3,8 +3,8 @@ package com.xp.starsite.member.service.impl;
 import com.xp.starsite.common.async.AsyncCommand;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.member.entity.Member;
-import com.xp.starsite.member.mapper.AsyncCommandAdminMapper;
-import com.xp.starsite.member.mapper.MemberMapper;
+import com.xp.starsite.member.repository.AsyncCommandAdminRepository;
+import com.xp.starsite.member.repository.MemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +16,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -41,15 +42,15 @@ class AsyncCommandAdminServiceTest {
     private static final long OUTSIDER = 8L;
 
     @Mock
-    private AsyncCommandAdminMapper mapper;
+    private AsyncCommandAdminRepository adminRepository;
     @Mock
-    private MemberMapper memberMapper;
+    private MemberRepository memberRepository;
 
     private AsyncCommandAdminServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new AsyncCommandAdminServiceImpl(mapper, memberMapper);
+        service = new AsyncCommandAdminServiceImpl(adminRepository, memberRepository);
         ReflectionTestUtils.setField(service, "adminMemberIds", ADMIN + ", 9");
     }
 
@@ -78,7 +79,7 @@ class AsyncCommandAdminServiceTest {
         Map<String, Object> out = service.summary(OUTSIDER);
 
         assertNotNull(out);
-        verify(memberMapper, never()).selectById(any());
+        verify(memberRepository, never()).findById(any());
     }
 
     @Test
@@ -87,27 +88,27 @@ class AsyncCommandAdminServiceTest {
         assertEquals(403, e.getCode());
         assertEquals("无管理员权限", e.getMessage());
         // 越权请求连命令存在性都不该查（防 id 枚举）
-        verify(mapper, never()).selectById(any());
+        verify(adminRepository, never()).findById(any());
     }
 
     @Test
     void whitelistHitLoadsRoleFromMemberTable() {
-        when(memberMapper.selectById(ADMIN)).thenReturn(activeMember(ADMIN));
-        when(mapper.countByStatus("PENDING")).thenReturn(1L);
-        when(mapper.countByStatus("RUNNING")).thenReturn(2L);
-        when(mapper.countByStatus("SUCCESS")).thenReturn(3L);
-        when(mapper.countByStatus("DEAD")).thenReturn(4L);
-        when(mapper.countBacklogDue(any(LocalDateTime.class))).thenReturn(5L);
-        when(mapper.selectRecent(500)).thenReturn(List.of());
+        when(memberRepository.findById(ADMIN)).thenReturn(Optional.of(activeMember(ADMIN)));
+        when(adminRepository.countByStatus("PENDING")).thenReturn(1L);
+        when(adminRepository.countByStatus("RUNNING")).thenReturn(2L);
+        when(adminRepository.countByStatus("SUCCESS")).thenReturn(3L);
+        when(adminRepository.countByStatus("DEAD")).thenReturn(4L);
+        when(adminRepository.countBacklogDue(any(LocalDateTime.class))).thenReturn(5L);
+        when(adminRepository.recent(500)).thenReturn(List.of());
 
         service.summary(ADMIN);
 
-        verify(memberMapper).selectById(ADMIN);
+        verify(memberRepository).findById(ADMIN);
     }
 
     @Test
     void whitelistHitButMemberDeletedThrows403() {
-        when(memberMapper.selectById(ADMIN)).thenReturn(null);
+        when(memberRepository.findById(ADMIN)).thenReturn(Optional.empty());
 
         BizException e = assertThrows(BizException.class, () -> service.list(ADMIN, null, null, 1, 20));
         assertEquals(403, e.getCode());
@@ -117,7 +118,7 @@ class AsyncCommandAdminServiceTest {
     void whitelistHitButMemberDisabledThrows403() {
         Member disabled = activeMember(ADMIN);
         disabled.setStatus(0);
-        when(memberMapper.selectById(ADMIN)).thenReturn(disabled);
+        when(memberRepository.findById(ADMIN)).thenReturn(Optional.of(disabled));
 
         BizException e = assertThrows(BizException.class, () -> service.kill(ADMIN, 1L));
         assertEquals(403, e.getCode());
@@ -128,18 +129,18 @@ class AsyncCommandAdminServiceTest {
     @Test
     void summaryAssemblesCountsBacklogAndTypeDistribution() {
         stubAdminOk();
-        when(mapper.countByStatus("PENDING")).thenReturn(1L);
-        when(mapper.countByStatus("RUNNING")).thenReturn(2L);
-        when(mapper.countByStatus("SUCCESS")).thenReturn(3L);
-        when(mapper.countByStatus("DEAD")).thenReturn(4L);
-        when(mapper.countBacklogDue(any(LocalDateTime.class))).thenReturn(5L);
+        when(adminRepository.countByStatus("PENDING")).thenReturn(1L);
+        when(adminRepository.countByStatus("RUNNING")).thenReturn(2L);
+        when(adminRepository.countByStatus("SUCCESS")).thenReturn(3L);
+        when(adminRepository.countByStatus("DEAD")).thenReturn(4L);
+        when(adminRepository.countBacklogDue(any(LocalDateTime.class))).thenReturn(5L);
         AsyncCommand a = command(1L, "DEAD");
         a.setCmdType("bill.import");
         AsyncCommand b = command(2L, "DEAD");
         b.setCmdType("bill.import");
         AsyncCommand c = command(3L, "PENDING");
         c.setCmdType("reminder.push");
-        when(mapper.selectRecent(500)).thenReturn(List.of(a, b, c));
+        when(adminRepository.recent(500)).thenReturn(List.of(a, b, c));
 
         Map<String, Object> out = service.summary(ADMIN);
 
@@ -154,7 +155,7 @@ class AsyncCommandAdminServiceTest {
     @Test
     void listSkipsPageQueryWhenTotalZero() {
         stubAdminOk();
-        when(mapper.countPage("DEAD", null)).thenReturn(0L);
+        when(adminRepository.countPage("DEAD", null)).thenReturn(0L);
 
         Map<String, Object> out = service.list(ADMIN, "DEAD", null, 1, 20);
 
@@ -162,20 +163,20 @@ class AsyncCommandAdminServiceTest {
         assertEquals(List.of(), out.get("records"));
         assertEquals(1L, out.get("page"));
         assertEquals(20L, out.get("size"));
-        verify(mapper, never()).selectPage(any(), any(), org.mockito.ArgumentMatchers.anyLong(),
+        verify(adminRepository, never()).page(any(), any(), org.mockito.ArgumentMatchers.anyLong(),
                 org.mockito.ArgumentMatchers.anyLong());
     }
 
     @Test
     void listComputesOffsetFromPage() {
         stubAdminOk();
-        when(mapper.countPage(null, null)).thenReturn(25L);
-        when(mapper.selectPage(null, null, 20L, 10L)).thenReturn(List.of());
+        when(adminRepository.countPage(null, null)).thenReturn(25L);
+        when(adminRepository.page(null, null, 20L, 10L)).thenReturn(List.of());
 
         Map<String, Object> out = service.list(ADMIN, null, null, 3, 10);
 
         assertEquals(25L, out.get("total"));
-        verify(mapper).selectPage(null, null, 20L, 10L);
+        verify(adminRepository).page(null, null, 20L, 10L);
     }
 
     /* ===== 重试/重占/终止状态机 ===== */
@@ -183,31 +184,31 @@ class AsyncCommandAdminServiceTest {
     @Test
     void retryRejectsRunningCommand() {
         stubAdminOk();
-        when(mapper.selectById(1L)).thenReturn(command(1L, "RUNNING"));
+        when(adminRepository.findById(1L)).thenReturn(Optional.of(command(1L, "RUNNING")));
 
         BizException e = assertThrows(BizException.class, () -> service.retry(ADMIN, 1L));
         assertEquals(400, e.getCode());
-        verify(mapper, never()).updateState(any());
+        verify(adminRepository, never()).updateState(any());
     }
 
     @Test
     void retryRejectsSuccessCommand() {
         stubAdminOk();
-        when(mapper.selectById(1L)).thenReturn(command(1L, "SUCCESS"));
+        when(adminRepository.findById(1L)).thenReturn(Optional.of(command(1L, "SUCCESS")));
 
         assertThrows(BizException.class, () -> service.retry(ADMIN, 1L));
-        verify(mapper, never()).updateState(any());
+        verify(adminRepository, never()).updateState(any());
     }
 
     @Test
     void retryResetsDeadCommandToPending() {
         stubAdminOk();
-        when(mapper.selectById(1L)).thenReturn(command(1L, "DEAD"));
+        when(adminRepository.findById(1L)).thenReturn(Optional.of(command(1L, "DEAD")));
 
         service.retry(ADMIN, 1L);
 
         ArgumentCaptor<AsyncCommand> cap = ArgumentCaptor.forClass(AsyncCommand.class);
-        verify(mapper).updateState(cap.capture());
+        verify(adminRepository).updateState(cap.capture());
         assertEquals("PENDING", cap.getValue().getStatus());
         assertEquals(0, cap.getValue().getRetryCount());
         assertNull(cap.getValue().getClaimToken());
@@ -217,7 +218,7 @@ class AsyncCommandAdminServiceTest {
     @Test
     void reclaimRejectsNonRunningCommand() {
         stubAdminOk();
-        when(mapper.selectById(1L)).thenReturn(command(1L, "PENDING"));
+        when(adminRepository.findById(1L)).thenReturn(Optional.of(command(1L, "PENDING")));
 
         BizException e = assertThrows(BizException.class, () -> service.reclaim(ADMIN, 1L));
         assertEquals(400, e.getCode());
@@ -227,12 +228,12 @@ class AsyncCommandAdminServiceTest {
     @Test
     void reclaimPutsStuckRunningBackToQueue() {
         stubAdminOk();
-        when(mapper.selectById(1L)).thenReturn(command(1L, "RUNNING"));
+        when(adminRepository.findById(1L)).thenReturn(Optional.of(command(1L, "RUNNING")));
 
         service.reclaim(ADMIN, 1L);
 
         ArgumentCaptor<AsyncCommand> cap = ArgumentCaptor.forClass(AsyncCommand.class);
-        verify(mapper).updateState(cap.capture());
+        verify(adminRepository).updateState(cap.capture());
         assertEquals("PENDING", cap.getValue().getStatus());
         assertNull(cap.getValue().getClaimToken());
     }
@@ -240,21 +241,21 @@ class AsyncCommandAdminServiceTest {
     @Test
     void killRejectsSuccessCommand() {
         stubAdminOk();
-        when(mapper.selectById(1L)).thenReturn(command(1L, "SUCCESS"));
+        when(adminRepository.findById(1L)).thenReturn(Optional.of(command(1L, "SUCCESS")));
 
         assertThrows(BizException.class, () -> service.kill(ADMIN, 1L));
-        verify(mapper, never()).updateState(any());
+        verify(adminRepository, never()).updateState(any());
     }
 
     @Test
     void killMarksDeadWithAuditableError() {
         stubAdminOk();
-        when(mapper.selectById(1L)).thenReturn(command(1L, "PENDING"));
+        when(adminRepository.findById(1L)).thenReturn(Optional.of(command(1L, "PENDING")));
 
         service.kill(ADMIN, 1L);
 
         ArgumentCaptor<AsyncCommand> cap = ArgumentCaptor.forClass(AsyncCommand.class);
-        verify(mapper).updateState(cap.capture());
+        verify(adminRepository).updateState(cap.capture());
         assertEquals("DEAD", cap.getValue().getStatus());
         assertTrue(cap.getValue().getLastError().contains("MANUAL_KILL by member " + ADMIN));
     }
@@ -262,7 +263,7 @@ class AsyncCommandAdminServiceTest {
     @Test
     void missingCommandThrows404AfterAdminCheck() {
         stubAdminOk();
-        when(mapper.selectById(99L)).thenReturn(null);
+        when(adminRepository.findById(99L)).thenReturn(Optional.empty());
 
         BizException e = assertThrows(BizException.class, () -> service.retry(ADMIN, 99L));
         assertEquals(404, e.getCode());
@@ -270,6 +271,6 @@ class AsyncCommandAdminServiceTest {
     }
 
     private void stubAdminOk() {
-        when(memberMapper.selectById(ADMIN)).thenReturn(activeMember(ADMIN));
+        when(memberRepository.findById(ADMIN)).thenReturn(Optional.of(activeMember(ADMIN)));
     }
 }

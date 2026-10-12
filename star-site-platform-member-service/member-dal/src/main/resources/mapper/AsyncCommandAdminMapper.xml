@@ -18,7 +18,7 @@
         WHERE status = 'PENDING' AND next_run_at &lt;= #{now}
     </select>
 
-    <select id="selectRecent" resultType="com.xp.starsite.common.async.AsyncCommand">
+    <select id="selectRecent" resultType="com.xp.starsite.member.dal.dataobject.AsyncCommandDO">
         SELECT <include refid="cols"/> FROM async_command
         ORDER BY id DESC
         LIMIT #{limit}
@@ -31,7 +31,7 @@
         <if test="cmdType != null and cmdType != ''">AND cmd_type = #{cmdType}</if>
     </select>
 
-    <select id="selectPage" resultType="com.xp.starsite.common.async.AsyncCommand">
+    <select id="selectPage" resultType="com.xp.starsite.member.dal.dataobject.AsyncCommandDO">
         SELECT <include refid="cols"/> FROM async_command
         WHERE 1 = 1
         <if test="status != null and status != ''">AND status = #{status}</if>
@@ -40,7 +40,7 @@
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
-    <select id="selectById" resultType="com.xp.starsite.common.async.AsyncCommand">
+    <select id="selectById" resultType="com.xp.starsite.member.dal.dataobject.AsyncCommandDO">
         SELECT <include refid="cols"/> FROM async_command
         WHERE id = #{id}
     </select>

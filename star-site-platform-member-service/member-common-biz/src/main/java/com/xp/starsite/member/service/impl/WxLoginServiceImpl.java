@@ -8,8 +8,8 @@ import com.xp.starsite.member.constant.MemberStatus;
 import com.xp.starsite.member.entity.Member;
 import com.xp.starsite.member.entity.MemberIdentity;
 import com.xp.starsite.member.integration.WxSessionGateway;
-import com.xp.starsite.member.mapper.MemberIdentityMapper;
-import com.xp.starsite.member.mapper.MemberMapper;
+import com.xp.starsite.member.repository.MemberIdentityRepository;
+import com.xp.starsite.member.repository.MemberRepository;
 import com.xp.starsite.member.service.WxLoginService;
 import com.xp.starsite.member.vo.LoginVO;
 import com.xp.starsite.member.vo.MemberVO;
@@ -25,8 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
  * 经典时序：wx.login() code → jscode2session → openid+unionid+session_key
  * → 按 unionid 归一、openid 兜底查身份 → 命中登录 / 未命中静默注册 → 签发 JWT。
  * session_key 落 identity.credential，永不下发。
- * 数据访问全部经 DAL（{@link MemberMapper}/{@link MemberIdentityMapper}），
- * 身份查询语义：openid 精确命中 selectByIdentity，unionid 跨端归一 selectByUnionid（均 LIMIT 1）。
+ * 数据访问经仓储层（{@link MemberRepository}/{@link MemberIdentityRepository}，实现位于 core-service），
+ * 身份查询语义：openid 精确命中 findByIdentity，unionid 跨端归一 findByUnionid（均 LIMIT 1）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -36,8 +36,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class WxLoginServiceImpl implements WxLoginService {
 
-    private final MemberMapper memberMapper;
-    private final MemberIdentityMapper identityMapper;
+    private final MemberRepository memberRepository;
+    private final MemberIdentityRepository identityRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     private final WxSessionGateway wxSessionGateway;
@@ -50,15 +50,15 @@ public class WxLoginServiceImpl implements WxLoginService {
         WxSessionGateway.WxSession session = wxSessionGateway.fetch(code);
 
         // 1) openid 精确命中 → 直接登录
-        MemberIdentity identity = identityMapper.selectByIdentity(IdentityType.WECHAT_MP, session.openid());
+        MemberIdentity identity = identityRepository.findByIdentity(IdentityType.WECHAT_MP, session.openid()).orElse(null);
         // 2) unionid 跨端归一：同主体其他端（公众号/PC扫码）已注册过 → 认回同一账号
         Member member;
         if (identity != null) {
-            member = memberMapper.selectById(identity.getMemberId());
+            member = memberRepository.findById(identity.getMemberId()).orElse(null);
         } else if (session.unionid() != null && !session.unionid().isBlank()) {
-            MemberIdentity unionIdentity = identityMapper.selectByUnionid(IdentityType.WECHAT_MP, session.unionid());
+            MemberIdentity unionIdentity = identityRepository.findByUnionid(IdentityType.WECHAT_MP, session.unionid()).orElse(null);
             if (unionIdentity != null) {
-                member = memberMapper.selectById(unionIdentity.getMemberId());
+                member = memberRepository.findById(unionIdentity.getMemberId()).orElse(null);
                 identity = null; // 走"老账号新端身份"分支
             } else {
                 member = null;
@@ -75,7 +75,7 @@ public class WxLoginServiceImpl implements WxLoginService {
             member.setNickname("微信用户" + session.openid().substring(Math.max(0, session.openid().length() - 6)));
             member.setGender(Gender.UNKNOWN);
             member.setStatus(MemberStatus.ACTIVE);
-            memberMapper.insert(member);
+            memberRepository.save(member);
             log.info("微信静默注册: memberId={}", member.getId());
         }
 
@@ -87,13 +87,13 @@ public class WxLoginServiceImpl implements WxLoginService {
             identity.setIdentifier(session.openid());
             identity.setUnionid(session.unionid());
             identity.setCredential(session.sessionKey());
-            identityMapper.insert(identity);
+            identityRepository.save(identity);
         } else {
             identity.setCredential(session.sessionKey());
             if (session.unionid() != null && identity.getUnionid() == null) {
                 identity.setUnionid(session.unionid());
             }
-            identityMapper.update(identity);
+            identityRepository.update(identity);
         }
 
         if (member.getStatus() != MemberStatus.ACTIVE) {
@@ -117,7 +117,7 @@ public class WxLoginServiceImpl implements WxLoginService {
         WxSessionGateway.WxSession session = wxSessionGateway.fetch(code);
 
         // 1) 账密校验目标账号（先取目标，避免下面的比较对不存在用户 NPE）
-        Member target = memberMapper.selectByUsername(username);
+        Member target = memberRepository.findByUsername(username).orElse(null);
         if (target == null || !passwordEncoder.matches(password, target.getPassword())) {
             throw new BizException(400, "账号或密码错误");
         }
@@ -126,7 +126,7 @@ public class WxLoginServiceImpl implements WxLoginService {
         }
 
         // 2) openid 已绑其他账号 → 拒绝重复绑定；已绑同一账号 → 幂等返回
-        MemberIdentity existing = identityMapper.selectByIdentity(IdentityType.WECHAT_MP, session.openid());
+        MemberIdentity existing = identityRepository.findByIdentity(IdentityType.WECHAT_MP, session.openid()).orElse(null);
         if (existing != null && !existing.getMemberId().equals(target.getId())) {
             throw new BizException(400, "该微信已绑定其他账号，请先在原账号解绑");
         }
@@ -149,11 +149,11 @@ public class WxLoginServiceImpl implements WxLoginService {
             identity.setMemberId(target.getId());
             identity.setUnionid(session.unionid());
             identity.setCredential(session.sessionKey());
-            identityMapper.insert(identity);
+            identityRepository.save(identity);
         } else {
             identity.setMemberId(target.getId());
             identity.setCredential(session.sessionKey());
-            identityMapper.update(identity);
+            identityRepository.update(identity);
         }
         String token = jwtUtil.generateToken(target.getId(),
                 target.getUsername() != null ? target.getUsername() : "wx-" + session.openid());

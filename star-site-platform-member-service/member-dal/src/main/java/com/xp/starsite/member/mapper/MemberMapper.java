@@ -1,6 +1,6 @@
 package com.xp.starsite.member.mapper;
 
-import com.xp.starsite.member.entity.Member;
+import com.xp.starsite.member.dal.dataobject.MemberDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -16,13 +16,13 @@ import org.apache.ibatis.annotations.Param;
 public interface MemberMapper {
 
     /** 新建会员（username/password 微信静默注册时可为 null） */
-    int insert(Member member);
+    int insert(MemberDO member);
 
     /** 按 id 取会员（含逻辑删过滤，不存在返回 null） */
-    Member selectById(@Param("id") Long id);
+    MemberDO selectById(@Param("id") Long id);
 
     /** 按用户名取会员（登录链路；至多一条，不存在返回 null） */
-    Member selectByUsername(@Param("username") String username);
+    MemberDO selectByUsername(@Param("username") String username);
 
     /** 用户名占用计数（注册查重；与 selectByUsername 同条件 deleted=0） */
     long countByUsername(@Param("username") String username);
@@ -32,7 +32,7 @@ public interface MemberMapper {
      * 与原 MyBatis-Plus updateById 的"null 字段不更新"语义一致）。
      * username/password/status 等敏感列不在本语句范围内，密码变更走 {@link #updatePassword}。
      */
-    int updateProfile(Member member);
+    int updateProfile(MemberDO member);
 
     /** 密码变更（BCrypt 密文整列替换） */
     int updatePassword(@Param("id") Long id, @Param("password") String password);
