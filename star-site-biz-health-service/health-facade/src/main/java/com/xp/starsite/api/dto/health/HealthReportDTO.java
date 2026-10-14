@@ -52,17 +52,21 @@ public class HealthReportDTO implements Serializable {
                 .orElse(null);
     }
 
-    /** 便捷方法：参考区间展示文案（如 "3.5-5.7"，无区间返回 ""） */
+    /** 便捷方法：参考区间展示文案（如 "3.5-5.7"，无区间返回 ""；去 DECIMAL 小数尾零） */
     public static String refRangeText(BigDecimal refLow, BigDecimal refHigh) {
         if (refLow == null && refHigh == null) {
             return "";
         }
         if (refLow == null) {
-            return "<=" + refHigh;
+            return "<=" + strip(refHigh);
         }
         if (refHigh == null) {
-            return ">=" + refLow;
+            return ">=" + strip(refLow);
         }
-        return refLow + "-" + refHigh;
+        return strip(refLow) + "-" + strip(refHigh);
+    }
+
+    private static String strip(BigDecimal value) {
+        return value == null ? "" : value.stripTrailingZeros().toPlainString();
     }
 }
