@@ -37,6 +37,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.xp.starsite.archive.constant.ArchiveBizType;
+import com.xp.starsite.archive.constant.ArchiveReminderBizType;
 
 /**
  * 家庭资产实现。估值手动更新（季度节奏），每次变更自动追加历史留痕。
@@ -86,7 +88,7 @@ public class AssetServiceImpl implements AssetService {
         if (asset.getNextInspectDate() != null) {
             // 年检提醒与落库原子：insert 放事务回调，半消息先发
             eventPublisher.publishTransactional(Topics.TOPIC_REMINDER, EventTypes.REMINDER_REGISTER,
-                    "asset", asset.getId(), inspectReminderOf(asset), () -> assetRepository.save(asset));
+                    ArchiveBizType.ASSET, asset.getId(), inspectReminderOf(asset), () -> assetRepository.save(asset));
         } else {
             assetRepository.save(asset);
         }
@@ -134,7 +136,7 @@ public class AssetServiceImpl implements AssetService {
         // 年检日变更：非空 upsert 规则，清空撤销
         if (asset.getNextInspectDate() != null) {
             eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_REGISTER,
-                    "asset", asset.getId(), inspectReminderOf(asset));
+                    ArchiveBizType.ASSET, asset.getId(), inspectReminderOf(asset));
         } else {
             publishCancel(asset);
         }
@@ -217,8 +219,8 @@ public class AssetServiceImpl implements AssetService {
     /** 年检提醒：年检日前 15 天，逐年重复（车辆一直开就一直检） */
     private ReminderRegisterEvent inspectReminderOf(ArchiveAsset asset) {
         ReminderRegisterEvent event = new ReminderRegisterEvent();
-        event.setSource("star-site-archive");
-        event.setBizType("vehicle_inspect");
+        event.setSource(ArchiveReminderBizType.SOURCE);
+        event.setBizType(ArchiveReminderBizType.VEHICLE_INSPECT);
         event.setBizId(asset.getId());
         event.setFamilyId(asset.getFamilyId());
         event.setOwnerMemberId(asset.getOwnerMemberId());
@@ -233,10 +235,10 @@ public class AssetServiceImpl implements AssetService {
 
     private void publishCancel(ArchiveAsset asset) {
         ReminderCancelEvent event = new ReminderCancelEvent();
-        event.setSource("star-site-archive");
-        event.setBizType("vehicle_inspect");
+        event.setSource(ArchiveReminderBizType.SOURCE);
+        event.setBizType(ArchiveReminderBizType.VEHICLE_INSPECT);
         event.setBizId(asset.getId());
-        eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_CANCEL, "asset", asset.getId(), event);
+        eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_CANCEL, ArchiveBizType.ASSET, asset.getId(), event);
     }
 
     private void applyDto(ArchiveAsset asset, AssetSaveDTO dto) {

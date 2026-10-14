@@ -3,6 +3,7 @@ package com.xp.starsite.recheck.assembler;
 import com.xp.starsite.api.dto.ReminderRuleDTO;
 import com.xp.starsite.api.dto.health.HealthReportDTO;
 import com.xp.starsite.recheck.entity.RecheckPlan;
+import com.xp.starsite.api.event.reminder.ReminderRepeatType;
 
 /**
  * 复查提醒规则参数组装器（RPC 参数组装收敛在 core-service，integration 只负责调用+容错）。
@@ -38,7 +39,7 @@ public final class ReminderRuleAssembler {
         ReminderRuleDTO dto = base(plan, BIZ_TYPE_REVIEW);
         dto.setTitle(memberName + "「" + plan.getItemName() + "」复查");
         dto.setRemindDate(plan.getTargetDate());
-        dto.setRepeatType("NONE");
+        dto.setRepeatType(ReminderRepeatType.NONE.name());
         dto.setAdvanceDays(7);
         dto.setRemark("复查闭环：对照基线 " + baselineText(plan));
         return dto;
@@ -49,7 +50,7 @@ public final class ReminderRuleAssembler {
         ReminderRuleDTO dto = base(plan, BIZ_TYPE_DAILY);
         dto.setTitle("每日监测：" + plan.getItemName());
         dto.setRemindDate(java.time.LocalDate.now().plusDays(1));
-        dto.setRepeatType("DAILY");
+        dto.setRepeatType(ReminderRepeatType.DAILY.name());
         dto.setRepeatUntil(plan.getTargetDate());
         dto.setAdvanceDays(0);
         dto.setRemark("复查前每日监测，至 " + plan.getTargetDate() + " 截止");

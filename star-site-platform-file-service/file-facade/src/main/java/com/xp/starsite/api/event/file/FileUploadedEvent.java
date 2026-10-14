@@ -15,6 +15,9 @@ import java.util.Map;
 @Data
 public class FileUploadedEvent implements Serializable {
 
+    /** attributes 里的导入目标账户 key（bill_import 场景；与上传方表单字段同名约定） */
+    public static final String ATTR_ACCOUNT_ID = "accountId";
+
     /** 文件 id（file 服务） */
     private Long fileId;
 

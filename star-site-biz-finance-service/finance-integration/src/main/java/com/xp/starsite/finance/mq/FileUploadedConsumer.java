@@ -73,7 +73,7 @@ public class FileUploadedConsumer extends AbstractIdempotentConsumer implements 
             return;
         }
         Map<String, String> attrs = event.getAttributes();
-        Long accountId = attrs == null ? null : parseLong(attrs.get("accountId"));
+        Long accountId = attrs == null ? null : parseLong(attrs.get(FileUploadedEvent.ATTR_ACCOUNT_ID));
         Long memberId = event.getUploaderMemberId();
         if (accountId == null || memberId == null) {
             log.warn("账单导入事件缺少 accountId/memberId，跳过: fileId={}", event.getFileId());

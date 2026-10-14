@@ -5,6 +5,8 @@ import com.xp.starsite.api.dto.ReminderRuleDTO;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import com.xp.starsite.health.constant.HealthReminderBizType;
+import com.xp.starsite.api.event.reminder.ReminderRepeatType;
 
 /**
  * 产检里程碑提醒规则参数组装器（RPC 参数组装收敛在 core-service，integration 只负责调用+容错）。
@@ -55,14 +57,14 @@ public final class PrenatalRuleAssembler {
                 continue; // 已过窗口的不再注册
             }
             ReminderRuleDTO rule = new ReminderRuleDTO();
-            rule.setSource("star-site-biz-health");
-            rule.setBizType("prenatal_checkup");
+            rule.setSource(HealthReminderBizType.SOURCE);
+            rule.setBizType(HealthReminderBizType.PRENATAL_CHECKUP);
             rule.setBizId(fromWeek * 100L + familyMemberId);
             rule.setFamilyId(familyId);
             rule.setFamilyMemberId(familyMemberId);
             rule.setTitle(String.format("孕 %d 周：%s（%s）", fromWeek, name, tip));
             rule.setRemindDate(remindDate);
-            rule.setRepeatType("NONE");
+            rule.setRepeatType(ReminderRepeatType.NONE.name());
             rule.setOwnerMemberId(ownerMemberId);
             rule.setAdvanceDays(ADVANCE_DAYS);
             rule.setRemark(tip);

@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Set;
+import com.xp.starsite.file.constant.FileBizType;
 
 /**
  * 文件服务实现：校验类型/大小 → 存储落盘（本地或 OSS）→ 建记录 → 发布上传完成事件。
@@ -61,7 +62,7 @@ public class FileServiceImpl implements FileService {
                     billImport ? "账单只支持 CSV 格式" : "只支持 pdf/jpg/png/webp 格式");
         }
         if (StringUtils.hasText(bizType) && !ALLOWED_BIZ.contains(bizType)) {
-            bizType = "other";
+            bizType = FileBizType.OTHER;
         }
 
         String storageKey;
@@ -77,7 +78,7 @@ public class FileServiceImpl implements FileService {
         record.setStorageKey(storageKey);
         record.setContentType(file.getContentType());
         record.setSizeBytes(file.getSize());
-        record.setBizType(StringUtils.hasText(bizType) ? bizType : "other");
+        record.setBizType(StringUtils.hasText(bizType) ? bizType : FileBizType.OTHER);
         record.setUploaderMemberId(uploaderMemberId);
         fileRecordRepository.save(record);
         log.info("文件上传: id={}, name={}, size={}, biz={}", record.getId(), original, file.getSize(), record.getBizType());

@@ -25,6 +25,8 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Set;
+import com.xp.starsite.archive.constant.ArchiveBizType;
+import com.xp.starsite.archive.constant.ArchiveReminderBizType;
 
 /**
  * 证件夹实现。提醒事件取舍与保单域一致：
@@ -133,8 +135,8 @@ public class DocumentServiceImpl implements DocumentService {
     /** 到期提醒：有效期前 30 天单次提醒 */
     private ReminderRegisterEvent expiryReminderOf(ArchiveDocument doc) {
         ReminderRegisterEvent event = new ReminderRegisterEvent();
-        event.setSource("star-site-archive");
-        event.setBizType("document_expiry");
+        event.setSource(ArchiveReminderBizType.SOURCE);
+        event.setBizType(ArchiveReminderBizType.DOCUMENT_EXPIRY);
         event.setBizId(doc.getId());
         event.setFamilyId(doc.getFamilyId());
         event.setOwnerMemberId(doc.getOwnerMemberId());
@@ -147,10 +149,10 @@ public class DocumentServiceImpl implements DocumentService {
 
     private void publishCancel(ArchiveDocument doc) {
         ReminderCancelEvent event = new ReminderCancelEvent();
-        event.setSource("star-site-archive");
-        event.setBizType("document_expiry");
+        event.setSource(ArchiveReminderBizType.SOURCE);
+        event.setBizType(ArchiveReminderBizType.DOCUMENT_EXPIRY);
         event.setBizId(doc.getId());
-        eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_CANCEL, "document", doc.getId(), event);
+        eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_CANCEL, ArchiveBizType.DOCUMENT, doc.getId(), event);
     }
 
     private void applyDto(ArchiveDocument doc, DocumentSaveDTO dto) {

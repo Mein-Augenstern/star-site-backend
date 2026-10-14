@@ -31,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import com.xp.starsite.api.event.reminder.ReminderRepeatType;
 
 /**
  * 提醒中心实现。
@@ -81,7 +82,7 @@ public class ReminderServiceImpl implements ReminderService {
         rule.setOwnerMemberId(event.getOwnerMemberId());
         rule.setTitle(event.getTitle());
         rule.setFirstRemindAt(event.getFirstRemindAt());
-        rule.setRepeatType(event.getRepeatType() == null ? "NONE" : event.getRepeatType().name());
+        rule.setRepeatType(event.getRepeatType() == null ? ReminderRepeatType.NONE.name() : event.getRepeatType().name());
         rule.setRepeatUntil(event.getRepeatUntil());
         rule.setAdvanceDays(event.getAdvanceDays() == null ? 0 : event.getAdvanceDays());
         rule.setStatus(1);
@@ -157,7 +158,7 @@ public class ReminderServiceImpl implements ReminderService {
         rule.setOwnerMemberId(memberId);
         rule.setTitle(dto.getTitle());
         rule.setFirstRemindAt(dto.getFirstRemindAt());
-        rule.setRepeatType(StringUtils.hasText(dto.getRepeatType()) ? dto.getRepeatType() : "NONE");
+        rule.setRepeatType(StringUtils.hasText(dto.getRepeatType()) ? dto.getRepeatType() : ReminderRepeatType.NONE.name());
         rule.setRepeatUntil(dto.getRepeatUntil());
         rule.setAdvanceDays(0);
         rule.setStatus(1);
@@ -330,29 +331,30 @@ public class ReminderServiceImpl implements ReminderService {
         List<LocalDate> dates = new ArrayList<>();
         LocalDate first = rule.getFirstRemindAt();
         LocalDate until = rule.getRepeatUntil();
-        switch (StringUtils.hasText(rule.getRepeatType()) ? rule.getRepeatType() : "NONE") {
-            case "ANNUAL" -> {
+        // repeat_type 落库为字符串，经 ofLenient 宽松解析为枚举开关（未知/空白回落 NONE），消灭分支魔法串
+        switch (ReminderRepeatType.ofLenient(rule.getRepeatType())) {
+            case ANNUAL -> {
                 for (LocalDate d = first; !d.isAfter(to); d = d.plusYears(1)) {
                     if (!d.isBefore(from) && (until == null || !d.isAfter(until))) {
                         dates.add(d);
                     }
                 }
             }
-            case "MONTHLY" -> {
+            case MONTHLY -> {
                 for (LocalDate d = first; !d.isAfter(to); d = d.plusMonths(1)) {
                     if (!d.isBefore(from) && (until == null || !d.isAfter(until))) {
                         dates.add(d);
                     }
                 }
             }
-            case "WEEKLY" -> {
+            case WEEKLY -> {
                 for (LocalDate d = first; !d.isAfter(to); d = d.plusWeeks(1)) {
                     if (!d.isBefore(from) && (until == null || !d.isAfter(until))) {
                         dates.add(d);
                     }
                 }
             }
-            case "DAILY" -> {
+            case DAILY -> {
                 for (LocalDate d = first; !d.isAfter(to); d = d.plusDays(1)) {
                     if (!d.isBefore(from) && (until == null || !d.isAfter(until))) {
                         dates.add(d);

@@ -24,5 +24,20 @@ public enum ReminderRepeatType {
     DAILY,
 
     /** 自定义（间隔天数，暂未支持） */
-    CUSTOM
+    CUSTOM;
+
+    /**
+     * 宽松解析：null/空白/未知值一律回落 NONE（单次）。
+     * repeat_type 在库里是字符串，历史数据与外部输入不保证合法，解析不允许抛异常。
+     */
+    public static ReminderRepeatType ofLenient(String value) {
+        if (value == null || value.isBlank()) {
+            return NONE;
+        }
+        try {
+            return valueOf(value);
+        } catch (IllegalArgumentException e) {
+            return NONE;
+        }
+    }
 }

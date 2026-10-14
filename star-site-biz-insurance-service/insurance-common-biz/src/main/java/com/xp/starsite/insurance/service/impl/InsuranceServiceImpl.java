@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import com.xp.starsite.insurance.constant.InsuranceBizType;
+import com.xp.starsite.insurance.constant.InsuranceReminderBizType;
 
 /**
  * 保单服务实现。
@@ -73,7 +75,7 @@ public class InsuranceServiceImpl implements InsuranceService {
         policy.setInsuredMemberName(insured.getName());
         // 主提醒与落库原子：半消息 → insert → 提交；insert 失败消息回滚
         eventPublisher.publishTransactional(Topics.TOPIC_REMINDER, EventTypes.REMINDER_REGISTER,
-                "policy", policy.getId(), paymentReminderOf(policy), () -> policyRepository.save(policy));
+                InsuranceBizType.POLICY, policy.getId(), paymentReminderOf(policy), () -> policyRepository.save(policy));
         publishExpiryReminder(policy);
         log.info("创建保单: id={}, insured={}, category={}", policy.getId(), insured.getName(), policy.getCategory());
         return toVO(policyRepository.findById(policy.getId()).orElse(null));
@@ -110,7 +112,7 @@ public class InsuranceServiceImpl implements InsuranceService {
         policyRepository.update(policy);
         // Register 是 upsert 语义：被保人/日期改了，重发覆盖规则
         eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_REGISTER,
-                "policy", policy.getId(), paymentReminderOf(policy));
+                InsuranceBizType.POLICY, policy.getId(), paymentReminderOf(policy));
         publishExpiryReminder(policy);
         return toVO(policyRepository.findById(id).orElse(null));
     }
@@ -119,10 +121,10 @@ public class InsuranceServiceImpl implements InsuranceService {
     public void delete(Long memberId, Long id) {
         InsurancePolicy policy = requireOwnedPolicy(memberId, id);
         policyRepository.markDeleted(id);
-        eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_CANCEL, "policy", id,
-                cancelReminderOf(policy, "policy_payment"));
-        eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_CANCEL, "policy", id,
-                cancelReminderOf(policy, "policy_expiry"));
+        eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_CANCEL, InsuranceBizType.POLICY, id,
+                cancelReminderOf(policy, InsuranceReminderBizType.POLICY_PAYMENT));
+        eventPublisher.publish(Topics.TOPIC_REMINDER, EventTypes.REMINDER_CANCEL, InsuranceBizType.POLICY, id,
+                cancelReminderOf(policy, InsuranceReminderBizType.POLICY_EXPIRY));
         log.info("删除保单: id={}", id);
     }
 
@@ -172,8 +174,8 @@ public class InsuranceServiceImpl implements InsuranceService {
     private com.xp.starsite.api.event.reminder.ReminderRegisterEvent paymentReminderOf(InsurancePolicy policy) {
         com.xp.starsite.api.event.reminder.ReminderRegisterEvent event =
                 new com.xp.starsite.api.event.reminder.ReminderRegisterEvent();
-        event.setSource("star-site-insurance");
-        event.setBizType("policy_payment");
+        event.setSource(InsuranceReminderBizType.SOURCE);
+        event.setBizType(InsuranceReminderBizType.POLICY_PAYMENT);
         event.setBizId(policy.getId());
         event.setFamilyId(policy.getFamilyId());
         event.setOwnerMemberId(policy.getOwnerMemberId());
@@ -194,8 +196,8 @@ public class InsuranceServiceImpl implements InsuranceService {
         }
         com.xp.starsite.api.event.reminder.ReminderRegisterEvent event =
                 new com.xp.starsite.api.event.reminder.ReminderRegisterEvent();
-        event.setSource("star-site-insurance");
-        event.setBizType("policy_expiry");
+        event.setSource(InsuranceReminderBizType.SOURCE);
+        event.setBizType(InsuranceReminderBizType.POLICY_EXPIRY);
         event.setBizId(policy.getId());
         event.setFamilyId(policy.getFamilyId());
         event.setOwnerMemberId(policy.getOwnerMemberId());
@@ -211,7 +213,7 @@ public class InsuranceServiceImpl implements InsuranceService {
             InsurancePolicy policy, String bizType) {
         com.xp.starsite.api.event.reminder.ReminderCancelEvent event =
                 new com.xp.starsite.api.event.reminder.ReminderCancelEvent();
-        event.setSource("star-site-insurance");
+        event.setSource(InsuranceReminderBizType.SOURCE);
         event.setBizType(bizType);
         event.setBizId(policy.getId());
         return event;
