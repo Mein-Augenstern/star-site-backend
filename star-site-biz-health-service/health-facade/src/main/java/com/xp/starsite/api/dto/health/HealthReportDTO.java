@@ -18,24 +18,34 @@ import java.util.List;
 @Data
 public class HealthReportDTO implements Serializable {
 
+    /** 主键（报告 id） */
     private Long id;
 
+    /** 家庭成员 id（冗余，消费方据此校验报告归属） */
     private Long familyMemberId;
 
+    /** 报告年份 */
     private Integer reportYear;
 
+    /** 体检日期 */
     private LocalDate checkupDate;
 
+    /** 医院 */
     private String hospital;
 
+    /** 标题 */
     private String title;
 
+    /** 总结 */
     private String summary;
 
+    /** 报告文件 id（file 服务） */
     private Long fileId;
 
+    /** 备注 */
     private String remark;
 
+    /** 创建时间 */
     private LocalDateTime createdAt;
 
     /** 详情接口返回，列表场景为 null */

@@ -23,10 +23,13 @@ public class ReminderRuleDTO implements Serializable {
     /** 业务主键 */
     private Long bizId;
 
+    /** 家庭 id */
     private Long familyId;
 
+    /** 提醒归属成员（可空） */
     private Long familyMemberId;
 
+    /** 提醒标题 */
     private String title;
 
     /** 首次提醒日期 */

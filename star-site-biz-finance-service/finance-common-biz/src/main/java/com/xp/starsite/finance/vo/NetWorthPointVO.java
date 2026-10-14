@@ -14,7 +14,9 @@ import java.time.LocalDate;
 @Data
 public class NetWorthPointVO {
 
+    /** 快照日期 */
     private LocalDate date;
 
+    /** 净资产（元） */
     private BigDecimal netWorth;
 }

@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 public class TransactionSaveDTO {
 
     @NotNull(message = "记账类型不能为空")
+    /** 1收入 2支出 3转账 4调整(余额校准,不计收支) */
     private Integer direction;
 
     /** 账户（收入/支出/调整 = 本账户；转账 = 转出账户） */
@@ -30,16 +31,22 @@ public class TransactionSaveDTO {
 
     @NotNull(message = "金额不能为空")
     @Digits(integer = 14, fraction = 2, message = "金额最多两位小数")
+    /** 金额（元） */
     private BigDecimal amount;
 
+    /** 分类枚举（调整/转账可空） */
     private String category;
 
     @NotNull(message = "交易时间不能为空")
+    /** 交易时间 */
     private LocalDateTime transTime;
 
+    /** 交易对手方（商户/个人），可空 */
     private String counterparty;
 
+    /** 关联账单文件 id（导入来源），可空 */
     private Long fileId;
 
+    /** 备注 */
     private String remark;
 }

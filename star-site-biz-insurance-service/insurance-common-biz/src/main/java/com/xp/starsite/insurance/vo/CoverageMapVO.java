@@ -17,13 +17,17 @@ public class CoverageMapVO {
     /** 矩阵行：一个成员的覆盖情况 */
     @Data
     public static class MemberRow {
+    /** 成员档案 id */
         private Long memberId;
+    /** 成员姓名 */
         private String memberName;
+    /** 与户主关系：self/spouse/father/mother/child/other */
         private String relation;
         /** 已配置的险种集合 */
         private List<String> categories;
     }
 
+    /** 该成员名下的保障行列表 */
     private List<MemberRow> rows;
 
     /** 全家年缴保费合计（趸交不计入） */

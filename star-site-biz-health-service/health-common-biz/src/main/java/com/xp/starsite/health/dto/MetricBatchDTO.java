@@ -19,6 +19,7 @@ import java.util.List;
 @Data
 public class MetricBatchDTO {
 
+    /** 本次批量录入的指标项列表 */
     @Valid
     @NotEmpty(message = "指标不能为空")
     private List<Item> items;
@@ -26,9 +27,11 @@ public class MetricBatchDTO {
     @Data
     public static class Item {
 
+        /** 家庭成员 id */
         @NotNull(message = "家庭成员不能为空")
         private Long familyMemberId;
 
+        /** 测量日期 */
         @NotNull(message = "测量日期不能为空")
         private LocalDate metricDate;
 
@@ -36,9 +39,11 @@ public class MetricBatchDTO {
         @NotBlank(message = "指标类型不能为空")
         private String metricType;
 
+        /** 数值 */
         @NotNull(message = "数值不能为空")
         private BigDecimal valueNum;
 
+        /** 备注 */
         private String remark;
     }
 }

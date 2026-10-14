@@ -14,9 +14,12 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class CategoryShareVO {
 
+    /** 分类枚举 */
     private String category;
 
+    /** 分类名 */
     private String categoryName;
 
+    /** 期间内该分类合计金额（元） */
     private BigDecimal amount;
 }

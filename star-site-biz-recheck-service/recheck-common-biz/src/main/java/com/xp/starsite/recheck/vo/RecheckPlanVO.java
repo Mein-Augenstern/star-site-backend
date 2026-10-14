@@ -14,8 +14,10 @@ import java.time.LocalDateTime;
 @Data
 public class RecheckPlanVO {
 
+    /** 雪花 id */
     private Long id;
 
+    /** 目标成员档案 id */
     private Long familyMemberId;
 
     /** 成员姓名（family 快照冗余，展示用） */
@@ -33,6 +35,7 @@ public class RecheckPlanVO {
     /** 单位 */
     private String unit;
 
+    /** 目标复查日期 */
     private LocalDate targetDate;
 
     /** 距目标复查日天数（负数=已过期） */
@@ -47,16 +50,21 @@ public class RecheckPlanVO {
     /** 关联日常监测指标类型（可空） */
     private String metricType;
 
+    /** 基线报告 id */
     private Long sourceReportId;
 
+    /** 基线报告标题快照 */
     private String sourceReportTitle;
 
+    /** 复查新报告 id（闭环时回填） */
     private Long closedReportId;
 
+    /** 复查新报告标题快照 */
     private String closedReportTitle;
 
     /** 闭环对比结论 */
     private String conclusion;
 
+    /** 创建时间 */
     private LocalDateTime createdAt;
 }

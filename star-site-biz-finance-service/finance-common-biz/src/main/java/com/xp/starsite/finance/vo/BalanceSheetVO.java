@@ -19,8 +19,10 @@ public class BalanceSheetVO {
     /** 档案资产估值合计（archive 域：房产/车辆等；archive 不可用时为 null 并标注） */
     private BigDecimal archiveAsset;
 
+    /** 档案资产是否可用（archive 服务在线才为 true） */
     private Boolean archiveAvailable;
 
+    /** 总资产 = 账户资产 + 档案资产（元） */
     private BigDecimal totalAsset;
 
     /** 负债账户余额合计（信用卡/贷款尚欠） */

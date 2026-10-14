@@ -18,20 +18,25 @@ import java.time.LocalDate;
 @Data
 public class FamilyMemberDTO {
 
+    /** 姓名/称呼 */
     @NotBlank(message = "姓名不能为空")
     @Size(max = 32, message = "姓名最长 32 位")
     private String name;
 
+    /** 与顶梁柱关系：self/spouse/father/mother/child/other */
     @NotBlank(message = "关系不能为空")
     @Pattern(regexp = "self|spouse|father|mother|child|other", message = "关系取值 self/spouse/father/mother/child/other")
     private String relation;
 
+    /** 性别：0未知 1男 2女 */
     @Min(value = 0, message = "gender 取值 0/1/2")
     @Max(value = 2, message = "gender 取值 0/1/2")
     private Integer gender;
 
+    /** 生日 */
     private LocalDate birthDate;
 
+    /** 联系电话 */
     @Pattern(regexp = "^$|^1[3-9]\\d{9}$", message = "手机号格式不正确")
     private String phone;
 
@@ -41,6 +46,7 @@ public class FamilyMemberDTO {
     /** 绑定登录账号 id，可空 */
     private Long linkedMemberId;
 
+    /** 备注（过敏史/慢性病等健康标注） */
     @Size(max = 255, message = "备注最长 255 位")
     private String remark;
 }

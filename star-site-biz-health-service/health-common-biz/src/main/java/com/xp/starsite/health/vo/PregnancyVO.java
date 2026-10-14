@@ -14,10 +14,13 @@ import java.util.List;
 @Data
 public class PregnancyVO {
 
+    /** 家庭成员 id */
     private Long familyMemberId;
 
+    /** 末次月经第一天 */
     private LocalDate lmpDate;
 
+    /** 预产期（由末次月经推算） */
     private LocalDate dueDate;
 
     /** 孕X周 */
@@ -43,11 +46,19 @@ public class PregnancyVO {
 
     @Data
     public static class Milestone {
+        /** 里程碑名称（如 NT 检查、大排畸） */
         private String name;
+
+        /** 起始孕周 */
         private Integer fromWeek;
+
+        /** 结束孕周 */
         private Integer toWeek;
+
         /** pending 未到窗口 / current 窗口期内 / done 已过窗口 */
         private String status;
+
+        /** 提示文案 */
         private String tip;
     }
 }

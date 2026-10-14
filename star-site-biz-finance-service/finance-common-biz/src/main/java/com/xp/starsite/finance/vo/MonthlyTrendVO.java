@@ -17,7 +17,9 @@ public class MonthlyTrendVO {
     /** YYYY-MM */
     private String month;
 
+    /** 当月收入合计（元） */
     private BigDecimal income;
 
+    /** 当月支出合计（元） */
     private BigDecimal expense;
 }

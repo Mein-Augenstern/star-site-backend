@@ -16,13 +16,16 @@ import java.time.LocalDate;
 @Data
 public class UserRuleCreateDTO {
 
+    /** 提醒归属成员 */
     @NotNull(message = "家庭成员不能为空")
     private Long familyMemberId;
 
+    /** 提醒标题 */
     @NotBlank(message = "提醒标题不能为空")
     @Size(max = 128, message = "标题最长 128 位")
     private String title;
 
+    /** 首次提醒日 */
     @NotNull(message = "首次提醒日期不能为空")
     private LocalDate firstRemindAt;
 

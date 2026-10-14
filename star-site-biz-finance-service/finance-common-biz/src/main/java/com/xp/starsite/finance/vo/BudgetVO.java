@@ -13,15 +13,19 @@ import java.math.BigDecimal;
 @Data
 public class BudgetVO {
 
+    /** 预算 id */
     private Long id;
 
+    /** 预算分类枚举 */
     private String category;
 
+    /** 分类名快照 */
     private String categoryName;
 
     /** 预算月份 YYYY-MM */
     private String period;
 
+    /** 预算金额（元） */
     private BigDecimal amount;
 
     /** 当月该分类已支出（流水聚合） */

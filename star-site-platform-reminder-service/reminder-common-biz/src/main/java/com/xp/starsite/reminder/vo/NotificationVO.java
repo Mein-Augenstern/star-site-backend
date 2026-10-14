@@ -13,14 +13,18 @@ import java.time.LocalDateTime;
 @Data
 public class NotificationVO {
 
+    /** 主键 */
     private Long id;
 
+    /** 所属提醒实例 id */
     private Long occurrenceId;
 
+    /** 通知标题（冗余自实例） */
     private String title;
 
     /** 0未读 1已读 */
     private Integer readFlag;
 
+    /** 创建时间（即投递时间） */
     private LocalDateTime createdAt;
 }

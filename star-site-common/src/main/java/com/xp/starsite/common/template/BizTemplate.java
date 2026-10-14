@@ -1,5 +1,6 @@
 package com.xp.starsite.common.template;
 
+import com.xp.starsite.common.error.CommonError;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.log.DigestLoggers;
 import com.xp.starsite.common.log.TraceContext;
@@ -54,11 +55,15 @@ public abstract class BizTemplate {
             emit(action, "biz_error", String.valueOf(e.getCode()), System.currentTimeMillis() - start);
             log.warn("业务拒绝: action={}, code={}, msg={}", action, e.getCode(), e.getMessage());
             // 5xx 语义的业务失败（依赖不可用等）对调用方可重试；4xx 参数/权限类重试无意义
-            return R.fail(e.getCode(), e.getMessage(), e.getCode() >= 500);
+            R<T> r = R.fail(e.getCode(), e.getMessage(), e.getCode() >= 500);
+            r.withError(CommonError.of(e.getCode(), e.getClass().getName(), e.getMessage(), traceId));
+            return r;
         } catch (RuntimeException e) {
             emit(action, "error", e.getClass().getSimpleName(), System.currentTimeMillis() - start);
             log.error("系统异常: action={}, traceId={}", action, traceId, e);
-            return R.fail(500, "系统繁忙，请稍后再试", true);
+            R<T> r = R.fail(500, "系统繁忙，请稍后再试", true);
+            r.withError(CommonError.ofThrowable(500, e, traceId));
+            return r;
         }
     }
 

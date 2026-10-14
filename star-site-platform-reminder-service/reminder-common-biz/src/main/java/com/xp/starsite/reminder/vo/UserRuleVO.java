@@ -13,22 +13,30 @@ import java.time.LocalDateTime;
 @Data
 public class UserRuleVO {
 
+    /** 主键 */
     private Long id;
 
+    /** 提醒归属成员 */
     private Long familyMemberId;
 
+    /** 提醒标题 */
     private String title;
 
+    /** 首次提醒日 */
     private LocalDate firstRemindAt;
 
+    /** 重复类型：NONE/ANNUAL/MONTHLY/WEEKLY/DAILY */
     private String repeatType;
 
+    /** 重复截止日（可空=长期） */
     private LocalDate repeatUntil;
 
+    /** 1启用 0停用 */
     private Integer status;
 
-    /** 已生成未完成的实例数（近期待办量） */
+    /** 未来 N 天内待触发实例数 */
     private Long pendingCount;
 
+    /** 创建时间 */
     private LocalDateTime createdAt;
 }

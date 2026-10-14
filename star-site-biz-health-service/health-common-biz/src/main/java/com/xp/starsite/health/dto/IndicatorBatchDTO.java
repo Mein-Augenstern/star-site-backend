@@ -15,6 +15,7 @@ import java.util.List;
 @Data
 public class IndicatorBatchDTO {
 
+    /** 本次批量录入的指标列表 */
     @Valid
     @NotEmpty(message = "指标列表不能为空")
     private List<IndicatorDTO> indicators;

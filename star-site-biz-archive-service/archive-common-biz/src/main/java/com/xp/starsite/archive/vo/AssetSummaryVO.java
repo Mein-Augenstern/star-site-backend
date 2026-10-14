@@ -16,8 +16,13 @@ public class AssetSummaryVO {
 
     @Data
     public static class TypeSlice {
+        /** 资产类型：real_estate/vehicle/deposit/investment/fund/other */
         private String assetType;
+
+        /** 该类型资产估值合计（元） */
         private BigDecimal totalValue;
+
+        /** 该类型资产件数 */
         private long count;
     }
 

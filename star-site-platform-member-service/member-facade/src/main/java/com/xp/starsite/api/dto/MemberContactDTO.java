@@ -13,8 +13,10 @@ import java.io.Serializable;
 @Data
 public class MemberContactDTO implements Serializable {
 
+    /** 账号 id（member.id） */
     private Long id;
 
+    /** 昵称（提醒邮件称呼用） */
     private String nickname;
 
     /** 可能为空（注册时选填；为空则邮件渠道跳过该用户） */

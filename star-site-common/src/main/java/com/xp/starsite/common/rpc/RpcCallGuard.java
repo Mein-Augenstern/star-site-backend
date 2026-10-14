@@ -42,7 +42,13 @@ public class RpcCallGuard {
                 return r.getData();
             }
             boolean retryable = r.getRetryable() != null ? r.getRetryable() : r.getCode() >= 500;
-            log.warn("RPC 业务失败: action={}, code={}, msg={}, retryable={}", action, r.getCode(), r.getMessage(), retryable);
+            if (r.getError() != null) {
+                // 远端统一错误对象：类型与 traceId 进本地日志，排障可跨服务直达
+                log.warn("RPC 业务失败: action={}, code={}, msg={}, remoteType={}, remoteTraceId={}, retryable={}",
+                        action, r.getCode(), r.getMessage(), r.getError().getType(), r.getError().getTraceId(), retryable);
+            } else {
+                log.warn("RPC 业务失败: action={}, code={}, msg={}, retryable={}", action, r.getCode(), r.getMessage(), retryable);
+            }
             throw new RpcException(r.getCode(), r.getMessage(), retryable);
         } catch (RpcException e) {
             throw e;

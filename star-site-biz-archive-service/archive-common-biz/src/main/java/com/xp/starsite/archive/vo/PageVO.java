@@ -13,12 +13,16 @@ import java.util.List;
 @Data
 public class PageVO<T> {
 
+    /** 当前页数据列表 */
     private List<T> records;
 
+    /** 总条数 */
     private long total;
 
+    /** 页码（1 起） */
     private long page;
 
+    /** 页大小 */
     private long size;
 
     public static <T> PageVO<T> of(List<T> records, long total, long page, long size) {

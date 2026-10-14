@@ -1,6 +1,7 @@
 package com.xp.starsite.common.result;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.xp.starsite.common.error.CommonError;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -29,6 +30,20 @@ public class R<T> implements Serializable {
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Boolean retryable;
+
+    /**
+     * 统一异常错误对象（失败响应携带，成功恒 null）：code/type/message/detail/
+     * stackTrace/traceId/timestamp，全平台唯一异常结构（见 CommonError 类注释）。
+     * 由全局异常处理器与业务模板填充；前端可忽略，RPC 消费方与排障工具消费。
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private CommonError error;
+
+    /** 失败响应挂统一错误对象（链式） */
+    public R<T> withError(CommonError error) {
+        this.error = error;
+        return this;
+    }
 
     public static <T> R<T> ok() {
         return build(ResultCode.SUCCESS.getCode(), ResultCode.SUCCESS.getMessage(), null);

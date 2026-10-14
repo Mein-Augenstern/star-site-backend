@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 @Data
 public class PaymentOrderDTO implements Serializable {
 
+    /** 雪花 id */
     private Long id;
 
     /** 支付单号 */
@@ -36,6 +37,7 @@ public class PaymentOrderDTO implements Serializable {
     /** 支付渠道：mock/alipay/wechat */
     private String channel;
 
+    /** 商品标题（渠道账单展示） */
     private String subject;
 
     /** 支付金额（元） */
@@ -47,9 +49,12 @@ public class PaymentOrderDTO implements Serializable {
     /** 支付凭证（仅已创建状态非空） */
     private String chargePayload;
 
+    /** 渠道侧交易号 */
     private String channelTradeNo;
 
+    /** 支付成功时间 */
     private LocalDateTime paidAt;
 
+    /** 创建时间 */
     private LocalDateTime createdAt;
 }

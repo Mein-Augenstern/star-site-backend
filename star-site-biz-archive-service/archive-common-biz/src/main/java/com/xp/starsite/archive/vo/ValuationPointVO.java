@@ -16,7 +16,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ValuationPointVO {
 
+    /** 该时点全家资产估值合计（元） */
     private BigDecimal value;
 
+    /** 估值时间 */
     private LocalDateTime valuedAt;
 }

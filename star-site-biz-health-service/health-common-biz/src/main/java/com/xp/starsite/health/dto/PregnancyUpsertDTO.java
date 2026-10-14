@@ -14,13 +14,17 @@ import java.time.LocalDate;
 @Data
 public class PregnancyUpsertDTO {
 
+    /** 家庭成员 id */
     @NotNull(message = "家庭成员不能为空")
     private Long familyMemberId;
 
+    /** 末次月经第一天 */
     @NotNull(message = "末次月经日期不能为空")
     private LocalDate lmpDate;
 
+    /** 身高 cm */
     private BigDecimal heightCm;
 
+    /** 孕前体重 kg */
     private BigDecimal prePregnancyWeight;
 }

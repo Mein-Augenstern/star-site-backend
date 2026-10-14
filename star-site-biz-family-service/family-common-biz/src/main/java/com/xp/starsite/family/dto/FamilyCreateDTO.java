@@ -13,10 +13,12 @@ import lombok.Data;
 @Data
 public class FamilyCreateDTO {
 
+    /** 家庭名（如 「我们仨」） */
     @NotBlank(message = "家庭名称不能为空")
     @Size(max = 64, message = "家庭名称最长 64 位")
     private String name;
 
+    /** 备注 */
     @Size(max = 255, message = "备注最长 255 位")
     private String remark;
 }

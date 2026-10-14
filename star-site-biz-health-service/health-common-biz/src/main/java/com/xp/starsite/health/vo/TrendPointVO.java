@@ -13,14 +13,19 @@ import java.math.BigDecimal;
 @Data
 public class TrendPointVO {
 
+    /** 报告年份 */
     private Integer reportYear;
 
+    /** 报告 id */
     private Long reportId;
 
+    /** 数值结果（与 valueText 二选一有值） */
     private BigDecimal valueNum;
 
+    /** 文本结果（阴/阳等，与 valueNum 二选一有值） */
     private String valueText;
 
+    /** 单位 */
     private String unit;
 
     /** 参考下限（趋势图参考区间带） */

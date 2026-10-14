@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 public class BudgetSaveDTO {
 
     @NotBlank(message = "分类不能为空")
+    /** 预算分类枚举 */
     private String category;
 
     /** 预算月份 YYYY-MM */
@@ -27,5 +28,6 @@ public class BudgetSaveDTO {
 
     @NotNull(message = "预算金额不能为空")
     @Digits(integer = 14, fraction = 2, message = "金额最多两位小数")
+    /** 预算金额（元） */
     private BigDecimal amount;
 }

@@ -12,9 +12,11 @@ import lombok.Data;
 @Data
 public class BindAccountDTO {
 
+    /** 登录名（即 member.username，账密校验通过后绑定微信身份） */
     @NotBlank(message = "账号不能为空")
     private String username;
 
+    /** 登录密码（明文，服务端 BCrypt 校验比对） */
     @NotBlank(message = "密码不能为空")
     private String password;
 }

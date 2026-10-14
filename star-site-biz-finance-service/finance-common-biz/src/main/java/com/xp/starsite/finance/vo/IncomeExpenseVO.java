@@ -13,13 +13,16 @@ import java.math.BigDecimal;
 @Data
 public class IncomeExpenseVO {
 
+    /** 统计年份 */
     private int year;
 
     /** 0 = 全年 */
     private Integer month;
 
+    /** 年度收入合计（元） */
     private BigDecimal income;
 
+    /** 年度支出合计（元） */
     private BigDecimal expense;
 
     /** 结余 = 收入 - 支出 */
