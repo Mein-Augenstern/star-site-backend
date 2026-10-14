@@ -59,3 +59,11 @@ management:
 logging:
   level:
     com.xp.starsite: info
+
+
+# RPC 集成（integration 层统一门卫 RpcCallGuard）：间调用超时基线，nacos yaml / compose env 可覆盖
+star:
+  rpc:
+    timeout:
+      connect-ms: 3000
+      read-ms: 10000

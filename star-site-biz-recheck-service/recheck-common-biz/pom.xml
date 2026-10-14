@@ -25,6 +25,12 @@
             <artifactId>recheck-core-model</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 跨服务出口显式依赖（不再经 core-service 通道传递）：integration 只被 common-biz 消费 -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>recheck-integration</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>family-facade</artifactId>

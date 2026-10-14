@@ -25,6 +25,12 @@
             <artifactId>spring-cloud-openfeign-core</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- RpcCallGuard.classify 引用 feign.FeignException（provided 不传递，测试类路径需显式声明） -->
+        <dependency>
+            <groupId>io.github.openfeign</groupId>
+            <artifactId>feign-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>

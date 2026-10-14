@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.xp.starsite.api.client.FileApi;
 import com.xp.starsite.api.event.file.FileUploadedEvent;
 import com.xp.starsite.common.mq.AbstractIdempotentConsumer;
+import com.xp.starsite.common.rpc.RpcCallGuard;
 import com.xp.starsite.common.mq.EnvelopeDecoder;
 import com.xp.starsite.common.mq.event.EventEnvelope;
 import com.xp.starsite.common.mq.event.EventTypes;
@@ -37,13 +38,15 @@ public class FileUploadedConsumer extends AbstractIdempotentConsumer implements 
     private static final String BIZ_BILL_IMPORT = "bill_import";
 
     private final FileApi fileApi;
+    private final RpcCallGuard rpc;
     private final ImportService importService;
     private final FinanceImportLogRepository importLogRepository;
 
-    public FileUploadedConsumer(JdbcTemplate jdbcTemplate, FileApi fileApi,
+    public FileUploadedConsumer(JdbcTemplate jdbcTemplate, FileApi fileApi, RpcCallGuard rpc,
                                 ImportService importService, FinanceImportLogRepository importLogRepository) {
         super(jdbcTemplate, "G_finance_file");
         this.fileApi = fileApi;
+        this.rpc = rpc;
         this.importService = importService;
         this.importLogRepository = importLogRepository;
     }
@@ -85,7 +88,8 @@ public class FileUploadedConsumer extends AbstractIdempotentConsumer implements 
         logRow.setAccountId(accountId);
         logRow.setFileId(fileId);
         try {
-            byte[] content = fileApi.content(fileId).getData();
+            // RPC 经统一门卫（fail-closed）：失败抛 RpcException 落下方 catch → import_log status=2（消息不重试）
+            byte[] content = rpc.call("finance.file.content", () -> fileApi.content(fileId));
             if (content == null) {
                 throw new IllegalStateException("账单文件内容为空");
             }

@@ -56,6 +56,7 @@ public class ReportServiceImpl implements ReportService {
     private final FinanceTransactionRepository transactionRepository;
     private final FinanceNetWorthSnapshotRepository snapshotRepository;
     private final ArchiveApi archiveApi;
+    private final com.xp.starsite.common.rpc.RpcCallGuard rpc;
 
     @Value("${finance.snapshot-cron:0 30 2 * * ?}")
     private String cronHint;
@@ -70,8 +71,12 @@ public class ReportServiceImpl implements ReportService {
         vo.setAccountAsset(accountAsset);
         vo.setTotalLiability(totalLiability);
         try {
-            BigDecimal archiveAsset = archiveApi.assetSummary(memberId).getData().getTotalValue();
-            vo.setArchiveAsset(archiveAsset == null ? BigDecimal.ZERO : archiveAsset);
+            // RPC 经统一门卫（判 code/翻译异常），data 判空防 NPE；读场景 fail-open：archive 挂了按 0 展示
+            com.xp.starsite.api.dto.AssetSummaryDTO summary =
+                    rpc.call("finance.archive.assetSummary", () -> archiveApi.assetSummary(memberId));
+            BigDecimal archiveAsset = summary == null || summary.getTotalValue() == null
+                    ? BigDecimal.ZERO : summary.getTotalValue();
+            vo.setArchiveAsset(archiveAsset);
             vo.setArchiveAvailable(true);
         } catch (Exception e) {
             log.warn("archive 资产总览不可用，资产负债表按 0 展示档案资产: {}", e.getMessage());

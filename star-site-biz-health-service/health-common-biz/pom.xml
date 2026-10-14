@@ -25,6 +25,17 @@
             <artifactId>health-core-model</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 跨服务出口与归属门卫显式依赖（不再经 core-service 通道传递） -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>health-integration</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>family-facade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>star-site-common</artifactId>

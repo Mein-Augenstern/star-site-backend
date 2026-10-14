@@ -12,14 +12,9 @@
 
     <artifactId>recheck-integration</artifactId>
     <name>recheck-integration</name>
-    <description>复查闭环外部集成：health 报告读取 + reminder 规则注册（跨服务调用的唯一出口，领域内禁止直依赖 Feign）</description>
+    <description>复查闭环外部集成：health 报告读取 + reminder 规则调用（跨服务调用的唯一出口，只做调用+容错；RPC 参数组装在 recheck-core-service 的 assembler）</description>
 
     <dependencies>
-        <dependency>
-            <groupId>com.xp.starsite</groupId>
-            <artifactId>recheck-core-model</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>health-facade</artifactId>

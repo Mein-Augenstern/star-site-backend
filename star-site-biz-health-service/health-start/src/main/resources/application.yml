@@ -49,3 +49,11 @@ jwt:
   # HS256 密钥，须 >= 32 字节；与网关/其他服务保持一致，生产环境用环境变量注入
   secret: "${JWT_SECRET:star-site-local-dev-secret-change-me-32bytes!}"
   expire-minutes: 720
+
+
+# RPC 集成（integration 层统一门卫 RpcCallGuard）：间调用超时基线，nacos yaml / compose env 可覆盖
+star:
+  rpc:
+    timeout:
+      connect-ms: 3000
+      read-ms: 10000

@@ -23,11 +23,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /** 业务异常 */
+    /** 业务异常（5xx 语义的业务失败对调用方可重试） */
     @ExceptionHandler(BizException.class)
     public R<Void> handleBizException(BizException e) {
         log.warn("业务异常: code={}, message={}", e.getCode(), e.getMessage());
-        return R.fail(e.getCode(), e.getMessage());
+        return R.fail(e.getCode(), e.getMessage(), e.getCode() >= 500);
+    }
+
+    /** RPC 调用异常（内部接口串联下游时冒泡，retryable 随异常透出） */
+    @ExceptionHandler(com.xp.starsite.common.rpc.RpcException.class)
+    public R<Void> handleRpcException(com.xp.starsite.common.rpc.RpcException e) {
+        log.warn("RPC 异常: code={}, message={}, retryable={}", e.getCode(), e.getMessage(), e.isRetryable());
+        return R.fail(e.getCode(), e.getMessage(), e.isRetryable());
     }
 
     /** 参数校验失败（@Valid） */
@@ -36,7 +43,7 @@ public class GlobalExceptionHandler {
     public R<Void> handleValidException(MethodArgumentNotValidException e) {
         FieldError fieldError = e.getBindingResult().getFieldError();
         String message = fieldError != null ? fieldError.getDefaultMessage() : "请求参数错误";
-        return R.fail(ResultCode.BAD_REQUEST.getCode(), message);
+        return R.fail(ResultCode.BAD_REQUEST.getCode(), message, false);
     }
 
     /** 兜底 */
@@ -44,6 +51,6 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public R<Void> handleException(Exception e) {
         log.error("系统异常", e);
-        return R.fail(ResultCode.SYSTEM_ERROR);
+        return R.fail(ResultCode.SYSTEM_ERROR.getCode(), ResultCode.SYSTEM_ERROR.getMessage(), true);
     }
 }

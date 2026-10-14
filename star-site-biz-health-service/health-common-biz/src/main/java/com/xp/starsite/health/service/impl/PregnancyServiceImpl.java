@@ -3,6 +3,7 @@ package com.xp.starsite.health.service.impl;
 import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.health.dto.PregnancyUpsertDTO;
 import com.xp.starsite.health.entity.PregnancyProfile;
+import com.xp.starsite.health.assembler.PrenatalRuleAssembler;
 import com.xp.starsite.health.integration.PregnancyReminderBridge;
 import com.xp.starsite.health.repository.PregnancyProfileRepository;
 import com.xp.starsite.health.service.PregnancyService;
@@ -19,7 +20,7 @@ import java.util.List;
 
 /**
  * 孕期助手服务实现。计算规则见 {@link com.xp.starsite.health.service.PregnancyService} 类注释。
- * 档案落库后经 {@link PregnancyReminderBridge} 将产检里程碑注册为提醒中心规则（幂等 upsert）。
+ * 档案落库后组装产检里程碑规则（PrenatalRuleAssembler）并经 {@link PregnancyReminderBridge} 注册为提醒中心规则（幂等 upsert）。
  * 数据访问经仓储层（{@link PregnancyProfileRepository}，底层调用 dal DAO）。
  *
  * @author xiaopu
@@ -86,8 +87,9 @@ public class PregnancyServiceImpl implements PregnancyService {
         // 里程碑注册提醒规则（幂等，已过窗口自动跳过）；
         // 提醒中心不可用只告警不阻断——孕周保存是主链路，提醒注册是增强链路
         try {
-            int registered = reminderBridge.registerPrenatalCheckups(
-                    profile.getFamilyMemberId(), profile.getLmpDate(), null, memberId);
+            // RPC 参数组装在 core-service 的 PrenatalRuleAssembler；integration 只负责容错调用
+            int registered = reminderBridge.registerMilestoneRules(PrenatalRuleAssembler.milestoneRules(
+                    profile.getFamilyMemberId(), profile.getLmpDate(), null, memberId));
             log.info("孕期档案保存: member={}, 孕周锚点={}, 里程碑注册提醒 {} 条",
                     dto.getFamilyMemberId(), profile.getLmpDate(), registered);
         } catch (Exception e) {

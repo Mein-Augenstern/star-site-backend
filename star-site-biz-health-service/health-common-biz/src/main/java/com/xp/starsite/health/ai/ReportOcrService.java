@@ -2,11 +2,10 @@ package com.xp.starsite.health.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xp.starsite.api.client.FileApi;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.llm.LlmClient;
-import com.xp.starsite.common.result.R;
 import com.xp.starsite.health.dto.IndicatorDTO;
+import com.xp.starsite.health.integration.FileIntegration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -34,7 +33,7 @@ public class ReportOcrService {
             格式：{"title":"标题","hospital":"医院","checkupDate":"YYYY-MM-DD 或 null","reportYear":2026,"indicators":[{"itemName":"指标名","itemGroup":"分组","valueNum":数值或null,"valueText":"文本结果或null","unit":"单位","refLow":下限或null,"refHigh":上限或null}]}
             注意：只提取图片中真实存在的内容，看不清的字段用 null；数值去掉单位和逗号。""";
 
-    private final FileApi fileApi;
+    private final FileIntegration fileIntegration;
     private final ObjectProvider<LlmClient> llmClient;
 
     public OcrDraft ocr(Long fileId) {
@@ -42,8 +41,7 @@ public class ReportOcrService {
         if (client == null) {
             throw new BizException(400, "拍照识别未启用（未配置 LLM_API_KEY），请手动录入");
         }
-        R<byte[]> resp = fileApi.content(fileId);
-        byte[] bytes = resp == null ? null : resp.getData();
+        byte[] bytes = fileIntegration.content(fileId);
         if (bytes == null || bytes.length == 0) {
             throw new BizException(400, "文件不存在或已删除");
         }

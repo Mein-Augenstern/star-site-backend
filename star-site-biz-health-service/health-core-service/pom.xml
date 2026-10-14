@@ -12,7 +12,7 @@
 
     <artifactId>health-core-service</artifactId>
     <name>health-core-service</name>
-    <description>健康域业务层：service 编排、AI 解读/OCR 业务、DTO/VO 契约（M 层）</description>
+    <description>健康域仓储层：Repository 接口+实现、DO↔Entity 转换、RPC 参数组装器（对上层屏蔽 DO/SQL 与跨服务 DTO 细节）</description>
 
     <dependencies>
         <dependency>
@@ -25,24 +25,15 @@
             <artifactId>health-core-model</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- RPC 参数组装器需要 facade 的 DTO 类型（纯类型依赖，不发起调用；调用在 health-integration） -->
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>health-integration</artifactId>
+            <artifactId>reminder-facade</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>star-site-common</artifactId>
-        </dependency>
-                <dependency>
-            <groupId>com.xp.starsite</groupId>
-            <artifactId>family-facade</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.xp.starsite</groupId>
-            <artifactId>file-facade</artifactId>
-            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

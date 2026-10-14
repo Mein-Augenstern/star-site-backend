@@ -53,11 +53,12 @@ public abstract class BizTemplate {
         } catch (BizException e) {
             emit(action, "biz_error", String.valueOf(e.getCode()), System.currentTimeMillis() - start);
             log.warn("业务拒绝: action={}, code={}, msg={}", action, e.getCode(), e.getMessage());
-            return R.fail(e.getCode(), e.getMessage());
+            // 5xx 语义的业务失败（依赖不可用等）对调用方可重试；4xx 参数/权限类重试无意义
+            return R.fail(e.getCode(), e.getMessage(), e.getCode() >= 500);
         } catch (RuntimeException e) {
             emit(action, "error", e.getClass().getSimpleName(), System.currentTimeMillis() - start);
             log.error("系统异常: action={}, traceId={}", action, traceId, e);
-            return R.fail(500, "系统繁忙，请稍后再试");
+            return R.fail(500, "系统繁忙，请稍后再试", true);
         }
     }
 

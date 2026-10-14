@@ -12,12 +12,17 @@
 
     <artifactId>health-integration</artifactId>
     <name>health-integration</name>
-    <description>健康域外部集成：提醒中心桥接（跨服务调用的唯一出口，领域内禁止直依赖 Feign）</description>
+    <description>健康域外部集成：提醒注册 + 文件内容读取（跨服务调用的唯一出口，只做调用+容错；RPC 参数组装在 health-core-service 的 assembler）</description>
 
     <dependencies>
-                <dependency>
+        <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>reminder-facade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>file-facade</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

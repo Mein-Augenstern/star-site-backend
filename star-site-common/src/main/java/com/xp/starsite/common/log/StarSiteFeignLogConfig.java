@@ -26,21 +26,23 @@ import org.springframework.core.env.Environment;
 @ConditionalOnClass(Logger.class)
 public class StarSiteFeignLogConfig {
 
-    /** 默认基线：BASIC 激活 Logger 回调 + 间调用超时（yml/env 显式配置可覆盖） */
+    /** 默认基线：BASIC 激活 Logger 回调 + 间调用超时（star.rpc.timeout.* 可配置，yml/env 显式配置可覆盖） */
+    private static final String KEY_CONNECT_TIMEOUT_MS = "star.rpc.timeout.connect-ms";
+    private static final String KEY_READ_TIMEOUT_MS = "star.rpc.timeout.read-ms";
     private static final int DEFAULT_CONNECT_TIMEOUT_MS = 3000;
     private static final int DEFAULT_READ_TIMEOUT_MS = 10000;
 
-    public StarSiteFeignLogConfig(FeignClientProperties props) {
+    public StarSiteFeignLogConfig(FeignClientProperties props, Environment env) {
         FeignClientProperties.FeignClientConfiguration cfg = props.getConfig()
                 .computeIfAbsent("default", k -> new FeignClientProperties.FeignClientConfiguration());
         if (cfg.getLoggerLevel() == null) {
             cfg.setLoggerLevel(Logger.Level.BASIC);
         }
         if (cfg.getConnectTimeout() == null) {
-            cfg.setConnectTimeout(DEFAULT_CONNECT_TIMEOUT_MS);
+            cfg.setConnectTimeout(env.getProperty(KEY_CONNECT_TIMEOUT_MS, Integer.class, DEFAULT_CONNECT_TIMEOUT_MS));
         }
         if (cfg.getReadTimeout() == null) {
-            cfg.setReadTimeout(DEFAULT_READ_TIMEOUT_MS);
+            cfg.setReadTimeout(env.getProperty(KEY_READ_TIMEOUT_MS, Integer.class, DEFAULT_READ_TIMEOUT_MS));
         }
     }
 

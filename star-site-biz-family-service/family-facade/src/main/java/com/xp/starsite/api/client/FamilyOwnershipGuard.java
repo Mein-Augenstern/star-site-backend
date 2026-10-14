@@ -4,6 +4,8 @@ import com.xp.starsite.api.dto.FamilyMemberSnapshotDTO;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.result.ResultCode;
+import com.xp.starsite.common.rpc.RpcCallGuard;
+import com.xp.starsite.common.rpc.RpcException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,6 +24,8 @@ import java.util.List;
  * </pre>
  *
  * fail-closed：family 服务不可用时拒绝请求，而不是放行。
+ * 调用经 {@link RpcCallGuard} 统一三段式处理（判 code/可重试判定/标准异常翻译），
+ * 对外仍抛 BizException（历史语义：403 无权限 / 500 依赖不可用），消费方零改动。
  *
  * @author xiaopu
  * @since 2026-10
@@ -32,40 +36,42 @@ public class FamilyOwnershipGuard {
 
     private final FamilyApi familyApi;
 
+    /** 无状态，实例化即可用（与各服务 @Bean 单参构造兼容） */
+    private final RpcCallGuard rpc = new RpcCallGuard();
+
     /** 校验家庭成员归属当前账号，不归属抛 403 */
     public FamilyMemberSnapshotDTO requireOwned(Long memberId, Long familyMemberId) {
-        R<FamilyMemberSnapshotDTO> r = invoke(() -> familyApi.checkOwnership(memberId, familyMemberId));
-        if (r.getData() == null) {
+        FamilyMemberSnapshotDTO member = invoke("family.ownership",
+                () -> familyApi.checkOwnership(memberId, familyMemberId));
+        if (member == null) {
             throw new BizException(ResultCode.FORBIDDEN.getCode(), "无权限访问该家庭成员的数据");
         }
-        return r.getData();
+        return member;
     }
 
     /** 当前账号家庭的全部成员 id（无家庭返回空列表，用于列表/搜索的范围收口） */
     public List<Long> listOwnedMemberIds(Long memberId) {
-        List<FamilyMemberSnapshotDTO> members = invoke(() -> familyApi.listMembers(memberId)).getData();
+        List<FamilyMemberSnapshotDTO> members = invoke("family.members",
+                () -> familyApi.listMembers(memberId));
         return members == null ? List.of()
                 : members.stream().map(FamilyMemberSnapshotDTO::getId).toList();
     }
 
     /** 当前账号家庭的全部成员快照（无家庭返回空列表；保障地图等需要姓名/关系的场景用） */
     public List<FamilyMemberSnapshotDTO> listOwnedMembers(Long memberId) {
-        List<FamilyMemberSnapshotDTO> members = invoke(() -> familyApi.listMembers(memberId)).getData();
+        List<FamilyMemberSnapshotDTO> members = invoke("family.members",
+                () -> familyApi.listMembers(memberId));
         return members == null ? List.of() : members;
     }
 
-    private <T> R<T> invoke(FeignCall<T> call) {
-        R<T> r;
+    /** 统一经 RpcCallGuard fail-closed（code!=0 已被翻译成异常，返回即 data）；RpcException 回译为历史 BizException 语义（500 家庭服务暂不可用） */
+    private <T> T invoke(String action, FeignCall<T> call) {
         try {
-            r = call.get();
-        } catch (Exception e) {
-            log.error("调用 family 服务失败（fail-closed 拒绝请求）: {}", e.getMessage(), e);
+            return rpc.call(action, () -> call.get());
+        } catch (RpcException e) {
+            log.error("调用 family 服务失败（fail-closed 拒绝请求）: action={}, retryable={}", action, e.isRetryable(), e);
             throw new BizException(ResultCode.SYSTEM_ERROR.getCode(), "家庭服务暂不可用，请稍后再试");
         }
-        if (r == null || r.getCode() != ResultCode.SUCCESS.getCode()) {
-            throw new BizException(ResultCode.SYSTEM_ERROR.getCode(), "家庭服务返回异常，请稍后再试");
-        }
-        return r;
     }
 
     @FunctionalInterface

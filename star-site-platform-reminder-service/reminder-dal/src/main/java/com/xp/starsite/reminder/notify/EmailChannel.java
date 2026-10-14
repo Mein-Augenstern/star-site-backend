@@ -3,6 +3,7 @@ package com.xp.starsite.reminder.notify;
 import com.xp.starsite.api.client.MemberApi;
 import com.xp.starsite.api.dto.MemberContactDTO;
 import com.xp.starsite.common.result.R;
+import com.xp.starsite.common.rpc.RpcCallGuard;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -29,6 +30,8 @@ public class EmailChannel {
 
     private final JavaMailSender mailSender;
     private final MemberApi memberApi;
+    /** 无状态门卫实例化即用（构造器签名保持稳定，不新增注入参数） */
+    private final RpcCallGuard rpc = new RpcCallGuard();
     private final String fromUser;
     private final boolean enabled;
 
@@ -81,9 +84,10 @@ public class EmailChannel {
     }
 
     private Optional<MemberContactDTO> contactOf(Long memberId) {
+        // 统一经 RpcCallGuard（判 code/异常翻译）；本渠道整体 tolerant，失败降级为无联系方式
         try {
-            R<MemberContactDTO> r = memberApi.contact(memberId);
-            return r.getData() == null ? Optional.empty() : Optional.of(r.getData());
+            MemberContactDTO contact = rpc.call("reminder.member.contact", () -> memberApi.contact(memberId));
+            return contact == null ? Optional.empty() : Optional.of(contact);
         } catch (Exception e) {
             log.warn("取会员联系方式失败: memberId={}, err={}", memberId, e.getMessage());
             return Optional.empty();

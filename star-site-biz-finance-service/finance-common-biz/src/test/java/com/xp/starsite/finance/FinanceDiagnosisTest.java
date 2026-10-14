@@ -1,6 +1,5 @@
 package com.xp.starsite.finance;
 
-import com.xp.starsite.api.client.ArchiveApi;
 import com.xp.starsite.api.dto.AssetSummaryDTO;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.llm.LlmClient;
@@ -43,27 +42,18 @@ class FinanceDiagnosisTest {
     @Mock
     private ReportService reportService;
     @Mock
-    private ArchiveApi archiveApi;
-    @Mock
     private LlmClient llmClient;
     @Mock
     private ObjectProvider<LlmClient> llmProvider;
 
-    @org.junit.jupiter.api.BeforeEach
-    void lenientStubs() {
-        // archive stub 在无 key 用例中不被调用，放宽严格模式
-        org.mockito.Mockito.lenient().when(archiveApi.assetSummary(ME))
-                .thenReturn(R.ok(new AssetSummaryDTO(BigDecimal.ZERO)));
-    }
-
     private FinanceDiagnosisService service() {
         when(llmProvider.getIfAvailable()).thenReturn(llmClient);
-        return new FinanceDiagnosisService(accountRepository, transactionRepository, reportService, archiveApi, llmProvider);
+        return new FinanceDiagnosisService(accountRepository, transactionRepository, reportService, llmProvider);
     }
 
     private FinanceDiagnosisService serviceWithoutLlm() {
         when(llmProvider.getIfAvailable()).thenReturn(null);
-        return new FinanceDiagnosisService(accountRepository, transactionRepository, reportService, archiveApi, llmProvider);
+        return new FinanceDiagnosisService(accountRepository, transactionRepository, reportService, llmProvider);
     }
 
     private void stubReports() {

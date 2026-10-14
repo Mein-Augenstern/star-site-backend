@@ -57,7 +57,7 @@ class ReportServiceTest {
     private ArchiveApi archiveApi;
 
     private ReportServiceImpl service() {
-        return new ReportServiceImpl(accountRepository, transactionRepository, snapshotRepository, archiveApi);
+        return new ReportServiceImpl(accountRepository, transactionRepository, snapshotRepository, archiveApi, new com.xp.starsite.common.rpc.RpcCallGuard());
     }
 
     private FinanceAccount account(long id, String type, String balance) {

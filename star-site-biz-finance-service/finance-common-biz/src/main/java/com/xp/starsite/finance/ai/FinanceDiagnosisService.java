@@ -1,6 +1,5 @@
 package com.xp.starsite.finance.ai;
 
-import com.xp.starsite.api.client.ArchiveApi;
 import com.xp.starsite.common.llm.LlmClient;
 import com.xp.starsite.finance.entity.FinanceAccount;
 import com.xp.starsite.finance.repository.FinanceAccountRepository;
@@ -42,7 +41,6 @@ public class FinanceDiagnosisService {
     private final FinanceAccountRepository accountRepository;
     private final FinanceTransactionRepository transactionRepository;
     private final ReportService reportService;
-    private final ArchiveApi archiveApi;
     private final ObjectProvider<LlmClient> llmClient;
 
     public String diagnose(Long memberId) {

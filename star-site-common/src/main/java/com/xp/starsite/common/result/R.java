@@ -1,14 +1,16 @@
 package com.xp.starsite.common.result;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 import java.io.Serializable;
 
 /**
- * 统一响应体：{code, message, data}
+ * 统一响应体：{code, message, data[, retryable]}
  *
  * <p>全平台所有 REST 接口的出参标准封装：controller 返回 {@code R.ok(data)} / {@code R.fail(...)}，
- * 前端与跨服务调用方按 code 判定成败，配合 ResultCode 统一错误语义。
+ * 前端与跨服务调用方按 code 判定成败，配合 ResultCode 统一错误语义；
+ * 失败响应可携带 retryable 供 RPC 消费方判定重试策略（见字段注释）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -19,6 +21,14 @@ public class R<T> implements Serializable {
     private int code;
     private String message;
     private T data;
+
+    /**
+     * 失败响应可选携带的可重试标记：true=调用方可重试（依赖超时/未就绪/5xx），
+     * false=业务性失败重试无意义；null=未声明（成功响应恒为 null）。
+     * 跨服务消费方经 RpcCallGuard 消费该语义，HTTP 前端可忽略本字段。
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean retryable;
 
     public static <T> R<T> ok() {
         return build(ResultCode.SUCCESS.getCode(), ResultCode.SUCCESS.getMessage(), null);
@@ -34,6 +44,13 @@ public class R<T> implements Serializable {
 
     public static <T> R<T> fail(int code, String message) {
         return build(code, message, null);
+    }
+
+    /** 失败响应（带可重试标记，供 RPC 消费方判定重试策略） */
+    public static <T> R<T> fail(int code, String message, boolean retryable) {
+        R<T> r = build(code, message, null);
+        r.setRetryable(retryable);
+        return r;
     }
 
     public static <T> R<T> build(int code, String message, T data) {

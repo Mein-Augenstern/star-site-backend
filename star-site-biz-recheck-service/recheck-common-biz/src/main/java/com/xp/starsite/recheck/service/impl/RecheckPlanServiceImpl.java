@@ -7,6 +7,7 @@ import com.xp.starsite.api.dto.health.HealthReportDTO;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
 import com.xp.starsite.common.util.IdGenerator;
+import com.xp.starsite.recheck.assembler.ReminderRuleAssembler;
 import com.xp.starsite.recheck.dto.RecheckPlanCloseDTO;
 import com.xp.starsite.recheck.dto.RecheckPlanCreateDTO;
 import com.xp.starsite.recheck.entity.RecheckPlan;
@@ -24,13 +25,12 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * 复查闭环服务实现：编排 family（归属）/ health（报告只读）/ reminder（规则）三个横向服务。
- * 事务只包本地 recheck_plan 写入；跨服务副作用（提醒规则）在事务外且失败不回滚
- * （提醒是增值能力，见 {@link ReminderIntegration}）。
+ * RPC 参数组装经 {@link ReminderRuleAssembler}（core-service 层）完成后，
+ * 由 {@link ReminderIntegration} 容错调用——提醒失败不回滚本地事务（增值能力非强一致）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -87,7 +87,11 @@ public class RecheckPlanServiceImpl implements RecheckPlanService {
         plan.setDeleted(0);
         planRepository.save(plan);
 
-        reminderIntegration.registerRules(plan, member.getName());
+        // RPC 参数组装在 core-service 的 assembler；integration 只负责容错调用（失败不阻断主流程）
+        reminderIntegration.upsertTolerant(ReminderRuleAssembler.reviewRule(plan, member.getName()));
+        if (ReminderRuleAssembler.hasDailyMonitoring(plan)) {
+            reminderIntegration.upsertTolerant(ReminderRuleAssembler.dailyRule(plan));
+        }
         log.info("复查计划创建: planId={}, member={}, itemName={}, targetDate={}",
                 plan.getId(), member.getName(), plan.getItemName(), plan.getTargetDate());
         return toVO(plan, member.getName());
@@ -122,7 +126,7 @@ public class RecheckPlanServiceImpl implements RecheckPlanService {
         plan.setStatus(RecheckPlan.STATUS_CLOSED);
         planRepository.update(plan);
 
-        reminderIntegration.cancelRules(plan);
+        cancelRulesTolerant(plan);
         log.info("复查计划闭环: planId={}, itemName={}, conclusion={}", plan.getId(), plan.getItemName(), plan.getConclusion());
         return toVO(plan, memberName(memberId, plan.getFamilyMemberId()));
     }
@@ -133,8 +137,16 @@ public class RecheckPlanServiceImpl implements RecheckPlanService {
         RecheckPlan plan = requireOwnedActivePlan(memberId, planId);
         plan.setStatus(RecheckPlan.STATUS_CANCELLED);
         planRepository.update(plan);
-        reminderIntegration.cancelRules(plan);
+        cancelRulesTolerant(plan);
         log.info("复查计划取消: planId={}", plan.getId());
+    }
+
+    /** 撤销该计划的全部提醒规则（复查日一次性 + 可选每日监测，tolerant 不阻断主流程） */
+    private void cancelRulesTolerant(RecheckPlan plan) {
+        reminderIntegration.deleteTolerant(ReminderRuleAssembler.deleteKey(plan, ReminderRuleAssembler.BIZ_TYPE_REVIEW));
+        if (ReminderRuleAssembler.hasDailyMonitoring(plan)) {
+            reminderIntegration.deleteTolerant(ReminderRuleAssembler.deleteKey(plan, ReminderRuleAssembler.BIZ_TYPE_DAILY));
+        }
     }
 
     /** 归属防线：计划必须存在且归属当前账号（fail-closed），且仍处于进行中 */
