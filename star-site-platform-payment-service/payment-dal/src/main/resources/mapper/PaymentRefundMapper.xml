@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 退款单 SQL（DAL）：全部参数绑定 #{}，逻辑删查询统一 deleted=0 -->
+<mapper namespace="com.xp.starsite.payment.mapper.PaymentRefundMapper">
+
+    <sql id="cols">
+        id, refund_no, order_id, order_no, channel, channel_trade_no, channel_refund_no,
+        amount, status, reason, operator_member_id, refunded_at, deleted, created_at, updated_at
+    </sql>
+
+    <insert id="insert">
+        INSERT INTO payment_refund
+            (id, refund_no, order_id, order_no, channel, channel_trade_no,
+             amount, status, reason, operator_member_id, deleted)
+        VALUES
+            (#{id}, #{refundNo}, #{orderId}, #{orderNo}, #{channel}, #{channelTradeNo},
+             #{amount}, #{status}, #{reason}, #{operatorMemberId}, #{deleted})
+    </insert>
+
+    <select id="selectByRefundNo" resultType="com.xp.starsite.payment.dal.dataobject.PaymentRefundDO">
+        SELECT <include refid="cols"/> FROM payment_refund
+        WHERE refund_no = #{refundNo} AND deleted = 0
+    </select>
+
+    <select id="selectById" resultType="com.xp.starsite.payment.dal.dataobject.PaymentRefundDO">
+        SELECT <include refid="cols"/> FROM payment_refund
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <update id="update">
+        UPDATE payment_refund
+        SET status = #{status},
+            channel_refund_no = #{channelRefundNo},
+            refunded_at = #{refundedAt}
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <!-- 渠道回调并发防重 -->
+    <update id="casStatus">
+        UPDATE payment_refund
+        SET status = #{newStatus},
+            channel_refund_no = COALESCE(#{channelRefundNo}, channel_refund_no),
+            refunded_at = COALESCE(#{refundedAt}, refunded_at)
+        WHERE id = #{id} AND deleted = 0 AND status = #{expectStatus}
+    </update>
+
+    <update id="markDeleted">
+        UPDATE payment_refund SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+</mapper>

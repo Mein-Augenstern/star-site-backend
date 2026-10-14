@@ -22,4 +22,7 @@ public final class EventTypes {
 
     /** 文件上传完成（TOPIC_FILE，消费方按 bizType 过滤） */
     public static final String FILE_UPLOADED = "FileUploaded";
+
+    /** 支付成功（TOPIC_PAYMENT，payload = PaymentSucceededEvent，消费方按 source 幂等更新业务单） */
+    public static final String PAYMENT_SUCCEEDED = "PaymentSucceeded";
 }

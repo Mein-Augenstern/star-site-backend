@@ -24,4 +24,7 @@ public final class Topics {
 
     /** 预留：报告/指标变更 → AI 解读、年报等衍生加工 */
     public static final String TOPIC_REPORT = "TOPIC_REPORT";
+
+    /** 消费方：各业务服务（保险费缴纳、会员订阅等）。支付结果驱动业务单状态流转 */
+    public static final String TOPIC_PAYMENT = "TOPIC_PAYMENT";
 }

@@ -24,6 +24,7 @@
         <module>star-site-biz-archive-service</module>
         <module>star-site-biz-finance-service</module>
         <module>star-site-biz-recheck-service</module>
+        <module>star-site-platform-payment-service</module>
     </modules>
 
     <properties>
@@ -95,6 +96,11 @@
             <dependency>
                 <groupId>com.xp.starsite</groupId>
                 <artifactId>health-facade</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.xp.starsite</groupId>
+                <artifactId>payment-facade</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -286,6 +286,26 @@ services:
     mem_limit: 320m
     restart: unless-stopped
 
+  payment:
+    profiles: ["app"]
+    image: star-site/platform-payment:latest
+    pull_policy: never
+    build:
+      <<: *app-build
+      args: { MODULE: star-site-platform-payment-service, JAR_SUB: payment-start }
+    container_name: star-payment
+    environment:
+      <<: *app-env
+      SPRING_CLOUD_NACOS_DISCOVERY_IP: star-payment
+      PAYMENT_NOTIFY_URL: ${PAYMENT_NOTIFY_URL:-https://***REMOVED-ECS-IP***:9090/api/payment/notify}
+      PAYMENT_MOCK_ENABLED: ${PAYMENT_MOCK_ENABLED:-true}
+      PAYMENT_MOCK_SECRET: ${PAYMENT_MOCK_SECRET:-star-site-mock-payment-secret-dev-only}
+    ports:
+      - "8090:8090"   # 联调：渠道回调直打容器（frp 隧道就绪后撤）
+    depends_on: [mysql, nacos]
+    mem_limit: 320m
+    restart: unless-stopped
+
   frpc:
     profiles: ["prod"]
     image: snowdreamtech/frpc:latest

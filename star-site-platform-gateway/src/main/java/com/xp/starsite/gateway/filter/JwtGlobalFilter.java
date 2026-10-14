@@ -33,9 +33,10 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
 
     private static final AntPathMatcher MATCHER = new AntPathMatcher();
 
-    /** 免 token 白名单 */
+    /** 免 token 白名单（/api/payment/notify/** 为渠道服务器异步回调，防线是渠道验签） */
     private static final String[] WHITELIST = {
             "/api/auth/**",
+            "/api/payment/notify/**",
             "/actuator/**",
     };
 

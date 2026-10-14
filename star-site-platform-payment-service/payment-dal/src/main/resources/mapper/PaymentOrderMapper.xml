@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 支付单 SQL（DAL）：全部参数绑定 #{}，逻辑删查询统一 deleted=0 -->
+<mapper namespace="com.xp.starsite.payment.mapper.PaymentOrderMapper">
+
+    <sql id="cols">
+        id, order_no, source, biz_type, biz_id, family_id, owner_member_id, channel,
+        subject, amount, status, channel_trade_no, paid_at, charge_payload, remark,
+        deleted, created_at, updated_at
+    </sql>
+
+    <!-- 雪花 id 应用侧赋值：事件载荷需要在 insert 前拿到 id，故显式插入 id 列 -->
+    <insert id="insert">
+        INSERT INTO payment_order
+            (id, order_no, source, biz_type, biz_id, family_id, owner_member_id, channel,
+             subject, amount, status, charge_payload, remark, deleted)
+        VALUES
+            (#{id}, #{orderNo}, #{source}, #{bizType}, #{bizId}, #{familyId}, #{ownerMemberId}, #{channel},
+             #{subject}, #{amount}, #{status}, #{chargePayload}, #{remark}, #{deleted})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.payment.dal.dataobject.PaymentOrderDO">
+        SELECT <include refid="cols"/> FROM payment_order
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <select id="selectByOrderNo" resultType="com.xp.starsite.payment.dal.dataobject.PaymentOrderDO">
+        SELECT <include refid="cols"/> FROM payment_order
+        WHERE order_no = #{orderNo} AND deleted = 0
+    </select>
+
+    <select id="selectByBiz" resultType="com.xp.starsite.payment.dal.dataobject.PaymentOrderDO">
+        SELECT <include refid="cols"/> FROM payment_order
+        WHERE source = #{source} AND biz_type = #{bizType} AND biz_id = #{bizId} AND deleted = 0
+        ORDER BY id DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectByOwner" resultType="com.xp.starsite.payment.dal.dataobject.PaymentOrderDO">
+        SELECT <include refid="cols"/> FROM payment_order
+        WHERE deleted = 0 AND owner_member_id = #{ownerMemberId}
+        <if test="source != null and source != ''">AND source = #{source}</if>
+        <if test="bizType != null and bizType != ''">AND biz_type = #{bizType}</if>
+        <if test="bizId != null">AND biz_id = #{bizId}</if>
+        ORDER BY id DESC
+        LIMIT 100
+    </select>
+
+    <update id="update">
+        UPDATE payment_order
+        SET status = #{status},
+            channel_trade_no = #{channelTradeNo},
+            paid_at = #{paidAt},
+            charge_payload = #{chargePayload},
+            remark = #{remark}
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <!-- 回调并发防重：状态只有从 expect 流转一次（uk_channel_trade 兜底重放） -->
+    <update id="casStatus">
+        UPDATE payment_order
+        SET status = #{newStatus},
+            channel_trade_no = COALESCE(#{channelTradeNo}, channel_trade_no),
+            paid_at = COALESCE(#{paidAt}, paid_at)
+        WHERE id = #{id} AND deleted = 0 AND status = #{expectStatus}
+    </update>
+
+    <update id="markDeleted">
+        UPDATE payment_order SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+</mapper>
