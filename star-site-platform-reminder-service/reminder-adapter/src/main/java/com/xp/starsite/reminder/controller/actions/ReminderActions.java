@@ -51,6 +51,12 @@ public final class ReminderActions {
     /** 手动触发到期扫描 */
     public static final String INTERNAL_SCAN = "reminder.internal.scan";
 
+    /** 跨服务注册提醒规则（upsert，幂等键 source+bizType+bizId） */
+    public static final String INTERNAL_RULE_UPSERT = "reminder.internal.ruleUpsert";
+
+    /** 跨服务撤销提醒规则 */
+    public static final String INTERNAL_RULE_DELETE = "reminder.internal.ruleDelete";
+
     private ReminderActions() {
     }
 }

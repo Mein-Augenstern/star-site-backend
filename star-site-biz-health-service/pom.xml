@@ -16,6 +16,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>health-facade</module>
         <module>health-core-model</module>
         <module>health-dal</module>
         <module>health-integration</module>

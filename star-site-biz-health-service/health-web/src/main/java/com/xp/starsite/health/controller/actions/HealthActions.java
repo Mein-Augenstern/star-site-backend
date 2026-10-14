@@ -78,6 +78,11 @@ public final class HealthActions {
     /** 拍照 OCR 结构化 */
     public static final String INSIGHT_OCR = "health.insight.ocr";
 
+    // —— 服务间内部接口 ——
+
+    /** 报告详情（服务间只读，health 横向化 facade） */
+    public static final String INTERNAL_REPORT_DETAIL = "health.internal.reportDetail";
+
     private HealthActions() {
     }
 }

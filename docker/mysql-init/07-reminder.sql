@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS `reminder_rule` (
   `biz_id`          BIGINT UNSIGNED NOT NULL COMMENT '业务主键',
   `title`           VARCHAR(128) NOT NULL COMMENT '提醒标题',
   `first_remind_at` DATE                 DEFAULT NULL COMMENT '首次提醒日期',
-  `repeat_type`     VARCHAR(16)  NOT NULL DEFAULT 'NONE' COMMENT 'NONE/ANNUAL/MONTHLY/WEEKLY/CUSTOM',
+  `repeat_type`     VARCHAR(16)  NOT NULL DEFAULT 'NONE' COMMENT 'NONE/ANNUAL/MONTHLY/WEEKLY/DAILY/CUSTOM',
   `repeat_until`    DATE                 DEFAULT NULL COMMENT '重复截止日(NULL=无限)',
   `advance_days`    INT          NOT NULL DEFAULT 0 COMMENT '提前天数',
   `status`          TINYINT      NOT NULL DEFAULT 1 COMMENT '1启用 0停用',

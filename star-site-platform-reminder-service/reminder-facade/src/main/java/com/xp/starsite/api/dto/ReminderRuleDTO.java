@@ -32,7 +32,7 @@ public class ReminderRuleDTO implements Serializable {
     /** 首次提醒日期 */
     private LocalDate remindDate;
 
-    /** 重复类型：NONE / ANNUAL / MONTHLY / WEEKLY */
+    /** 重复类型：NONE / ANNUAL / MONTHLY / WEEKLY / DAILY */
     private String repeatType;
 
     /** 归属账号（提醒接收人） */

@@ -20,6 +20,9 @@ public enum ReminderRepeatType {
     /** 每周 */
     WEEKLY,
 
+    /** 每天（复查闭环的每日监测打卡等，通常配合 repeatUntil 截止） */
+    DAILY,
+
     /** 自定义（间隔天数，暂未支持） */
     CUSTOM
 }

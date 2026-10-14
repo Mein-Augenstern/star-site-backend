@@ -20,6 +20,12 @@
             <artifactId>health-common-biz</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 内部契约：HealthInternalController 把 VO 映射为 facade DTO 供服务间调用 -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>health-facade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

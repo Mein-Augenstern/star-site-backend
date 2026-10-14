@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.xp.starsite</groupId>
+        <artifactId>star-site-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>star-site-biz-recheck-service</artifactId>
+    <name>star-site-biz-recheck-service</name>
+    <description>复查闭环微服务（SOFA 风格多模块聚合工程）：异常指标 → 复查计划 → 提醒/每日监测 → 新报告对比闭环。垂直健康产品样板：依赖 health/reminder/family 横向服务，自身不碰数据源</description>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>recheck-core-model</module>
+        <module>recheck-dal</module>
+        <module>recheck-integration</module>
+        <module>recheck-core-service</module>
+        <module>recheck-common-biz</module>
+        <module>recheck-adapter</module>
+        <module>recheck-start</module>
+    </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

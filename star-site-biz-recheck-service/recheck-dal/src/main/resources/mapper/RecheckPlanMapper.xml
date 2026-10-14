@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 复查计划 SQL（DAL）：全部参数绑定 #{}，逻辑删查询统一 deleted=0 -->
+<mapper namespace="com.xp.starsite.recheck.mapper.RecheckPlanMapper">
+
+    <sql id="cols">
+        id, family_id, owner_member_id, family_member_id,
+        source_report_id, source_report_title, source_indicator_id, item_name,
+        baseline_value_num, baseline_value_text, unit, ref_low, ref_high, baseline_abnormal_flag,
+        target_date, metric_type, status, closed_report_id, closed_report_title, conclusion,
+        remark, deleted, created_at, updated_at
+    </sql>
+
+    <!-- 雪花 id 应用侧赋值：reminder 规则的 bizId 需要在 insert 前拿到计划 id，故显式插入 id 列 -->
+    <insert id="insert">
+        INSERT INTO recheck_plan
+            (id, family_id, owner_member_id, family_member_id,
+             source_report_id, source_report_title, source_indicator_id, item_name,
+             baseline_value_num, baseline_value_text, unit, ref_low, ref_high, baseline_abnormal_flag,
+             target_date, metric_type, status, closed_report_id, closed_report_title, conclusion,
+             remark, deleted)
+        VALUES
+            (#{id}, #{familyId}, #{ownerMemberId}, #{familyMemberId},
+             #{sourceReportId}, #{sourceReportTitle}, #{sourceIndicatorId}, #{itemName},
+             #{baselineValueNum}, #{baselineValueText}, #{unit}, #{refLow}, #{refHigh}, #{baselineAbnormalFlag},
+             #{targetDate}, #{metricType}, #{status}, #{closedReportId}, #{closedReportTitle}, #{conclusion},
+             #{remark}, #{deleted})
+    </insert>
+
+    <select id="selectById" resultType="com.xp.starsite.recheck.dal.dataobject.RecheckPlanDO">
+        SELECT <include refid="cols"/> FROM recheck_plan
+        WHERE id = #{id} AND deleted = 0
+    </select>
+
+    <update id="update">
+        UPDATE recheck_plan
+        SET target_date = #{targetDate},
+            metric_type = #{metricType},
+            status = #{status},
+            closed_report_id = #{closedReportId},
+            closed_report_title = #{closedReportTitle},
+            conclusion = #{conclusion},
+            remark = #{remark}
+        WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <update id="markDeleted">
+        UPDATE recheck_plan SET deleted = 1 WHERE id = #{id} AND deleted = 0
+    </update>
+
+    <select id="selectByOwner" resultType="com.xp.starsite.recheck.dal.dataobject.RecheckPlanDO">
+        SELECT <include refid="cols"/> FROM recheck_plan
+        WHERE deleted = 0
+          AND owner_member_id = #{ownerMemberId}
+        <if test="familyMemberId != null">AND family_member_id = #{familyMemberId}</if>
+        <if test="status != null">AND status = #{status}</if>
+        ORDER BY id DESC
+        LIMIT 100
+    </select>
+</mapper>

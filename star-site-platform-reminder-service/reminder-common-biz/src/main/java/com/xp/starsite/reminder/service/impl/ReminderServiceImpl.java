@@ -352,6 +352,13 @@ public class ReminderServiceImpl implements ReminderService {
                     }
                 }
             }
+            case "DAILY" -> {
+                for (LocalDate d = first; !d.isAfter(to); d = d.plusDays(1)) {
+                    if (!d.isBefore(from) && (until == null || !d.isAfter(until))) {
+                        dates.add(d);
+                    }
+                }
+            }
             default -> {
                 // NONE：首期落在窗口内才提醒
                 if (!first.isBefore(from) && !first.isAfter(to) && (until == null || !first.isAfter(until))) {

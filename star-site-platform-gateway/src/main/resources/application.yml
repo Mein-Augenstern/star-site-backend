@@ -45,6 +45,10 @@ spring:
           uri: lb://star-site-biz-finance
           predicates:
             - Path=/api/finance/**
+        - id: recheck-route
+          uri: lb://star-site-biz-recheck
+          predicates:
+            - Path=/api/recheck/**
       # 跨域统一在网关处理
       globalcors:
         cors-configurations:
