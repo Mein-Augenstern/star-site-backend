@@ -1,6 +1,8 @@
 package com.xp.starsite.health.service.impl;
 
 import com.xp.starsite.api.client.FamilyOwnershipGuard;
+import com.xp.starsite.api.dto.health.HealthIndicatorDTO;
+import com.xp.starsite.api.dto.health.HealthReportDTO;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
 import com.xp.starsite.health.dto.IndicatorBatchDTO;
@@ -63,6 +65,56 @@ public class ReportServiceImpl implements ReportService {
         reportRepository.save(report);
         log.info("上传体检报告: id={}, member={}, year={}", report.getId(), dto.getFamilyMemberId(), dto.getReportYear());
         return toVO(report, null);
+    }
+
+    @Override
+    public HealthReportDTO getInternalDetail(Long memberId, Long reportId) {
+        return toInternalDto(getDetail(memberId, reportId));
+    }
+
+    @Override
+    public List<HealthReportDTO> listInternal(Long memberId, Long familyMemberId) {
+        return listReports(memberId, familyMemberId, null, 1, 20).getRecords()
+                .stream().map(vo -> {
+                    HealthReportDTO dto = toInternalDto(vo);
+                    dto.setIndicators(null);
+                    return dto;
+                }).toList();
+    }
+
+    /** VO → 内部契约 DTO（映射收敛在 common-biz，供 facade 出参；控制器零映射） */
+    private HealthReportDTO toInternalDto(HealthReportVO vo) {
+        HealthReportDTO dto = new HealthReportDTO();
+        dto.setId(vo.getId());
+        dto.setFamilyMemberId(vo.getFamilyMemberId());
+        dto.setReportYear(vo.getReportYear());
+        dto.setCheckupDate(vo.getCheckupDate());
+        dto.setHospital(vo.getHospital());
+        dto.setTitle(vo.getTitle());
+        dto.setSummary(vo.getSummary());
+        dto.setFileId(vo.getFileId());
+        dto.setRemark(vo.getRemark());
+        dto.setCreatedAt(vo.getCreatedAt());
+        if (vo.getIndicators() != null) {
+            dto.setIndicators(vo.getIndicators().stream().map(i -> {
+                HealthIndicatorDTO ind = new HealthIndicatorDTO();
+                ind.setId(i.getId());
+                ind.setReportId(i.getReportId());
+                ind.setReportYear(i.getReportYear());
+                ind.setItemName(i.getItemName());
+                ind.setItemGroup(i.getItemGroup());
+                ind.setValueNum(i.getValueNum());
+                ind.setValueText(i.getValueText());
+                ind.setUnit(i.getUnit());
+                ind.setRefLow(i.getRefLow());
+                ind.setRefHigh(i.getRefHigh());
+                ind.setAbnormalFlag(i.getAbnormalFlag());
+                ind.setSortNo(i.getSortNo());
+                ind.setCreatedAt(i.getCreatedAt());
+                return ind;
+            }).toList());
+        }
+        return dto;
     }
 
     @Override

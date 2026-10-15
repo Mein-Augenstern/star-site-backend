@@ -1,7 +1,12 @@
 package com.xp.starsite.payment.service.impl;
 
+import com.xp.starsite.api.client.PaymentOrderCreateInternalDTO;
+import com.xp.starsite.api.dto.PaymentOrderDTO;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;
+import com.xp.starsite.common.mq.EventPublisher;
+import com.xp.starsite.common.mq.event.EventTypes;
+import com.xp.starsite.common.mq.event.Topics;
 import com.xp.starsite.common.util.IdGenerator;
 import com.xp.starsite.payment.channel.CallbackResult;
 import com.xp.starsite.payment.channel.ChargeRequest;
@@ -44,7 +49,7 @@ public class PaymentOrderServiceImpl implements PaymentOrderService {
     private final PaymentOrderRepository orderRepository;
     private final PaymentChannelRegistry channelRegistry;
     private final IdGenerator idGenerator;
-    private final com.xp.starsite.common.mq.EventPublisher eventPublisher;
+    private final EventPublisher eventPublisher;
 
     /** 渠道服务器回调基地址（star.payment.notify-url，如公网隧道/域名；拼接 /api/payment/notify/{channel}） */
     @Value("${star.payment.notify-url:}")
@@ -68,7 +73,7 @@ public class PaymentOrderServiceImpl implements PaymentOrderService {
 
         PaymentOrder order = new PaymentOrder();
         order.setId(idGenerator.nextId());
-        order.setOrderNo("PP" + order.getId());
+        order.setOrderNo(PaymentOrder.NO_PREFIX + order.getId());
         order.setSource(dto.getSource());
         order.setBizType(dto.getBizType());
         order.setBizId(dto.getBizId());
@@ -117,6 +122,26 @@ public class PaymentOrderServiceImpl implements PaymentOrderService {
     }
 
     @Override
+    public PaymentOrderDTO createInternal(Long memberId, PaymentOrderCreateInternalDTO internal) {
+        PaymentOrderCreateDTO dto = new PaymentOrderCreateDTO();
+        dto.setSource(internal.getSource());
+        dto.setBizType(internal.getBizType());
+        dto.setBizId(internal.getBizId());
+        dto.setFamilyId(internal.getFamilyId());
+        dto.setChannel(internal.getChannel());
+        dto.setSubject(internal.getSubject());
+        dto.setAmount(internal.getAmount());
+        dto.setRemark(internal.getRemark());
+        return toDto(create(memberId, dto));
+    }
+
+    @Override
+    public PaymentOrderDTO getByBizInternal(Long memberId, String source, String bizType, Long bizId) {
+        PaymentOrder order = orderRepository.findByBiz(source, bizType, bizId).orElse(null);
+        return order == null ? null : toDto(toVO(order));
+    }
+
+    @Override
     public String handleNotify(String channelType, Map<String, String> headers, String rawBody) {
         PaymentChannel channel = channelRegistry.get(channelType);
         CallbackResult callback = channel.verifyAndParse(headers, rawBody);
@@ -158,8 +183,8 @@ public class PaymentOrderServiceImpl implements PaymentOrderService {
             event.setChannelTradeNo(callback.getChannelTradeNo());
             event.setAmount(order.getAmount());
             event.setPaidAt(LocalDateTime.now());
-            eventPublisher.publish(com.xp.starsite.common.mq.event.Topics.TOPIC_PAYMENT,
-                    com.xp.starsite.common.mq.event.EventTypes.PAYMENT_SUCCEEDED,
+            eventPublisher.publish(Topics.TOPIC_PAYMENT,
+                    EventTypes.PAYMENT_SUCCEEDED,
                     order.getBizType(), order.getBizId(), event);
         } catch (Exception e) {
             log.warn("支付成功事件发布失败（不阻断入账）: orderNo={}, err={}", order.getOrderNo(), e.getMessage());
@@ -208,6 +233,26 @@ public class PaymentOrderServiceImpl implements PaymentOrderService {
             throw new BizException(ResultCode.FORBIDDEN.getCode(), "无权限访问该支付单");
         }
         return order;
+    }
+
+    /** VO → facade 快照（内部契约出参；indicators 类敏感字段不透出） */
+    private PaymentOrderDTO toDto(PaymentOrderVO vo) {
+        PaymentOrderDTO dto = new PaymentOrderDTO();
+        dto.setId(vo.getId());
+        dto.setOrderNo(vo.getOrderNo());
+        dto.setSource(vo.getSource());
+        dto.setBizType(vo.getBizType());
+        dto.setBizId(vo.getBizId());
+        dto.setOwnerMemberId(vo.getOwnerMemberId());
+        dto.setChannel(vo.getChannel());
+        dto.setSubject(vo.getSubject());
+        dto.setAmount(vo.getAmount());
+        dto.setStatus(vo.getStatus());
+        dto.setChargePayload(vo.getChargePayload());
+        dto.setChannelTradeNo(vo.getChannelTradeNo());
+        dto.setPaidAt(vo.getPaidAt());
+        dto.setCreatedAt(vo.getCreatedAt());
+        return dto;
     }
 
     private PaymentOrderVO toVO(PaymentOrder order) {

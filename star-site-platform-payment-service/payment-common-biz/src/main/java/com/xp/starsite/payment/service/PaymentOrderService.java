@@ -52,6 +52,22 @@ public interface PaymentOrderService {
     void close(Long memberId, Long id);
 
     /**
+     * 业务代下单（内部契约）：同业务键在途单复用返回，已支付/已退款拒绝。
+     * 转换收敛在本服务（InternalDTO 组装 + VO→facade DTO 映射），控制器零映射。
+     *
+     * @param memberId 支付人账号
+     * @return 支付单快照（含支付凭证）
+     */
+    com.xp.starsite.api.dto.PaymentOrderDTO createInternal(Long memberId,
+                                                           com.xp.starsite.api.client.PaymentOrderCreateInternalDTO dto);
+
+    /**
+     * 按业务幂等键查单（内部契约，供业务方驱动状态流转）；尚无支付单时返回 null
+     */
+    com.xp.starsite.api.dto.PaymentOrderDTO getByBizInternal(Long memberId, String source,
+                                                             String bizType, Long bizId);
+
+    /**
      * 渠道异步回调处理（验签 → 金额核对 → CAS 状态流转 → 发布支付成功事件）。
      * 幂等：重复回调（CAS 不命中）按首次处理结果直接应答成功。
      *

@@ -19,6 +19,9 @@ import java.time.LocalDateTime;
 @Data
 public class PaymentOrder {
 
+    /** 支付单号前缀（渠道 out_trade_no 用） */
+    public static final String NO_PREFIX = "PP";
+
     /** 已创建（凭证已生成，等待用户支付） */
     public static final int STATUS_CREATED = 1;
 

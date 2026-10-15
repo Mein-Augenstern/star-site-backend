@@ -16,6 +16,9 @@ import java.time.LocalDateTime;
 @Data
 public class PaymentRefund {
 
+    /** 退款单号前缀（渠道 out_refund_no 用） */
+    public static final String NO_PREFIX = "RF";
+
     /** 退款已受理（渠道处理中） */
     public static final int STATUS_APPLIED = 1;
 

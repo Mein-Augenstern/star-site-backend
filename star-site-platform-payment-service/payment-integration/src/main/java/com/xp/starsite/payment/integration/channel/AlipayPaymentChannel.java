@@ -3,6 +3,9 @@ package com.xp.starsite.payment.integration.channel;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.DefaultAlipayClient;
+import com.alipay.api.domain.AlipayTradeCloseModel;
+import com.alipay.api.domain.AlipayTradePrecreateModel;
+import com.alipay.api.domain.AlipayTradeRefundModel;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.alipay.api.request.AlipayTradeCloseRequest;
 import com.alipay.api.request.AlipayTradePrecreateRequest;
@@ -32,6 +35,8 @@ import java.util.Map;
 /**
  * 支付宝渠道适配器（官方 alipay-sdk-java）：当面付扫码（precreate）为主路径，
  * 异步回调 form 报文 rsaCheckV1 验签，退款走 alipay.trade.refund 同步受理。
+ * 请求参数一律用 SDK 的 *Model 对象（setBizModel）——军规禁魔法串，且手拼
+ * bizContent JSON 对标题/原因里的特殊字符天然脆弱。
  * 配置齐 star.payment.alipay.* 才装配（app-id/private-key/alipay-public-key），
  * 网关默认正式环境，沙箱经 star.payment.alipay.gateway-url 覆盖。
  *
@@ -71,10 +76,11 @@ public class AlipayPaymentChannel implements PaymentChannel {
     public ChargeResult charge(ChargeRequest request) {
         AlipayTradePrecreateRequest alipayRequest = new AlipayTradePrecreateRequest();
         alipayRequest.setNotifyUrl(notifyUrl);
-        alipayRequest.setBizContent("{" +
-                "\"out_trade_no\":\"" + request.getOrderNo() + "\"," +
-                "\"total_amount\":\"" + request.getAmount().toPlainString() + "\"," +
-                "\"subject\":\"" + escape(request.getSubject()) + "\"}");
+        AlipayTradePrecreateModel model = new AlipayTradePrecreateModel();
+        model.setOutTradeNo(request.getOrderNo());
+        model.setTotalAmount(request.getAmount().toPlainString());
+        model.setSubject(request.getSubject());
+        alipayRequest.setBizModel(model);
         try {
             AlipayTradePrecreateResponse response = alipayClient.execute(alipayRequest);
             if (!response.isSuccess()) {
@@ -109,7 +115,9 @@ public class AlipayPaymentChannel implements PaymentChannel {
     @Override
     public void close(String orderNo) {
         AlipayTradeCloseRequest request = new AlipayTradeCloseRequest();
-        request.setBizContent("{\"out_trade_no\":\"" + orderNo + "\"}");
+        AlipayTradeCloseModel model = new AlipayTradeCloseModel();
+        model.setOutTradeNo(orderNo);
+        request.setBizModel(model);
         try {
             AlipayTradeCloseResponse response = alipayClient.execute(request);
             log.info("支付宝关单: orderNo={}, success={}, msg={}", orderNo, response.isSuccess(), response.getSubMsg());
@@ -122,11 +130,12 @@ public class AlipayPaymentChannel implements PaymentChannel {
     @Override
     public RefundResult refund(RefundRequest request) {
         AlipayTradeRefundRequest alipayRequest = new AlipayTradeRefundRequest();
-        alipayRequest.setBizContent("{" +
-                "\"out_trade_no\":\"" + request.getOrderNo() + "\"," +
-                "\"refund_amount\":\"" + request.getAmount().toPlainString() + "\"," +
-                "\"out_request_no\":\"" + request.getRefundNo() + "\"," +
-                "\"refund_reason\":\"" + escape(request.getReason()) + "\"}");
+        AlipayTradeRefundModel model = new AlipayTradeRefundModel();
+        model.setOutTradeNo(request.getOrderNo());
+        model.setRefundAmount(request.getAmount().toPlainString());
+        model.setOutRequestNo(request.getRefundNo());
+        model.setRefundReason(request.getReason());
+        alipayRequest.setBizModel(model);
         try {
             AlipayTradeRefundResponse response = alipayClient.execute(alipayRequest);
             if (!response.isSuccess()) {
@@ -154,10 +163,5 @@ public class AlipayPaymentChannel implements PaymentChannel {
             params.put(key, value);
         }
         return params;
-    }
-
-    /** bizContent JSON 串里的引号转义（标题/原因来自用户输入） */
-    private String escape(String text) {
-        return text == null ? "" : text.replace("\"", "'");
     }
 }

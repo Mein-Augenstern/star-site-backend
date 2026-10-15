@@ -85,6 +85,27 @@ public interface ReportService {
     List<HealthReportVO> search(Long memberId, String keyword, Long familyMemberId);
 
     /**
+     * 报告详情（内部契约出参：facade DTO，含全部指标）。
+     * 供 HealthInternalController（health 横向化只读契约）使用——
+     * 对齐 family 先例：服务返回 facade DTO，控制器零映射。
+     *
+     * @param memberId 当前登录账号
+     * @param reportId 报告 id
+     * @throws com.xp.starsite.common.exception.BizException 400 报告不存在；403 非本人家庭成员的报告
+     */
+    com.xp.starsite.api.dto.health.HealthReportDTO getInternalDetail(Long memberId, Long reportId);
+
+    /**
+     * 报告摘要列表（内部契约出参：facade DTO，不含指标，按体检日期倒序，最近 20 份）。
+     * 智能体工具「查全家最近报告」用。
+     *
+     * @param memberId        当前登录账号
+     * @param familyMemberId  可选，指定成员则单查（校验归属）；不传=全家范围
+     * @throws com.xp.starsite.common.exception.BizException 403 家庭成员不归属当前账号
+     */
+    java.util.List<com.xp.starsite.api.dto.health.HealthReportDTO> listInternal(Long memberId, Long familyMemberId);
+
+    /**
      * 报告指标历年趋势（按报告年份升序，用于折线图）
      *
      * @param memberId       当前登录账号

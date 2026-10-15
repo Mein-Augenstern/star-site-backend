@@ -20,12 +20,6 @@
             <artifactId>payment-common-biz</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- 内部契约：PaymentInternalController 实现 facade 语义（DTO 转换收敛在此） -->
-        <dependency>
-            <groupId>com.xp.starsite</groupId>
-            <artifactId>payment-facade</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

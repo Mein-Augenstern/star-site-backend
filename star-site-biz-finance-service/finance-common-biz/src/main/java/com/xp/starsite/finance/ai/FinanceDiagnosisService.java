@@ -33,6 +33,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FinanceDiagnosisService {
 
+    /** archive 不可用时的展示兜底文案 */
+    private static final String ARCHIVE_UNAVAILABLE_TEXT = "未知";
+
+    /** 现金流充裕时的展示文案 */
+    private static final String MONTHS_COVERED_ADEQUATE = "充裕";
+
     private final FinanceAccountRepository accountRepository;
     private final FinanceTransactionRepository transactionRepository;
     private final ReportService reportService;
@@ -65,7 +71,7 @@ public class FinanceDiagnosisService {
         sheetDto.setTotalAsset(text(sheet.getTotalAsset()));
         boolean archiveOk = Boolean.TRUE.equals(sheet.getArchiveAvailable());
         sheetDto.setArchiveAvailable(archiveOk);
-        sheetDto.setArchiveAsset(archiveOk ? text(sheet.getArchiveAsset()) : "未知");
+        sheetDto.setArchiveAsset(archiveOk ? text(sheet.getArchiveAsset()) : ARCHIVE_UNAVAILABLE_TEXT);
         sheetDto.setTotalLiability(text(sheet.getTotalLiability()));
         sheetDto.setNetWorth(text(sheet.getNetWorth()));
         request.setSheet(sheetDto);
@@ -78,7 +84,7 @@ public class FinanceDiagnosisService {
 
         FinanceDiagnosisRequestDTO.Cash cashDto = new FinanceDiagnosisRequestDTO.Cash();
         cashDto.setLiquidBalance(text(cash.getLiquidBalance()));
-        cashDto.setMonthsCovered(cash.getMonthsCovered() == null ? "充裕" : String.valueOf(cash.getMonthsCovered()));
+        cashDto.setMonthsCovered(cash.getMonthsCovered() == null ? MONTHS_COVERED_ADEQUATE : String.valueOf(cash.getMonthsCovered()));
         request.setCash(cashDto);
 
         List<FinanceDiagnosisRequestDTO.Account> accountDtos = new ArrayList<>();

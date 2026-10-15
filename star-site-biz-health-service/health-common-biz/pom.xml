@@ -36,6 +36,12 @@
             <artifactId>family-facade</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 内部契约出参：ReportService 内部方法返回 facade DTO（映射收敛在 common-biz） -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>health-facade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>star-site-common</artifactId>

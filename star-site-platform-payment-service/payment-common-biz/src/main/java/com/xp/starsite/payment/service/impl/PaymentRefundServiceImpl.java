@@ -63,7 +63,7 @@ public class PaymentRefundServiceImpl implements PaymentRefundService {
         // 退款单号先于渠道调用生成（渠道 out_refund_no 幂等键；失败重发同号不重复退）
         PaymentRefund refund = new PaymentRefund();
         refund.setId(idGenerator.nextId());
-        refund.setRefundNo("RF" + refund.getId());
+        refund.setRefundNo(PaymentRefund.NO_PREFIX + refund.getId());
         refund.setOrderId(order.getId());
         refund.setOrderNo(order.getOrderNo());
         refund.setChannel(order.getChannel());
