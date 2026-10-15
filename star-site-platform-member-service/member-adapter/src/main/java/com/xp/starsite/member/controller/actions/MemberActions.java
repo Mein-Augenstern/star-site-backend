@@ -57,19 +57,14 @@ public final class MemberActions {
     // —— 管理端异步管控 ——
 
     /** star-async 监控总览 */
-    public static final String ADMIN_ASYNC_SUMMARY = "member.admin.async.summary";
 
     /** star-async 分页列表 */
-    public static final String ADMIN_ASYNC_LIST = "member.admin.async.list";
 
     /** star-async 手动重试 */
-    public static final String ADMIN_ASYNC_RETRY = "member.admin.async.retry";
 
     /** star-async 重占（卡单处理） */
-    public static final String ADMIN_ASYNC_RECLAIM = "member.admin.async.reclaim";
 
     /** star-async 终止（置死信） */
-    public static final String ADMIN_ASYNC_KILL = "member.admin.async.kill";
 
     // —— 服务间内部接口 ——
 

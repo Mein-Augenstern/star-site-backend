@@ -7,7 +7,6 @@ import com.xp.starsite.member.controller.actions.MemberActions;
 import com.xp.starsite.member.service.MemberService;
 import com.xp.starsite.member.vo.MemberVO;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,14 +37,6 @@ public class MemberInternalController {
      */
     @GetMapping("/{id}/contact")
     public R<MemberContactDTO> contact(@PathVariable Long id) {
-        return queryTemplate.query(MemberActions.INTERNAL_CONTACT, () -> {
-            MemberVO member = memberService.getById(id);
-            if (member == null) {
-                return null;
-            }
-            MemberContactDTO dto = new MemberContactDTO();
-            BeanUtils.copyProperties(member, dto);
-            return dto;
-        });
+        return queryTemplate.query(MemberActions.INTERNAL_CONTACT, () -> memberService.getContact(id));
     }
 }

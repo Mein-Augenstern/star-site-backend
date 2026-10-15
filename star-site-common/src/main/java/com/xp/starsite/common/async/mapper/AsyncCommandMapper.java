@@ -60,4 +60,38 @@ public interface AsyncCommandMapper {
     @Update("UPDATE async_command SET status = 'PENDING', claim_token = NULL, updated_at = NOW() " +
             "WHERE status = 'RUNNING' AND updated_at < NOW() - INTERVAL #{timeoutMinutes} MINUTE")
     int reclaimStale(@Param("timeoutMinutes") int timeoutMinutes);
+
+    // ---- 管控端查询（AdminAsyncController，2026-10-15 自 member 收敛入组件）----
+
+    /** 各状态计数（监控总览） */
+    @Select("SELECT COUNT(*) FROM async_command WHERE status = #{status}")
+    long countByStatus(@Param("status") String status);
+
+    /** 积压：到期未执行的 PENDING 数 */
+    @Select("SELECT COUNT(*) FROM async_command WHERE status = 'PENDING' AND next_run_at <= #{now}")
+    long countBacklogDue(@Param("now") java.time.LocalDateTime now);
+
+    /** 近 N 条（按 id 倒序，运维肉眼判断类型分布） */
+    @Select("SELECT * FROM async_command ORDER BY id DESC LIMIT #{limit}")
+    List<AsyncCommand> selectRecent(@Param("limit") int limit);
+
+    /** 管控分页计数（status/cmdType 可选过滤） */
+    @Select("<script>SELECT COUNT(*) FROM async_command WHERE 1 = 1" +
+            "<if test=\"status != null and status != ''\"> AND status = #{status}</if>" +
+            "<if test=\"cmdType != null and cmdType != ''\"> AND cmd_type = #{cmdType}</if>" +
+            "</script>")
+    long countPage(@Param("status") String status, @Param("cmdType") String cmdType);
+
+    /** 管控分页（status/cmdType 可选过滤，id 倒序 + LIMIT OFFSET） */
+    @Select("<script>SELECT * FROM async_command WHERE 1 = 1" +
+            "<if test=\"status != null and status != ''\"> AND status = #{status}</if>" +
+            "<if test=\"cmdType != null and cmdType != ''\"> AND cmd_type = #{cmdType}</if>" +
+            " ORDER BY id DESC LIMIT #{size} OFFSET #{offset}" +
+            "</script>")
+    List<AsyncCommand> selectPage(@Param("status") String status, @Param("cmdType") String cmdType,
+                                  @Param("offset") long offset, @Param("size") long size);
+
+    /** 按 id 取命令（管控处置前置查询，不存在返回 null） */
+    @Select("SELECT * FROM async_command WHERE id = #{id}")
+    AsyncCommand selectById(@Param("id") Long id);
 }

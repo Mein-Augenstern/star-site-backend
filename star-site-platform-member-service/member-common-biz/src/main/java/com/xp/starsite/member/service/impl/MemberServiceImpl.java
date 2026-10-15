@@ -84,6 +84,19 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    public com.xp.starsite.api.dto.MemberContactDTO getContact(Long id) {
+        MemberVO member = getById(id);
+        if (member == null) {
+            return null;
+        }
+        com.xp.starsite.api.dto.MemberContactDTO dto = new com.xp.starsite.api.dto.MemberContactDTO();
+        dto.setId(member.getId());
+        dto.setNickname(member.getNickname());
+        dto.setEmail(member.getEmail());
+        return dto;
+    }
+
+    @Override
     public MemberVO updateProfile(Long id, MemberUpdateDTO dto) {
         Member member = requireMember(id);
         if (dto.getNickname() != null) {

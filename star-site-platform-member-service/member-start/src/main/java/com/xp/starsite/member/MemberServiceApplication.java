@@ -14,7 +14,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
  */
 @SpringBootApplication(scanBasePackages = "com.xp.starsite")
 @EnableDiscoveryClient
-@MapperScan(basePackages = {"com.xp.starsite.member.mapper", "com.xp.starsite.common.async.mapper"})
+@MapperScan(basePackages = "com.xp.starsite.member.mapper")
 public class MemberServiceApplication {
 
     public static void main(String[] args) {

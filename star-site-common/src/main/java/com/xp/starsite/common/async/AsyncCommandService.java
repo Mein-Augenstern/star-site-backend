@@ -57,6 +57,41 @@ public class AsyncCommandService {
         return ids.isEmpty() ? List.of() : mapper.selectByIds(ids);
     }
 
+    /** 按 id 取命令（管控处置前置查询，不存在返回 null） */
+    public AsyncCommand findById(long id) {
+        return mapper.selectById(id);
+    }
+
+    /** 管控处置回写（重试/重占/终止的统一状态落库） */
+    public void updateState(AsyncCommand cmd) {
+        mapper.updateState(cmd);
+    }
+
+    /** 管控端：各状态计数 */
+    public long countByStatus(String status) {
+        return mapper.countByStatus(status);
+    }
+
+    /** 管控端：积压（到期未执行 PENDING 数） */
+    public long countBacklogDue(LocalDateTime now) {
+        return mapper.countBacklogDue(now);
+    }
+
+    /** 管控端：近 N 条命令（按 id 倒序） */
+    public List<AsyncCommand> selectRecent(int limit) {
+        return mapper.selectRecent(limit);
+    }
+
+    /** 管控端：分页计数 */
+    public long countPage(String status, String cmdType) {
+        return mapper.countPage(status, cmdType);
+    }
+
+    /** 管控端：分页查询 */
+    public List<AsyncCommand> selectPage(String status, String cmdType, long offset, long size) {
+        return mapper.selectPage(status, cmdType, offset, size);
+    }
+
     public void markSuccess(AsyncCommand cmd) {
         cmd.setStatus(AsyncCommand.SUCCESS);
         cmd.setClaimToken(null);

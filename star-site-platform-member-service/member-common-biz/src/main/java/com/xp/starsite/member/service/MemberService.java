@@ -45,6 +45,14 @@ public interface MemberService {
     MemberVO getById(Long id);
 
     /**
+     * 会员联系方式（内部契约出参：facade DTO；提醒邮件触达用，邮箱可空）
+     *
+     * @param id 会员 id
+     * @return 联系方式；会员不存在返回 null
+     */
+    com.xp.starsite.api.dto.MemberContactDTO getContact(Long id);
+
+    /**
      * 编辑个人资料
      *
      * @param id  会员 id

@@ -13,6 +13,10 @@ spring:
         ip: 127.0.0.1
     gateway:
       routes:
+        - id: admin-async-route
+          uri: lb://star-site-biz-health
+          predicates:
+            - Path=/api/admin/async/**
         - id: member-route
           uri: lb://star-site-platform-member
           predicates:

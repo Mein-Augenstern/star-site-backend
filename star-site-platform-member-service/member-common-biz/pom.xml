@@ -34,6 +34,12 @@
             <groupId>com.xp.starsite</groupId>
             <artifactId>star-site-common</artifactId>
         </dependency>
+        <!-- 内部契约出参：MemberService.getContact 返回 facade DTO（映射收敛在 common-biz） -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>member-facade</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>

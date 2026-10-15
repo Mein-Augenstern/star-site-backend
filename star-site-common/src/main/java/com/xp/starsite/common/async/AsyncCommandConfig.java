@@ -6,7 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
+import com.xp.starsite.common.template.QueryTemplate;
+import com.xp.starsite.common.template.WriteTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,9 +34,31 @@ import java.util.stream.Collectors;
 @org.mybatis.spring.annotation.MapperScan(basePackages = "com.xp.starsite.common.async.mapper")
 public class AsyncCommandConfig {
 
+    /** 管理员白名单（逗号分隔 memberId；未配置=放行，本地开发态） */
+    private final String adminMemberIds;
+
+    /** 管控端点基路径（每服务独立 DB 后各服务自持表，网关按路径前缀路由到对应服务） */
+    private final String adminBasePath;
+
+    public AsyncCommandConfig(Environment env) {
+        this.adminMemberIds = env.getProperty("star.async.admin-member-ids", "");
+        this.adminBasePath = env.getProperty("star.async.admin-base-path", "/api/admin/async");
+    }
+
     @Bean
     public AsyncCommandService asyncCommandService(AsyncCommandMapper mapper) {
         return new AsyncCommandService(mapper);
+    }
+
+    /** 建表初始化：async_command 表随组件走（每服务独立 DB 后各服务自持，增量安全） */
+    @Bean
+    public AsyncCommandDdlInitializer asyncCommandDdlInitializer(org.springframework.beans.factory.ObjectProvider<javax.sql.DataSource> dataSourceProvider) {
+        return new AsyncCommandDdlInitializer(dataSourceProvider.getIfAvailable());
+    }
+
+    @Bean
+    public AsyncCommandAdminService asyncCommandAdminService(AsyncCommandService commandService) {
+        return new AsyncCommandAdminService(commandService, adminMemberIds);
     }
 
     @Slf4j

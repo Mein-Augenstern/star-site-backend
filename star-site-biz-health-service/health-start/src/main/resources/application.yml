@@ -51,3 +51,6 @@ star:
     timeout:
       connect-ms: 3000
       read-ms: 10000
+  async:
+    # star-async 管控端管理员白名单（逗号分隔 memberId；未配置=放行，本地开发态）
+    admin-member-ids: ${STAR_ASYNC_ADMIN_MEMBER_IDS:}
