@@ -1,5 +1,7 @@
 package com.xp.starsite.common.log;
 
+import javax.sql.DataSource;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -12,8 +14,10 @@ import org.apache.ibatis.plugin.Interceptor;
 
 import java.util.EnumSet;
 
+import com.xp.starsite.common.id.SequenceWorkerIdAllocator;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 日志留痕体系装配（servlet 服务自动生效，gateway/WebFlux 零感知）：
@@ -29,6 +33,7 @@ import com.xp.starsite.common.template.WriteTemplate;
  * @author xiaopu
  * @since 2026-10
  */
+@Slf4j
 @Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class StarSiteLogConfig {
@@ -68,10 +73,45 @@ public class StarSiteLogConfig {
         return new WriteTemplate(env.getProperty("spring.application.name", "unknown"));
     }
 
-    /** 雪花 id（替代 MyBatis-Plus ASSIGN_ID）：需要 insert 前拿 id 的场景经业务层显式调用 */
+    /**
+     * 全局 ID（物理主键）通用组件：雪花算法 + sequence 表分配机器位。
+     * 每个服务在 sys_sequence 表中有各自的一行 sequence（隔离键=服务名），
+     * 启动时原子分配 workerId——根治全平台共享 workerId=1 的跨服务撞号问题。
+     * <ul>
+     *   <li>显式配置 star.snowflake.worker-id 优先（单测/特殊部署确定性用）；</li>
+     *   <li>无 DB（理论兜底）或分配失败：回落 hash(服务名)%1024（按服务确定，降低撞号面）；</li>
+     *   <li>sequence 表缺失自动创建（IF NOT EXISTS），DDL 同步在 docker/mysql-init/22-sys-sequence.sql。</li>
+     * </ul>
+     * 需要应用侧生成 id 的场景经业务层显式调用 nextId()（替代 MyBatis-Plus ASSIGN_ID）。
+     */
     @Bean
-    public com.xp.starsite.common.util.IdGenerator idGenerator(Environment env) {
-        return new com.xp.starsite.common.util.IdGenerator(
-                env.getProperty("star.snowflake.worker-id", Long.class, 1L));
+    public com.xp.starsite.common.util.IdGenerator idGenerator(Environment env,
+                                                               ObjectProvider<DataSource> dataSourceProvider) {
+        String appName = env.getProperty("spring.application.name", "unknown");
+        Long explicit = env.getProperty("star.snowflake.worker-id", Long.class);
+        if (explicit != null) {
+            log.info("[id] workerId 使用显式配置: service={}, workerId={}", appName, explicit);
+            return new com.xp.starsite.common.util.IdGenerator(explicit);
+        }
+        DataSource dataSource = dataSourceProvider.getIfAvailable();
+        if (dataSource == null) {
+            log.warn("[id] 无可用 DataSource，workerId 回落 hash: service={}", appName);
+            return new com.xp.starsite.common.util.IdGenerator(fallbackWorkerId(appName));
+        }
+        try {
+            long workerId = new SequenceWorkerIdAllocator(dataSource, appName,
+                    appName + "@" + env.getProperty("PID", "0") + "@" + System.currentTimeMillis()).allocate();
+            log.info("[id] workerId 经 sequence 表分配: service={}, workerId={}", appName, workerId);
+            return new com.xp.starsite.common.util.IdGenerator(workerId);
+        } catch (Exception e) {
+            long fallback = fallbackWorkerId(appName);
+            log.warn("[id] workerId sequence 分配失败，回落 hash({}): service={}, err={}", fallback, appName, e.getMessage());
+            return new com.xp.starsite.common.util.IdGenerator(fallback);
+        }
+    }
+
+    /** 兜底机器位：按服务名 hash（同服务确定、跨服务离散），把撞号面从「全平台同一值」缩到「同服务多实例」 */
+    private long fallbackWorkerId(String appName) {
+        return Math.floorMod(appName.hashCode(), 1024);
     }
 }
