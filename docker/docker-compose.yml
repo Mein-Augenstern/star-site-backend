@@ -320,6 +320,7 @@ services:
       AI_LLM_MODEL: glm-4.5-air
       AI_LLM_VISION_MODEL: glm-4v-flash
       AI_MOCK_ENABLED: "false"
+      JWT_SECRET: ${JWT_SECRET:-star-site-local-dev-secret-change-me-32bytes!}
     ports:
       - "8091:8091"   # 联调直打
     depends_on: [nacos]

@@ -52,6 +52,24 @@ public class HealthInternalController {
                 () -> toDto(reportService.getDetail(memberId, reportId)));
     }
 
+    /**
+     * 报告摘要列表（不含指标，按体检日期倒序）——智能体工具「查全家最近报告」用
+     *
+     * @param memberId 当前登录账号（归属校验主体）
+     * @return 报告快照列表（indicators 恒为 null）
+     */
+    @GetMapping("/reports")
+    public R<List<HealthReportDTO>> listReports(@RequestParam("memberId") Long memberId,
+                                                @RequestParam(value = "familyMemberId", required = false) Long familyMemberId) {
+        return queryTemplate.query(HealthActions.INTERNAL_REPORT_LIST,
+                () -> reportService.listReports(memberId, familyMemberId, null, 1, 20).getRecords()
+                        .stream().map(vo -> {
+                            HealthReportDTO dto = toDto(vo);
+                            dto.setIndicators(null);
+                            return dto;
+                        }).toList());
+    }
+
     /** VO → facade DTO：跨服务契约只透传快照字段，不带实现层 VO */
     private HealthReportDTO toDto(HealthReportVO vo) {
         HealthReportDTO dto = new HealthReportDTO();

@@ -103,6 +103,11 @@ public final class FinanceActions {
     /** 异步导入记录 */
     public static final String IMPORT_LOGS = "finance.import.logs";
 
+    // —— 服务间内部接口 ——
+
+    /** 资产负债表（服务间只读，智能体工具用） */
+    public static final String INTERNAL_BALANCE_SHEET = "finance.internal.balanceSheet";
+
     private FinanceActions() {
     }
 }

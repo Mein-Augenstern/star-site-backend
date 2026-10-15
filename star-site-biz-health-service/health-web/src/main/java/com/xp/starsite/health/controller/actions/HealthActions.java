@@ -83,6 +83,9 @@ public final class HealthActions {
     /** 报告详情（服务间只读，health 横向化 facade） */
     public static final String INTERNAL_REPORT_DETAIL = "health.internal.reportDetail";
 
+    /** 报告摘要列表（服务间只读，智能体工具用） */
+    public static final String INTERNAL_REPORT_LIST = "health.internal.reportList";
+
     private HealthActions() {
     }
 }
