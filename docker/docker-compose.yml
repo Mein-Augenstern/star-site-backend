@@ -200,8 +200,6 @@ services:
       SPRING_CLOUD_NACOS_DISCOVERY_IP: star-health
       # star-async 异步命令组件开关（调度器随 @EnableScheduling 运行）
       STAR_ASYNC_ENABLED: "true"
-      LLM_API_KEY: ***REMOVED-GLM-KEY***
-      LLM_MODEL: glm-4.5-air
       JAVA_OPTS: -Xmx192m -Xms64m
     depends_on: [mysql, nacos]
     mem_limit: 320m
@@ -265,8 +263,6 @@ services:
     environment:
       <<: *app-env
       SPRING_CLOUD_NACOS_DISCOVERY_IP: star-finance
-      LLM_API_KEY: ***REMOVED-GLM-KEY***
-      LLM_MODEL: glm-4.5-air
     depends_on: [mysql, nacos]
     mem_limit: 320m
     restart: unless-stopped
@@ -304,6 +300,30 @@ services:
       - "8090:8090"   # 联调：渠道回调直打容器（frp 隧道就绪后撤）
     depends_on: [mysql, nacos]
     mem_limit: 320m
+    restart: unless-stopped
+
+  ai:
+    profiles: ["app"]
+    build:
+      context: ../../star-site-platform-ai-service
+      dockerfile: Dockerfile
+    image: star-site/platform-ai:latest
+    pull_policy: never
+    container_name: star-ai
+    environment:
+      NACOS_SERVER_ADDR: star-nacos:8848
+      NACOS_NAMESPACE: public
+      NACOS_REGISTER_IP: star-ai
+      SERVICE_NAME: star-site-platform-ai
+      AI_LLM_BASE_URL: https://open.bigmodel.cn/api/paas/v4
+      AI_LLM_API_KEY: ***REMOVED-GLM-KEY***
+      AI_LLM_MODEL: glm-4.5-air
+      AI_LLM_VISION_MODEL: glm-4v-flash
+      AI_MOCK_ENABLED: "false"
+    ports:
+      - "8091:8091"   # 联调直打
+    depends_on: [nacos]
+    mem_limit: 512m
     restart: unless-stopped
 
   frpc:

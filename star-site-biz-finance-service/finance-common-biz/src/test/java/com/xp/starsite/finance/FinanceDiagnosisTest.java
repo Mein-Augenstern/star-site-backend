@@ -1,18 +1,19 @@
 package com.xp.starsite.finance;
 
-import com.xp.starsite.api.dto.AssetSummaryDTO;
 import com.xp.starsite.common.exception.BizException;
-import com.xp.starsite.common.llm.LlmClient;
-import com.xp.starsite.common.result.R;
+import com.xp.starsite.common.rpc.RpcException;
 import com.xp.starsite.finance.ai.FinanceDiagnosisService;
+import com.xp.starsite.finance.ai.AiIntegration;
+import com.xp.starsite.finance.ai.dto.FinanceDiagnosisDTO;
+import com.xp.starsite.finance.ai.dto.FinanceDiagnosisRequestDTO;
 import com.xp.starsite.finance.repository.FinanceAccountRepository;
 import com.xp.starsite.finance.repository.FinanceTransactionRepository;
 import com.xp.starsite.finance.service.ReportService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.ObjectProvider;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -20,12 +21,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 财务 AI 诊断单元测试：数据聚合进 Prompt、未配 key 降级、LLM 失败翻译（mock 全部依赖）
+ * 财务 AI 诊断单元测试：聚合快照结构化上送 AI 服务、失败翻译 503（mock 全部依赖）。
+ * LLM 拆分到 ai 服务后，本测试只验证「聚合 → 集成层」的编排与容错（prompt 在 AI 服务侧）。
  *
  * @author xiaopu
  * @since 2026-10
@@ -42,18 +42,10 @@ class FinanceDiagnosisTest {
     @Mock
     private ReportService reportService;
     @Mock
-    private LlmClient llmClient;
-    @Mock
-    private ObjectProvider<LlmClient> llmProvider;
+    private AiIntegration aiIntegration;
 
     private FinanceDiagnosisService service() {
-        when(llmProvider.getIfAvailable()).thenReturn(llmClient);
-        return new FinanceDiagnosisService(accountRepository, transactionRepository, reportService, llmProvider);
-    }
-
-    private FinanceDiagnosisService serviceWithoutLlm() {
-        when(llmProvider.getIfAvailable()).thenReturn(null);
-        return new FinanceDiagnosisService(accountRepository, transactionRepository, reportService, llmProvider);
+        return new FinanceDiagnosisService(accountRepository, transactionRepository, reportService, aiIntegration);
     }
 
     private void stubReports() {
@@ -83,41 +75,30 @@ class FinanceDiagnosisTest {
     }
 
     @Test
-    void diagnosisCallsLlmWithData() {
+    void diagnosisSendsStructuredSnapshot() {
         stubReports();
-        when(llmClient.chat(anyString(), anyString())).thenReturn("诊断结论……");
+        when(aiIntegration.diagnose(any(FinanceDiagnosisRequestDTO.class)))
+                .thenReturn(new FinanceDiagnosisDTO());
 
-        String text = service().diagnose(ME);
+        service().diagnose(ME);
 
-        assertEquals("诊断结论……", text);
-        var sysCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
-        var userCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
-        verify(llmClient).chat(sysCaptor.capture(), userCaptor.capture());
-        assertTrue(sysCaptor.getValue().contains("家庭财务顾问"));
-        // 数据进了 Prompt
-        assertTrue(userCaptor.getValue().contains("2105000"));
-        assertTrue(userCaptor.getValue().contains("结余：8000"));
+        ArgumentCaptor<FinanceDiagnosisRequestDTO> captor =
+                ArgumentCaptor.forClass(FinanceDiagnosisRequestDTO.class);
+        org.mockito.Mockito.verify(aiIntegration).diagnose(captor.capture());
+        var req = captor.getValue();
+        // 数据结构化进了请求（不再是拼 Prompt 字符串）
+        assertEquals("2105000", req.getSheet().getTotalAsset());
+        assertEquals("2097000", req.getSheet().getNetWorth());
+        assertEquals("8000", req.getLastMonth().getSurplus());
     }
 
     @Test
-    void noKeyMeansDisabled() {
-        when(llmProvider.getIfAvailable()).thenReturn(null);
-
-        BizException e = assertThrows(BizException.class, () -> serviceWithoutLlm().diagnose(ME));
-        assertEquals(400, e.getCode());
-    }
-
-    @Test
-    void llmFailureTranslatedTo503() {
+    void aiFailureTranslatedTo503() {
         stubReports();
-        when(llmClient.chat(anyString(), anyString()))
-                .thenThrow(new LlmClient.LlmException("timeout", null));
+        when(aiIntegration.diagnose(any(FinanceDiagnosisRequestDTO.class)))
+                .thenThrow(new RpcException(500, "依赖服务暂不可用，请稍后再试", true));
 
         BizException e = assertThrows(BizException.class, () -> service().diagnose(ME));
         assertEquals(503, e.getCode());
-    }
-
-    private static void assertTrue(boolean cond) {
-        org.junit.jupiter.api.Assertions.assertTrue(cond);
     }
 }

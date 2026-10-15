@@ -1,25 +1,29 @@
 package com.xp.starsite.health.ai;
 
 import com.xp.starsite.common.exception.BizException;
-import com.xp.starsite.common.llm.LlmClient;
 import com.xp.starsite.api.client.FamilyOwnershipGuard;
 import com.xp.starsite.common.result.ResultCode;
 import com.xp.starsite.health.entity.HealthIndicator;
 import com.xp.starsite.health.entity.HealthReport;
+import com.xp.starsite.health.integration.AiIntegration;
+import com.xp.starsite.health.integration.ai.dto.InterpretIndicatorDTO;
+import com.xp.starsite.health.integration.ai.dto.ReportInterpretDTO;
+import com.xp.starsite.health.integration.ai.dto.ReportInterpretRequestDTO;
 import com.xp.starsite.health.repository.HealthIndicatorRepository;
 import com.xp.starsite.health.repository.HealthReportRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 体检报告 AI 解读：聚合报告 + 指标 → LLM → 结果落库缓存（同报告不重复花钱，force 强制重解读）。
- * LlmClient 可选：未配 llm.api-key 时抛 400"未启用"提示；LLM 调用失败抛 503。
+ * 体检报告 AI 解读：聚合报告 + 指标 → 结构化数据发 AI 智能体服务（prompt/模型在 AI 侧）→
+ * 结果落库缓存（同报告不重复花钱，force 强制重解读）。
+ * AI 服务不可用时抛 503（fail-closed 翻译自 RpcException）；
  * 越权防线：复用 getDetail 聚合（内部已做归属校验），此处按 id+owner 查询即安全。
  *
  * @author xiaopu
@@ -30,23 +34,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ReportInterpretationService {
 
-    private static final String SYSTEM_PROMPT = """
-            你是家庭健康助手。请用通俗易懂的中文解读这份体检报告：
-            1. 先总体评价健康状况；
-            2. 逐条指出异常指标（偏高/偏低）及其常见含义；
-            3. 给出饮食、运动、复查方面的建议；
-            4. 最后必须声明：以上分析仅供参考，不构成医疗诊断，异常指标请遵医嘱就诊。
-            全文 300 字以内，不要使用 Markdown 标记。""";
-
     private final HealthReportRepository reportRepository;
     private final HealthIndicatorRepository indicatorRepository;
     private final FamilyOwnershipGuard ownershipGuard;
-    private final ObjectProvider<LlmClient> llmClient;
+    private final AiIntegration aiIntegration;
 
     /**
      * 解读（结果落库）。数据归属由调用方校验（Controller 层先查报告归属）。
      *
-     * @param force true = 已解读过也重新调 LLM
+     * @param force true = 已解读过也重新调 AI
      */
     public InterpretationResult interpret(Long memberId, Long reportId, boolean force) {
         HealthReport report = reportRepository.findById(reportId).orElse(null);
@@ -61,44 +57,41 @@ public class ReportInterpretationService {
         }
         List<HealthIndicator> indicators = indicatorRepository.findByReportId(reportId);
 
-        LlmClient client = llmClient.getIfAvailable();
-        if (client == null) {
-            throw new BizException(ResultCode.BAD_REQUEST.getCode(), "AI 解读未启用（未配置 LLM_API_KEY）");
-        }
-
-        StringBuilder user = new StringBuilder();
-        user.append("报告：").append(report.getReportYear()).append("年体检");
-        if (report.getHospital() != null && !report.getHospital().isBlank()) {
-            user.append("（").append(report.getHospital()).append("）");
-        }
-        user.append("，共 ").append(indicators.size()).append(" 项指标：\n");
-        for (HealthIndicator i : indicators) {
-            String value = i.getValueNum() != null ? i.getValueNum().toPlainString()
-                    : (i.getValueText() == null ? "-" : i.getValueText());
-            user.append("- ").append(i.getItemName()).append(": ").append(value);
-            if (i.getUnit() != null && !i.getUnit().isBlank()) {
-                user.append(i.getUnit());
-            }
-            if (i.getRefLow() != null || i.getRefHigh() != null) {
-                user.append("（参考 ").append(i.getRefLow() == null ? "-" : i.getRefLow().toPlainString())
-                        .append("~").append(i.getRefHigh() == null ? "-" : i.getRefHigh().toPlainString()).append("）");
-            }
-            if (i.getAbnormalFlag() != null && i.getAbnormalFlag() > 0) {
-                user.append(i.getAbnormalFlag() == 1 ? "【偏高】" : "【偏低】");
-            }
-            user.append("\n");
-        }
-
-        String text;
+        ReportInterpretDTO result;
         try {
-            text = client.chat(SYSTEM_PROMPT, user.toString());
-        } catch (LlmClient.LlmException e) {
+            result = aiIntegration.reportInterpret(toRequest(report, indicators));
+        } catch (com.xp.starsite.common.rpc.RpcException e) {
             throw new BizException(503, "AI 服务暂不可用，请稍后再试");
         }
 
+        String text = result.getText();
         reportRepository.updateInterpretation(reportId, text, LocalDateTime.now());
         log.info("AI 解读完成: report={}, len={}", reportId, text.length());
-        return new InterpretationResult(text, report.getInterpretedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), false);
+        return new InterpretationResult(text, report.getInterpretedAt() == null
+                ? LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                : report.getInterpretedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), false);
+    }
+
+    /** 领域实体 → 结构化解读请求（渲染在 AI 服务侧） */
+    private ReportInterpretRequestDTO toRequest(HealthReport report, List<HealthIndicator> indicators) {
+        ReportInterpretRequestDTO request = new ReportInterpretRequestDTO();
+        request.setReportYear(report.getReportYear());
+        request.setHospital(report.getHospital());
+        List<InterpretIndicatorDTO> rows = new ArrayList<>();
+        for (HealthIndicator i : indicators) {
+            InterpretIndicatorDTO row = new InterpretIndicatorDTO();
+            row.setName(i.getItemName());
+            String value = i.getValueNum() != null ? i.getValueNum().toPlainString()
+                    : (i.getValueText() == null ? "-" : i.getValueText());
+            row.setValue(value);
+            row.setUnit(i.getUnit());
+            row.setRefLow(i.getRefLow() == null ? null : i.getRefLow().toPlainString());
+            row.setRefHigh(i.getRefHigh() == null ? null : i.getRefHigh().toPlainString());
+            row.setAbnormalFlag(i.getAbnormalFlag() == null ? 0 : i.getAbnormalFlag());
+            rows.add(row);
+        }
+        request.setIndicators(rows);
+        return request;
     }
 
     /** 解读结果 */

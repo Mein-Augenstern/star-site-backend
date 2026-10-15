@@ -25,6 +25,12 @@
             <artifactId>file-facade</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- 跨语言 AI 契约：消费方自定义 @FeignClient 需要 openfeign 注解（provided） -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-openfeign-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>star-site-common</artifactId>

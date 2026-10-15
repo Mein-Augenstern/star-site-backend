@@ -18,7 +18,8 @@ import org.springframework.context.annotation.Import;
 @EnableDiscoveryClient
 @EnableScheduling
 // 资产负债表聚合调 archive 服务（ArchiveApi 契约在 star-site-api）
-@EnableFeignClients(basePackages = "com.xp.starsite.api.client")
+// 跨语言 AI 契约在消费方 integration 模块（docs/技术/12 §跨语言规约），一并纳入扫描
+@EnableFeignClients(basePackages = {"com.xp.starsite.api.client", "com.xp.starsite.finance.ai"})
 // 消费 TOPIC_FILE（账单导入事件）：显式装配，未配 rocketmq.name-server 时不生效
 @Import(com.xp.starsite.common.mq.StarSiteMqConfig.class)
 @MapperScan("com.xp.starsite.finance.mapper")

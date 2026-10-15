@@ -39,12 +39,6 @@ mybatis:
 #   consumer:
 #     group: G_finance_file
 
-llm:
-  # AI 财务诊断（智谱 GLM，OpenAI 兼容协议）；未配 api-key 时接口返回"未启用"提示
-  base-url: ${LLM_BASE_URL:https://open.bigmodel.cn/api/paas/v4}
-  api-key: ${LLM_API_KEY:}
-  model: ${LLM_MODEL:glm-4-flash}
-
 jwt:
   # HS256 密钥，须 >= 32 字节；与网关/其他服务保持一致，生产环境用环境变量注入
   secret: "${JWT_SECRET:star-site-local-dev-secret-change-me-32bytes!}"

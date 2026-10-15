@@ -53,6 +53,10 @@ spring:
           uri: lb://star-site-platform-payment
           predicates:
             - Path=/api/payment/**
+        - id: ai-route
+          uri: lb://star-site-platform-ai
+          predicates:
+            - Path=/api/ai/**
       # 跨域统一在网关处理
       globalcors:
         cors-configurations:
