@@ -2,7 +2,6 @@ package com.xp.starsite.recheck.integration;
 
 import com.xp.starsite.api.client.ReminderApi;
 import com.xp.starsite.api.dto.ReminderRuleDTO;
-import com.xp.starsite.common.rpc.RpcCallGuard;
 import com.xp.starsite.common.rpc.RpcIntegration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,15 +23,13 @@ public class ReminderIntegration {
 
     private final ReminderApi reminderApi;
 
-    private final RpcCallGuard rpc;
-
-    /** 注册规则（tolerant：失败吞掉返回 false，error 留痕，不阻断建计划主流程） */
-    public boolean upsertTolerant(ReminderRuleDTO dto) {
-        return rpc.attempt("recheck.reminder.ruleUpsert", () -> reminderApi.upsertRule(dto));
+    /** 注册规则（tolerant：@RpcTolerant 在 ReminderApi 方法上，切面吞掉失败） */
+    public void upsert(ReminderRuleDTO dto) {
+        reminderApi.upsertRule(dto);
     }
 
-    /** 撤销规则（tolerant：幂等键定位，失败吞掉不阻断闭环/取消主流程） */
-    public boolean deleteTolerant(ReminderRuleDTO key) {
-        return rpc.attempt("recheck.reminder.ruleDelete", () -> reminderApi.deleteRule(key));
+    /** 撤销规则（tolerant：同上） */
+    public void delete(ReminderRuleDTO key) {
+        reminderApi.deleteRule(key);
     }
 }

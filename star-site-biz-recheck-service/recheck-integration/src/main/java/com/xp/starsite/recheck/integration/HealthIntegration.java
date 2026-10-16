@@ -2,7 +2,6 @@ package com.xp.starsite.recheck.integration;
 
 import com.xp.starsite.api.client.HealthApi;
 import com.xp.starsite.api.dto.health.HealthReportDTO;
-import com.xp.starsite.common.rpc.RpcCallGuard;
 import com.xp.starsite.common.rpc.RpcIntegration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,8 +22,6 @@ public class HealthIntegration {
 
     private final HealthApi healthApi;
 
-    private final RpcCallGuard rpc;
-
     /**
      * 报告详情（含全部指标）
      *
@@ -32,6 +29,6 @@ public class HealthIntegration {
      *         或报告不存在（透传 400 语义，retryable=false）
      */
     public HealthReportDTO getReportDetail(Long memberId, Long reportId) {
-        return rpc.call("recheck.health.reportDetail", () -> healthApi.getReportDetail(memberId, reportId));
+        return healthApi.getReportDetail(memberId, reportId).getData();
     }
 }

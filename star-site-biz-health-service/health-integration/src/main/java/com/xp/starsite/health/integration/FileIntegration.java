@@ -1,7 +1,6 @@
 package com.xp.starsite.health.integration;
 
 import com.xp.starsite.api.client.FileApi;
-import com.xp.starsite.common.rpc.RpcCallGuard;
 import com.xp.starsite.common.rpc.RpcIntegration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,8 +21,6 @@ public class FileIntegration {
 
     private final FileApi fileApi;
 
-    private final RpcCallGuard rpc;
-
     /**
      * 读文件内容（字节数组）
      *
@@ -31,6 +28,6 @@ public class FileIntegration {
      *         或文件不存在（透传 400 语义，retryable=false）
      */
     public byte[] content(Long fileId) {
-        return rpc.call("health.file.content", () -> fileApi.content(fileId));
+        return fileApi.content(fileId).getData();
     }
 }

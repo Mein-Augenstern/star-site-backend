@@ -15,6 +15,11 @@
     <description>公共模块：统一响应、异常、JWT 工具</description>
 
     <dependencies>
+        <!-- AOP 切面（RpcClientAspect 等）：Spring Boot 管理版本 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
         <!-- 只引注解所需的 spring-web / validation-api（不带 servlet 容器），
              保证 WebFlux 网关也能依赖本模块而不被强制成 SERVLET 应用 -->
         <dependency>

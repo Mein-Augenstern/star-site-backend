@@ -88,9 +88,9 @@ public class RecheckPlanServiceImpl implements RecheckPlanService {
         planRepository.save(plan);
 
         // RPC 参数组装在 core-service 的 assembler；integration 只负责容错调用（失败不阻断主流程）
-        reminderIntegration.upsertTolerant(ReminderRuleAssembler.reviewRule(plan, member.getName()));
+        reminderIntegration.upsert(ReminderRuleAssembler.reviewRule(plan, member.getName()));
         if (ReminderRuleAssembler.hasDailyMonitoring(plan)) {
-            reminderIntegration.upsertTolerant(ReminderRuleAssembler.dailyRule(plan));
+            reminderIntegration.upsert(ReminderRuleAssembler.dailyRule(plan));
         }
         log.info("复查计划创建: planId={}, member={}, itemName={}, targetDate={}",
                 plan.getId(), member.getName(), plan.getItemName(), plan.getTargetDate());
@@ -143,9 +143,9 @@ public class RecheckPlanServiceImpl implements RecheckPlanService {
 
     /** 撤销该计划的全部提醒规则（复查日一次性 + 可选每日监测，tolerant 不阻断主流程） */
     private void cancelRulesTolerant(RecheckPlan plan) {
-        reminderIntegration.deleteTolerant(ReminderRuleAssembler.deleteKey(plan, ReminderRuleAssembler.BIZ_TYPE_REVIEW));
+        reminderIntegration.delete(ReminderRuleAssembler.deleteKey(plan, ReminderRuleAssembler.BIZ_TYPE_REVIEW));
         if (ReminderRuleAssembler.hasDailyMonitoring(plan)) {
-            reminderIntegration.deleteTolerant(ReminderRuleAssembler.deleteKey(plan, ReminderRuleAssembler.BIZ_TYPE_DAILY));
+            reminderIntegration.delete(ReminderRuleAssembler.deleteKey(plan, ReminderRuleAssembler.BIZ_TYPE_DAILY));
         }
     }
 
