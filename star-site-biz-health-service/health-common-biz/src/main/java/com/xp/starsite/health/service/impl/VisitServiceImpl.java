@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 就医记录服务实现。越权防线约定见 {@link com.xp.starsite.health.service.VisitService}。
@@ -34,6 +35,7 @@ public class VisitServiceImpl implements VisitService {
     private final FamilyOwnershipGuard ownershipGuard;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public VisitVO createVisit(Long memberId, VisitCreateDTO dto) {
         ownershipGuard.requireOwned(memberId, dto.getFamilyMemberId());
         VisitRecord visit = new VisitRecord();
@@ -67,6 +69,7 @@ public class VisitServiceImpl implements VisitService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteVisit(Long memberId, Long id) {
         VisitRecord visit = visitRepository.findById(id)
                 .orElseThrow(() -> new BizException(ResultCode.BAD_REQUEST.getCode(), "就医记录不存在"));

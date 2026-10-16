@@ -72,6 +72,7 @@ public class AssetServiceImpl implements AssetService {
     private final IdGenerator idGenerator;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public AssetVO create(Long memberId, AssetSaveDTO dto) {
         FamilyMemberSnapshotDTO holder = resolveHolder(memberId, dto.getHolderMemberId());
         ArchiveAsset asset = new ArchiveAsset();
@@ -144,6 +145,7 @@ public class AssetServiceImpl implements AssetService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void delete(Long memberId, Long id) {
         ArchiveAsset asset = requireOwnedAsset(memberId, id);
         assetRepository.markDeleted(id);

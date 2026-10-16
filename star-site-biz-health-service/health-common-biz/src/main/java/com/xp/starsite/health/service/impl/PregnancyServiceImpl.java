@@ -17,6 +17,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 孕期助手服务实现。计算规则见 {@link com.xp.starsite.health.service.PregnancyService} 类注释。
@@ -55,6 +56,7 @@ public class PregnancyServiceImpl implements PregnancyService {
     private final PregnancyReminderBridge reminderBridge;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public PregnancyVO upsertPregnancy(Long memberId, PregnancyUpsertDTO dto) {
         ownershipGuard.requireOwned(memberId, dto.getFamilyMemberId());
         PregnancyProfile profile = pregnancyRepository.findByFamilyMemberId(dto.getFamilyMemberId())

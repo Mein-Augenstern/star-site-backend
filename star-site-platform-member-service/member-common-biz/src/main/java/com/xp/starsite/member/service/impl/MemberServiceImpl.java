@@ -47,6 +47,7 @@ public class MemberServiceImpl implements MemberService {
     private final BCryptPasswordEncoder passwordEncoder;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void register(RegisterDTO dto) {
         if (memberRepository.countByUsername(dto.getUsername()) > 0) {
             throw new BizException(ResultCode.USERNAME_EXISTS);
@@ -141,6 +142,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void unbindIdentity(Long memberId, Long id) {
         MemberIdentity identity = identityRepository.findById(id).orElse(null);
         if (identity == null || !identity.getMemberId().equals(memberId)) {

@@ -82,6 +82,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public AccountVO update(Long memberId, Long id, AccountSaveDTO dto) {
         FinanceAccount account = requireOwnedAccount(memberId, id);
         validateType(dto.getAccountType());
@@ -94,6 +95,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void delete(Long memberId, Long id) {
         FinanceAccount account = requireOwnedAccount(memberId, id);
         if (account.getBalance().compareTo(BigDecimal.ZERO) != 0) {

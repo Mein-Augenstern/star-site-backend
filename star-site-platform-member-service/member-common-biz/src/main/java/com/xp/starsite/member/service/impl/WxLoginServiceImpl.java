@@ -43,6 +43,7 @@ public class WxLoginServiceImpl implements WxLoginService {
     private final WxSessionGateway wxSessionGateway;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public LoginVO loginByWechatMp(String code) {
         if (code == null || code.isBlank()) {
             throw new BizException(400, "code 不能为空");

@@ -20,6 +20,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 月度预算实现。使用率 = 当月该分类支出 / 预算（流水实时聚合，非快照）。
@@ -37,6 +38,7 @@ public class BudgetServiceImpl implements BudgetService {
     private final IdGenerator idGenerator;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BudgetVO save(Long memberId, BudgetSaveDTO dto) {
         if (dto.getAmount().signum() <= 0) {
             throw new BizException(ResultCode.BAD_REQUEST.getCode(), "预算金额必须大于 0");
@@ -74,6 +76,7 @@ public class BudgetServiceImpl implements BudgetService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void delete(Long memberId, Long id) {
         FinanceBudget budget = budgetRepository.findById(id).orElse(null);
         if (budget == null || !budget.getOwnerMemberId().equals(memberId)) {

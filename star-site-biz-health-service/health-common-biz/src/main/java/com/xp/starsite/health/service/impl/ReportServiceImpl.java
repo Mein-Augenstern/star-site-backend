@@ -49,6 +49,7 @@ public class ReportServiceImpl implements ReportService {
     private final FamilyOwnershipGuard ownershipGuard;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public HealthReportVO createReport(Long memberId, ReportCreateDTO dto) {
         ownershipGuard.requireOwned(memberId, dto.getFamilyMemberId());
         HealthReport report = new HealthReport();
@@ -169,6 +170,7 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteReport(Long memberId, Long id) {
         requireOwnedReport(memberId, id);
         reportRepository.markDeleted(id);

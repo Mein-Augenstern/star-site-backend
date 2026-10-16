@@ -18,6 +18,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 家庭档案服务实现。数据访问经仓储层（{@link FamilyRepository}/{@link FamilyMemberRepository}，
@@ -37,6 +38,7 @@ public class FamilyServiceImpl implements FamilyService {
     private final FamilyMemberRepository familyMemberRepository;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public FamilyVO create(Long ownerMemberId, FamilyCreateDTO dto) {
         if (familyRepository.countByOwner(ownerMemberId) > 0) {
             throw new BizException(4005, "已有家庭，无需重复创建");
@@ -57,6 +59,7 @@ public class FamilyServiceImpl implements FamilyService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public FamilyMemberVO addMember(Long ownerMemberId, FamilyMemberDTO dto) {
         Family family = requireFamily(ownerMemberId);
         FamilyMember member = new FamilyMember();
@@ -74,6 +77,7 @@ public class FamilyServiceImpl implements FamilyService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public FamilyMemberVO updateMember(Long ownerMemberId, Long memberId, FamilyMemberDTO dto) {
         Family family = requireFamily(ownerMemberId);
         FamilyMember member = requireMember(family.getId(), memberId);
@@ -84,6 +88,7 @@ public class FamilyServiceImpl implements FamilyService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteMember(Long ownerMemberId, Long memberId) {
         Family family = requireFamily(ownerMemberId);
         FamilyMember member = requireMember(family.getId(), memberId);

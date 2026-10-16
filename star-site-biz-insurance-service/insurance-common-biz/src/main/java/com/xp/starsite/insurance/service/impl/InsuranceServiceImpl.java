@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import com.xp.starsite.insurance.constant.InsuranceBizType;
 import com.xp.starsite.insurance.constant.InsuranceReminderBizType;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 保单服务实现。
@@ -64,6 +65,7 @@ public class InsuranceServiceImpl implements InsuranceService {
     private final IdGenerator idGenerator;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public PolicyVO create(Long memberId, PolicySaveDTO dto) {
         FamilyMemberSnapshotDTO insured = ownershipGuard.requireOwned(memberId, dto.getInsuredMemberId());
         InsurancePolicy policy = new InsurancePolicy();
@@ -104,6 +106,7 @@ public class InsuranceServiceImpl implements InsuranceService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public PolicyVO update(Long memberId, Long id, PolicySaveDTO dto) {
         InsurancePolicy policy = requireOwnedPolicy(memberId, id);
         FamilyMemberSnapshotDTO insured = ownershipGuard.requireOwned(memberId, dto.getInsuredMemberId());
@@ -118,6 +121,7 @@ public class InsuranceServiceImpl implements InsuranceService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void delete(Long memberId, Long id) {
         InsurancePolicy policy = requireOwnedPolicy(memberId, id);
         policyRepository.markDeleted(id);

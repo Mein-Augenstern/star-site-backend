@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 import com.xp.starsite.archive.constant.ArchiveBizType;
 import com.xp.starsite.archive.constant.ArchiveReminderBizType;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 证件夹实现。提醒事件取舍与保单域一致：
@@ -58,6 +59,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final IdGenerator idGenerator;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public DocumentVO create(Long memberId, DocumentSaveDTO dto) {
         FamilyMemberSnapshotDTO holder = ownershipGuard.requireOwned(memberId, dto.getHolderMemberId());
         ArchiveDocument doc = new ArchiveDocument();
@@ -97,6 +99,7 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public DocumentVO update(Long memberId, Long id, DocumentSaveDTO dto) {
         ArchiveDocument doc = requireOwnedDocument(memberId, id);
         FamilyMemberSnapshotDTO holder = ownershipGuard.requireOwned(memberId, dto.getHolderMemberId());
@@ -114,6 +117,7 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void delete(Long memberId, Long id) {
         ArchiveDocument doc = requireOwnedDocument(memberId, id);
         documentRepository.markDeleted(id);

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 家庭目标实现（V1 进度手动更新；F5 可联动账户/流水自动攒）。
@@ -31,6 +32,7 @@ public class GoalServiceImpl implements GoalService {
     private final IdGenerator idGenerator;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public GoalVO create(Long memberId, GoalSaveDTO dto) {
         FinanceGoal goal = new FinanceGoal();
         goal.setId(idGenerator.nextId());
@@ -48,6 +50,7 @@ public class GoalServiceImpl implements GoalService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public GoalVO update(Long memberId, Long id, GoalSaveDTO dto) {
         FinanceGoal goal = requireOwnedGoal(memberId, id);
         applyDto(goal, dto);
@@ -56,6 +59,7 @@ public class GoalServiceImpl implements GoalService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void delete(Long memberId, Long id) {
         requireOwnedGoal(memberId, id);
         goalRepository.markDeleted(id);

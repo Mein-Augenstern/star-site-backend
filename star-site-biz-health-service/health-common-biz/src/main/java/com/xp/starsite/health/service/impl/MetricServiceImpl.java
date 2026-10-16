@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 日常指标服务实现。越权防线约定见 {@link com.xp.starsite.health.service.MetricService}。
@@ -37,6 +38,7 @@ public class MetricServiceImpl implements MetricService {
     private final FamilyOwnershipGuard ownershipGuard;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<MetricVO> addMetrics(Long memberId, MetricBatchDTO dto) {
         // 先整批校验归属（任一不归属整批拒绝），再逐条落库
         for (MetricBatchDTO.Item item : dto.getItems()) {
@@ -75,6 +77,7 @@ public class MetricServiceImpl implements MetricService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteMetric(Long memberId, Long id) {
         DailyMetric m = metricRepository.findById(id)
                 .orElseThrow(() -> new BizException(ResultCode.BAD_REQUEST.getCode(), "指标记录不存在"));

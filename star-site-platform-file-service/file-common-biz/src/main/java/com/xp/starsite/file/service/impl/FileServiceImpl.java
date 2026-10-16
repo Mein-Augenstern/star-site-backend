@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Set;
 import com.xp.starsite.file.constant.FileBizType;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 文件服务实现：校验类型/大小 → 存储落盘（本地或 OSS）→ 建记录 → 发布上传完成事件。
@@ -44,6 +45,7 @@ public class FileServiceImpl implements FileService {
     private final EventPublisher eventPublisher;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public FileVO upload(MultipartFile file, String bizType, Long uploaderMemberId,
                          java.util.Map<String, String> metadata) {
         if (file == null || file.isEmpty()) {
