@@ -61,6 +61,13 @@ spring:
           uri: lb://star-site-platform-ai
           predicates:
             - Path=/api/ai/**
+        # invest 个人投资微服务（Python/FastAPI）。上游默认容器内访问宿主机进程；
+        # 宿主机直接跑网关时设 INVEST_UPSTREAM=http://127.0.0.1:8790
+        # 鉴权：网关 JwtGlobalFilter 统一校验 + invest 服务内 star JWT 纵深防御
+        - id: invest-route
+          uri: "${INVEST_UPSTREAM:http://host.docker.internal:8790}"
+          predicates:
+            - Path=/api/invest/**
       # 跨域统一在网关处理
       globalcors:
         cors-configurations:
