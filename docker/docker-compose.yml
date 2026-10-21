@@ -13,7 +13,7 @@ x-app-env: &app-env
   SPRING_DATASOURCE_URL: jdbc:mysql://star-mysql:3306/star_site?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
   SPRING_DATASOURCE_USERNAME: root
   SPRING_DATASOURCE_PASSWORD: root123
-  JWT_SECRET: star-site-local-dev-secret-change-me-32bytes!
+  JWT_SECRET: ***REMOVED-JWT-SECRET***
   # Feign 超时与 BASIC 级别由 common StarSiteFeignLogConfig 程序化兜底（yml/env 可覆盖）
   # P4 可观测：management 端点（micrometer-registry-prometheus 已在各 start 模块）
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,prometheus
@@ -320,7 +320,7 @@ services:
       AI_LLM_MODEL: glm-4.5-air
       AI_LLM_VISION_MODEL: glm-4v-flash
       AI_MOCK_ENABLED: "false"
-      JWT_SECRET: ${JWT_SECRET:-star-site-local-dev-secret-change-me-32bytes!}
+      JWT_SECRET: ${JWT_SECRET:-***REMOVED-JWT-SECRET***}
     ports:
       - "8091:8091"   # 联调直打
     depends_on: [nacos]
