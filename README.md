@@ -2,6 +2,53 @@
 
 star-site 后端：Spring Cloud Alibaba 微服务架构。
 
+## 业务全景：家庭数字资产与健康中枢
+
+一句话：**把一个家庭散落在各处的健康、保障、财富、证件信息，收拢成一个有归属、有提醒、可追溯的中枢。**
+
+| 业务域 | 解决的真实问题 | 核心能力 |
+|---|---|---|
+| 🏥 健康（health） | 体检报告纸质化、指标无追踪 | 报告结构化、指标录入与趋势、就医/孕期记录、AI 报告解读 |
+| 🛡 保障（insurance） | 保单散乱、保障缺口不自知、缴费遗忘 | 保单档案、**保障地图**（成员 × 险种矩阵）、缴费/到期事件提醒 |
+| 💰 财富（finance） | 家庭账目口径混乱 | 多账户记账（收入/支出/转账/调整）、流水与余额同事务、可回滚 |
+| 📁 档案（archive） | 证件/资产信息找不到、估值无历史 | 证件夹、房产车辆台账、估值历史与总览 |
+| 👨‍👩‍👧 家庭（family） | 多成员数据的归属与隔离 | 家庭/成员档案，全域数据的归属锚点 |
+| ⚙️ 平台（platform） | 横向能力重复建设 | 网关/账号/文件/提醒/支付，**可跨项目复用** |
+
+## 架构
+
+```
+ 微信小程序(app) / Web(frontend)
+        │  HTTPS + Bearer JWT
+        ▼
+┌────────────────────────────────────────────────────────┐
+│ platform-gateway (WebFlux: 路由 + JWT 白名单 + CORS)      │
+└──────────────┬─────────────────────────────────────────┘
+               ▼ 同步调用（REST，/api/**）
+   ┌─────────────────────────────────────────────┐
+   │ 业务域：family / health / insurance /          │
+   │         finance / archive / payment            │
+   │ 平台域：member / file / reminder / gateway     │
+   └──────┬───────────────────────┬──────────────┘
+          │ Feign /internal/**     │ RocketMQ 领域事件
+          │ （跨域取数 + 归属校验）   │ （事务消息 + 幂等消费）
+          ▼                       ▼
+   family（归属锚点）        reminder 提醒中心
+                                  ▲
+   ai-service（LangChain/LangGraph 智能体，经 Nacos 回调 /internal/**）│
+                                                          │
+   MySQL 8 · Redis 7 · Nacos · RocketMQ 5 ────────────────┘
+```
+
+## 技术亮点（设计决策）
+
+1. **域隔离，不搞大泥球**：垂直域之间不读对方表、不跨域 JOIN；同步走 Feign `/internal/**`（网关不路由），异步走 MQ 领域事件——服务间依赖有方向、可治理。
+2. **数据归属 fail-closed**：凡按 id / familyMemberId 取数先过 `FamilyOwnershipGuard`（403）；列表接口不传成员 id 时也收口在本家庭内——越权路径在架构层被堵死，不靠每个开发者自觉。
+3. **事务消息 + 幂等消费**：`EventPublisher.publishTransactional` 保「落库与发消息」原子；消费端以 `(consumerGroup, eventId)` 落幂等表，重复投递不产生重复提醒。
+4. **平台与业务两级模块**：`platform-*` 是无业务语义的横向服务（其他项目可直接复用），业务域在其上生长——换业务不换底盘。
+5. **双形态部署**：单机 docker compose（`--profile app` 一键全栈）↔ 双节点 k8s/helm（values 分层覆盖），同一套镜像两种规模。
+6. **AI 能力服务化**：平台唯一 LLM 出口（见 [star-site-platform-ai-service](https://github.com/Mein-Augenstern/star-site-platform-ai-service)），Java 侧只暴露 `/internal/**` 数据端点，智能体经 ReAct 自主取数——模型可换、提示词资产集中。
+
 ## 技术栈
 
 | 组件 | 版本 |
