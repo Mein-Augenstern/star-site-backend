@@ -14,5 +14,8 @@ logs/
 # 本地环境覆盖
 *.local.yml
 
+# 部署真实凭据（样例见 .env.node-a.example / .env.prod.example）
+deploy/.env.node-a-*
+
 # mimosa 扫描状态
 .mimosa/

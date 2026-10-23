@@ -13,7 +13,7 @@ x-app-env: &app-env
   SPRING_DATASOURCE_URL: jdbc:mysql://star-mysql:3306/star_site?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
   SPRING_DATASOURCE_USERNAME: root
   SPRING_DATASOURCE_PASSWORD: root123
-  JWT_SECRET: ***REMOVED-JWT-SECRET***
+  JWT_SECRET: ${JWT_SECRET:-star-site-local-dev-secret-change-me-32bytes!}
   # Feign 超时与 BASIC 级别由 common StarSiteFeignLogConfig 程序化兜底（yml/env 可覆盖）
   # P4 可观测：management 端点（micrometer-registry-prometheus 已在各 start 模块）
   MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,prometheus
@@ -293,7 +293,7 @@ services:
     environment:
       <<: *app-env
       SPRING_CLOUD_NACOS_DISCOVERY_IP: star-payment
-      PAYMENT_NOTIFY_URL: ${PAYMENT_NOTIFY_URL:-https://***REMOVED-ECS-IP***:9090/api/payment/notify}
+      PAYMENT_NOTIFY_URL: ${PAYMENT_NOTIFY_URL:-https://<ECS_PUBLIC_IP>:9090/api/payment/notify}
       PAYMENT_MOCK_ENABLED: ${PAYMENT_MOCK_ENABLED:-true}
       PAYMENT_MOCK_SECRET: ${PAYMENT_MOCK_SECRET:-star-site-mock-payment-secret-dev-only}
     ports:
@@ -316,11 +316,11 @@ services:
       NACOS_REGISTER_IP: star-ai
       SERVICE_NAME: star-site-platform-ai
       AI_LLM_BASE_URL: https://open.bigmodel.cn/api/paas/v4
-      AI_LLM_API_KEY: ***REMOVED-GLM-KEY***
+      AI_LLM_API_KEY: ${AI_LLM_API_KEY:-}
       AI_LLM_MODEL: glm-4.5-air
       AI_LLM_VISION_MODEL: glm-4v-flash
       AI_MOCK_ENABLED: "false"
-      JWT_SECRET: ${JWT_SECRET:-***REMOVED-JWT-SECRET***}
+      JWT_SECRET: ${JWT_SECRET:-star-site-local-dev-secret-change-me-32bytes!}
     ports:
       - "8091:8091"   # 联调直打
     depends_on: [nacos]

@@ -1,4 +1,4 @@
-# node-a@***REMOVED-ECS-IP*** 单机过渡形态覆盖层：
+# node-a 单机过渡形态覆盖层：
 # 1) 网关绑 127.0.0.1:18080（8080 被 frps 占用），宿主机 nginx 80 反代 /api/
 # 2) nginx 容器不绑端口（宿主机 nginx 已持有 80；profiles 合并是并集，不能用 disabled 排除）
 services:
@@ -7,14 +7,14 @@ services:
   # 服务按宿主机内网 IP 注册（DISCOVERY_IP），端口必须发布到同一内网 IP 供跨容器/跨节点直连
   # （绑内网 IP 而非 0.0.0.0：公网安全组不开这些端口）
   platform-member:
-    ports: !override ["***REMOVED-LAN-IP***:8081:8081"]
+    ports: !override ["<NODE_A_LAN_IP>:8081:8081"]
   family:
-    ports: !override ["***REMOVED-LAN-IP***:8082:8082"]
+    ports: !override ["<NODE_A_LAN_IP>:8082:8082"]
   platform-file:
-    ports: !override ["***REMOVED-LAN-IP***:8083:8083"]
+    ports: !override ["<NODE_A_LAN_IP>:8083:8083"]
   health:
-    ports: !override ["***REMOVED-LAN-IP***:8084:8084"]
+    ports: !override ["<NODE_A_LAN_IP>:8084:8084"]
   platform-reminder:
-    ports: !override ["***REMOVED-LAN-IP***:8085:8085"]
+    ports: !override ["<NODE_A_LAN_IP>:8085:8085"]
   nginx:
     ports: !override []

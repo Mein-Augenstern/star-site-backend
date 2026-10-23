@@ -1,9 +1,9 @@
 # frp 客户端（家里 Mac 上，随 star-site compose 启动）
-# serverAddr 填 ECS 公网 IP；token 与 ECS 侧 frps.toml 一致
+# serverAddr 填 ECS 公网 IP；token 与 ECS 侧 frps.toml 一致（真实值由 deploy/.env.node-a* 提供，不入库）
 
-serverAddr = "***REMOVED-ECS-IP***"
+serverAddr = "${FRP_SERVER_ADDR}"
 serverPort = 7000
-auth.token = "***REMOVED-FRP-TOKEN***"
+auth.token = "${FRP_TOKEN}"
 
 loginFailExit = false        # ECS 重启时客户端不退出，自动重连
 transport.heartbeatInterval = 30
@@ -11,8 +11,8 @@ transport.heartbeatTimeout = 90
 transport.tcpMux = true
 transport.tcpMuxKeepaliveInterval = 30
 
-# TCP 隧道：公网 ***REMOVED-ECS-IP***:9090 → 本机网关容器 8080
-# 手机小程序（开发版+打开调试）可访问 http://***REMOVED-ECS-IP***:9090/api
+# TCP 隧道：公网 <ECS_PUBLIC_IP>:9090 → 本机网关容器 8080
+# 手机小程序（开发版+打开调试）可访问 http://<ECS_PUBLIC_IP>:9090/api
 [[proxies]]
 name = "star-gateway-tcp"
 type = "tcp"

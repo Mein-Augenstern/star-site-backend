@@ -52,7 +52,7 @@ star:
       read-ms: 10000
   payment:
     # 渠道服务器回调基地址（拼接 /api/payment/notify/{channel}）；本地开发走 frp 隧道，域名就绪后替换
-    notify-url: ${PAYMENT_NOTIFY_URL:https://***REMOVED-ECS-IP***:9090/api/payment/notify}
+    notify-url: ${PAYMENT_NOTIFY_URL:https://<ECS_PUBLIC_IP>:9090/api/payment/notify}
     # mock 沙箱渠道（默认启用；生产置 false 后 mock 下单即报不支持渠道）
     mock:
       enabled: ${PAYMENT_MOCK_ENABLED:true}
