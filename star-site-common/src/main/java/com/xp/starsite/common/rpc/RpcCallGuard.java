@@ -21,7 +21,7 @@ import java.util.function.Supplier;
  * （连接/超时、404 未就绪、5xx → true；其余 4xx → false）。
  * 出站耗时/状态留痕由 FeignDigestLogger（HTTP 层）承担，本类只补失败语义日志。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

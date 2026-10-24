@@ -36,7 +36,7 @@ import java.util.Set;
  * 数据访问经仓储层（{@link HealthReportRepository}/{@link HealthIndicatorRepository}，
  * 实现位于 core-service、底层调用 dal DAO），业务层只见领域模型、零 DAO 依赖。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

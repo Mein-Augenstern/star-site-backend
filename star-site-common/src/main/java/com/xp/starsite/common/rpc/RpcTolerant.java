@@ -17,7 +17,7 @@ import java.lang.annotation.Target;
  * 未标注的方法一律 fail-closed：失败抛标准 RpcException（带 retryable）。
  * 值级标注在「客户端接口方法」上（提供方实现类不感知）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Target(ElementType.METHOD)

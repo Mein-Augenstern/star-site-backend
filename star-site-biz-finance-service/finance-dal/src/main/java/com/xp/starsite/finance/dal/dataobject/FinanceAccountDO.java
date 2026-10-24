@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 资金账户数据对象（finance_account 表镜像，DAL 自持——不依赖任何上层模型）。
  * 领域语义见 core-model 的 entity/FinanceAccount。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

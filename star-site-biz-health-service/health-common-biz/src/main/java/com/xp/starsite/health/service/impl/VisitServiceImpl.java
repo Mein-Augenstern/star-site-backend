@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 数据访问经仓储层（{@link VisitRecordRepository}，实现位于 core-service、底层调用 dal DAO），
  * service 只面向领域模型 Entity 编排；VO 映射属于本层（common-biz 出参契约）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

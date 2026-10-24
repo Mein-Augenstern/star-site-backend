@@ -8,7 +8,7 @@ import org.springframework.beans.BeanUtils;
  * 孕期档案模型转换：DO（DAL 表映射）↔ Entity（core-model 领域模型）。
  * 转换只在本层（core-service）发生——dal 不感知领域模型，core-model 不感知表结构。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public final class PregnancyConverter {

@@ -6,7 +6,7 @@ import lombok.EqualsAndHashCode;
 /**
  * 撤销提醒规则（按幂等键删除）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

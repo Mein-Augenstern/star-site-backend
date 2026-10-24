@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * RPC 参数组装经 {@link ReminderRuleAssembler}（core-service 层）完成后，
  * 由 {@link ReminderIntegration} 容错调用——提醒失败不回滚本地事务（增值能力非强一致）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

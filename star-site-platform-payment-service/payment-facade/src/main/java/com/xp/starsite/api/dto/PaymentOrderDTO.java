@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 支付单快照（跨服务传输用）：业务服务（保险代收/会员订阅）经 PaymentInternalApi
  * 下单与查单时的契约载体。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

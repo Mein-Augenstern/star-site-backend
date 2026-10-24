@@ -25,7 +25,7 @@ import java.util.List;
  * 调用方仍须先经 FamilyOwnershipGuard 校验成员归属。
  * 业务逻辑统一经模板包裹（动作名 health.internal.*）；映射下沉在 service（军规：控制器零映射）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController

@@ -6,7 +6,7 @@ import lombok.Data;
 /**
  * 预下单结果：前端拉起支付所需的凭证
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

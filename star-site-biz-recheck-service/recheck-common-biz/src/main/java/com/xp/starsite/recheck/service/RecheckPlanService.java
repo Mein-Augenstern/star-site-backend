@@ -13,7 +13,7 @@ import java.util.List;
  * 带 familyMemberId 的操作先经 {@link com.xp.starsite.api.client.FamilyOwnershipGuard} 校验；
  * 报告/指标数据经 health-facade 从 health（横向服务）只读获取，本服务不落报告数据。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface RecheckPlanService {

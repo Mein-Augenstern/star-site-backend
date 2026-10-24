@@ -11,7 +11,7 @@ import java.util.List;
  * 逻辑删：family_member.deleted，查询一律带 deleted=0，删除为 UPDATE 置位。
  * 归属校验（FamilyOwnershipGuard → family.internal 接口）依赖 selectById 的 family_id 归属判断。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

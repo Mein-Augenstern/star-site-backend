@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  * <p>
  * 按服务开关：环境变量 STAR_ASYNC_ENABLED=true。消费服务还需 @EnableScheduling。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

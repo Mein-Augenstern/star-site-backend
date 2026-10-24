@@ -29,7 +29,7 @@ import java.util.List;
  * 全部端点需 JWT；业务逻辑统一经模板包裹（动作名 family.*），
  * 归属防线由 Service 层 FamilyOwnershipGuard 承担（fail-closed）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController

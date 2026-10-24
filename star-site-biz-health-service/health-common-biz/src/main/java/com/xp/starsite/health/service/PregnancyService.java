@@ -11,7 +11,7 @@ import com.xp.starsite.health.vo.PregnancyVO;
  * 产检里程碑（NT/唐筛/大排畸/糖耐等 8 个窗口）随计算视图返回并标注 pending/current/done。
  * 归属防线约定同 {@link ReportService}（首参 memberId + family 归属校验，fail-closed）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface PregnancyService {

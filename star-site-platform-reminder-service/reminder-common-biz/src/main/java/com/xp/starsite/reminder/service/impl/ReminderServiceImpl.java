@@ -44,7 +44,7 @@ import com.xp.starsite.api.event.reminder.ReminderRepeatType;
  * {@link NotificationRepository}，实现位于 core-service、底层调用 dal DAO）；
  * 规则撤销为物理删（reminder 域三表无 deleted 列，唯一键干净优先）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

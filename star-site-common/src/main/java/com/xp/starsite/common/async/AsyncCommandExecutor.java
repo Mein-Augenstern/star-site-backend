@@ -2,7 +2,7 @@ package com.xp.starsite.common.async;
 
 /** 异步命令执行器：业务实现为本组件 Bean，type() 即路由键
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface AsyncCommandExecutor {

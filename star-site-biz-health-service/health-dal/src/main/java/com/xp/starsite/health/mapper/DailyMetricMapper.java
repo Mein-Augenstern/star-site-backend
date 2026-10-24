@@ -11,7 +11,7 @@ import java.util.List;
  * 日常指标数据访问（DAL）：daily_metric（血压/血糖/体重等按日自测），逻辑删。
  * 入参/出参均为 {@link DailyMetricDO}（DAL 自持数据对象，不依赖 core-model）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

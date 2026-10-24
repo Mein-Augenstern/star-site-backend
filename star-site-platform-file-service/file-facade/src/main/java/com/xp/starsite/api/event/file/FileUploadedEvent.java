@@ -9,7 +9,7 @@ import java.util.Map;
  * 文件上传完成事件（TOPIC_FILE）。上传成功后由 file 服务发出，
  * 消费方按 bizType 决定是否处理（账单导入：bill_import）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

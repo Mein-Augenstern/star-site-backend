@@ -9,7 +9,7 @@ import org.springframework.beans.BeanUtils;
  * 转换只在本层（core-service）发生——dal 不感知领域模型，core-model 不感知表结构。
  * VO（接入层视图）映射不属于本层，由 common-biz 的用例层完成。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public final class MemberIdentityConverter {

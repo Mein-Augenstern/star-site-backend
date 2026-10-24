@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * 归属校验：health 侧按 memberId 校验报告归属（fail-closed），消费方仍须自行
  * 经 FamilyOwnershipGuard 校验成员归属后再调用。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @FeignClient(name = "star-site-biz-health", contextId = "healthInternalApi", path = "/internal/health")

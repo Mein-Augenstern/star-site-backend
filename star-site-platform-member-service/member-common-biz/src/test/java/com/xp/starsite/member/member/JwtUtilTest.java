@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 /**
  * JwtUtil 单测：验证 token 签发/解析往返、非法与过期 token 均被拒绝（认证防线，不启 Spring 上下文）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 class JwtUtilTest {

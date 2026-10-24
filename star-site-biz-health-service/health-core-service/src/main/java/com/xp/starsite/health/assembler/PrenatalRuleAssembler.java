@@ -13,7 +13,7 @@ import com.xp.starsite.api.event.reminder.ReminderRepeatType;
  * 依据孕周（LMP）生成标准产检里程碑的提醒规则 DTO；已过窗口的自动跳过。
  * 纯 POJO——只构造 DTO 不发起调用。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public final class PrenatalRuleAssembler {

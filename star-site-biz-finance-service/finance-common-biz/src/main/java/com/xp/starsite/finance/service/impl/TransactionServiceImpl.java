@@ -28,7 +28,7 @@ import java.util.List;
  * 都能由 balance_after 快照对账。删除回滚余额；转账整组回滚。
  * 余额走仓储原子增量（不整行 update）；雪花 id 应用侧 save 前赋值。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

@@ -10,7 +10,7 @@ import lombok.Data;
 /**
  * 编辑个人资料入参
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

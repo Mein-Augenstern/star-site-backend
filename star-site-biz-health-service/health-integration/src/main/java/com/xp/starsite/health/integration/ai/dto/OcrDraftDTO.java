@@ -10,7 +10,7 @@ import java.util.List;
  * OCR 结构化草稿（跨语言契约，字段与 Python app/schemas.py OcrDraft 对齐）。
  * 消费方映射到 health 自己的 OcrDraft（IndicatorDTO 列表）预填表单。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

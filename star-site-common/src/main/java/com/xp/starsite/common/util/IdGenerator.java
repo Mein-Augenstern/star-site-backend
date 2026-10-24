@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
  * 机器位取自配置 {@code star.snowflake.worker-id}（多实例部署时各不相同即可，单机默认 1）。
  * 单例 Bean：{@code IdGenerator} 由 StarSiteLogConfig（或各服务配置）注册；静态场景可 {@code new IdGenerator(1)}。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public class IdGenerator {

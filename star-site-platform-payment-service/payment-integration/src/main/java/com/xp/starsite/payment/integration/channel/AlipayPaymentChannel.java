@@ -40,7 +40,7 @@ import java.util.Map;
  * 配置齐 star.payment.alipay.* 才装配（app-id/private-key/alipay-public-key），
  * 网关默认正式环境，沙箱经 star.payment.alipay.gateway-url 覆盖。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

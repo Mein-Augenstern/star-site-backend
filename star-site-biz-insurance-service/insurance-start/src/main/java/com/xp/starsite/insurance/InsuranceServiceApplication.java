@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Import;
 /**
  * 保单微服务启动类
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @SpringBootApplication(scanBasePackages = "com.xp.starsite")

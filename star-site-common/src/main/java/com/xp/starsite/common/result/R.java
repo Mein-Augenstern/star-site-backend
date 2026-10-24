@@ -13,7 +13,7 @@ import java.io.Serializable;
  * 前端与跨服务调用方按 code 判定成败，配合 ResultCode 统一错误语义；
  * 失败响应可携带 retryable 供 RPC 消费方判定重试策略（见字段注释）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

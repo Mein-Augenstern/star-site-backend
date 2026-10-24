@@ -20,7 +20,7 @@ import java.io.InputStream;
  * bucket 保持私有，文件一律经本服务流式转发（JWT 保护）；
  * ECS 上把 OSS_ENDPOINT 换成同地域内网 endpoint 可免流量费。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

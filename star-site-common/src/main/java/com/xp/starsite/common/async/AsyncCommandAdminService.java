@@ -19,7 +19,7 @@ import java.util.Map;
  * 查询/处置经 {@link AsyncCommandService}；白名单经构造注入（对象由
  * AsyncCommandConfig 的 @Bean 工厂创建，@Value 对 new 对象不生效）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

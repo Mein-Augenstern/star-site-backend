@@ -40,7 +40,7 @@ import java.util.Set;
  * - 快照：每日 02:30 落一行（uk(owner,date) 幂等），曲线由此出。
  * 数据访问经仓储层（{@link FinanceAccountRepository} 等，实现位于 core-service、底层调用 dal DAO）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

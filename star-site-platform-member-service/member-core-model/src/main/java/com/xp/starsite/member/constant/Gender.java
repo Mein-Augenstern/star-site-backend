@@ -3,7 +3,7 @@ package com.xp.starsite.member.constant;
 /**
  * 性别（member.gender / 家庭成员快照 gender 落库值，0未知 1男 2女）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public final class Gender {

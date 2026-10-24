@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 体检报告数据对象（health_report 表镜像，DAL 自持——不依赖任何上层模型）。
  * 领域语义见 core-model 的 entity/HealthReport。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

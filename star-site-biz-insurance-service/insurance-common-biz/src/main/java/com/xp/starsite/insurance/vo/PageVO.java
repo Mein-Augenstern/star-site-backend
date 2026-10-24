@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * 简单分页视图（域内自持，不跨域复用其他服务的 VO）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

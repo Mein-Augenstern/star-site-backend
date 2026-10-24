@@ -28,7 +28,7 @@ import java.time.LocalDateTime;
  * 退款终态判定：mock/支付宝为同步终态（受理即成功），微信异步处理中以渠道通知为准
  * （受理成功先保持已受理，避免提前标记已退款）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  * 配置类本身随 scanBasePackages 扫描注册，条件注解保证网关/WebFlux 不受影响；
  * digest 日志文件路径由各服务 logback-spring.xml 定义（SOFA 命名惯例）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

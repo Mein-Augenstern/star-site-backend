@@ -8,7 +8,7 @@ import java.time.LocalDate;
 /**
  * 注册/更新提醒规则（全量 upsert 语义）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

@@ -13,7 +13,7 @@ import org.springframework.web.client.RestClient;
  * 双通道：配置 wx.mp.secret 走真实 jscode2session；未配置走 mock（code 即 openid），
  * 开发态不依赖真 secret 即可全链路跑通。session_key 仅随结果返回、由上层落库，永不下发。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

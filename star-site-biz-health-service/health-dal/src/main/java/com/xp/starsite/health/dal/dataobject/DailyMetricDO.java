@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 日常健康指标数据对象（daily_metric 表镜像，DAL 自持——不依赖任何上层模型）。
  * 领域语义见 core-model 的 entity/DailyMetric。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

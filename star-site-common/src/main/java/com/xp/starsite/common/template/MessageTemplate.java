@@ -12,7 +12,7 @@ import java.util.function.Supplier;
  * ② mq-consume-digest 留痕（topic/tag/eventId/状态/耗时）；③ 异常原样上抛交 MQ 重试
  * （配合 AbstractIdempotentConsumer 的幂等去重，重试安全）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public class MessageTemplate {

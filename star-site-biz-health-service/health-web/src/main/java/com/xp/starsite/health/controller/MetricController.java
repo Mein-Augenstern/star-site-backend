@@ -31,7 +31,7 @@ import java.util.List;
  * 拆分约定与鉴权说明见 {@link ReportController} 类注释；
  * 业务逻辑统一经模板包裹（动作名 health.metric.*）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController

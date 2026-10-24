@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 全部端点需 JWT；memberId 用于归属校验防横向越权；
  * 业务逻辑统一经模板包裹（动作名 insurance.policy.* / insurance.map）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController

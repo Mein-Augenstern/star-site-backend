@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * 参数校验失败转 400、未知异常兜底 500 且捕获完整堆栈进 error.stackTrace（不泄露给
  * message 字段，全量在日志文件）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

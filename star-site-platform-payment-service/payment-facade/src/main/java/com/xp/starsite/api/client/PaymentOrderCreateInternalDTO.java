@@ -12,7 +12,7 @@ import java.math.BigDecimal;
  * 业务服务代下单请求（PaymentInternalApi 专用；与 C 端 PaymentOrderCreateDTO 字段对齐，
  * 独立成类避免 facade 依赖 common-biz 的 DTO）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 月度预算实现。使用率 = 当月该分类支出 / 预算（流水实时聚合，非快照）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

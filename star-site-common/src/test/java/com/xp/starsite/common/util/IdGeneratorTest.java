@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * 雪花 ID 生成器单元测试：不同机器位实例间不撞号、同实例高并发单调唯一。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 class IdGeneratorTest {

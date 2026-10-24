@@ -15,7 +15,7 @@ import java.util.List;
  * 反射校验其 Feign 客户端类型字段注入非空——缺失即 fail-fast，把「带着断掉的依赖上线」
  * 拦在启动期；同时输出一行本服务 RPC 依赖面清单（集成类 → 依赖服务），留档可查。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public class RpcDependencyChecker implements SmartInitializingSingleton {

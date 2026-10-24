@@ -29,7 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
  * 业务逻辑统一经模板包裹（动作名 file.*）；
  * 例外：view 返回 {@link ResponseEntity} 文件流而非 {@link R}，模板不能包它（见方法注释）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController
@@ -90,7 +90,7 @@ public class FileController {
  * 业务逻辑统一经查询模板包裹：模板包掉成功与失败的全部响应处理，
  * Controller 一行返回；动作命名规范 file.internal.*。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController

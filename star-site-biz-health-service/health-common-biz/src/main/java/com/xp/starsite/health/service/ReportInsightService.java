@@ -9,7 +9,7 @@ import com.xp.starsite.health.ai.ReportOcrService;
  * 异步解读基于 star-async 幂等命令：事务内落命令立即返回，
  * 后台执行，结果经报告详情（GET /reports/{id} 的 interpretation 字段）轮询获取。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface ReportInsightService {

@@ -25,7 +25,7 @@ import java.util.List;
  * 实时生成不落库（数据持续变化，缓存意义低）；
  * fail-open：archive 不可用时按 0 计入并在数据中标注；AI 不可用时抛 503（RpcException 翻译）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

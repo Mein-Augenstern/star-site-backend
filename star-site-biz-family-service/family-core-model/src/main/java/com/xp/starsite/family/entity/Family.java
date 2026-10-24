@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 成员档案见 {@link FamilyMember}（自然人 ≠ 登录账号）。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

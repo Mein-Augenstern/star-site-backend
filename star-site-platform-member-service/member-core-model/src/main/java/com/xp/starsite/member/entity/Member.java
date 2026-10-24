@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * created_at / updated_at 由数据库默认值维护。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

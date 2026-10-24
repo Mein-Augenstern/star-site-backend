@@ -9,7 +9,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
  * 会员微服务启动类
  * scanBasePackages 扩到整个 starsite 包，扫到 common 模块的 JwtUtil / 全局异常处理
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @SpringBootApplication(scanBasePackages = "com.xp.starsite")

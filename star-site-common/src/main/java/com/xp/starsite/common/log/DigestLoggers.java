@@ -24,7 +24,7 @@ import java.util.Map;
  * 每行一个 JSON 对象，字段统一含 time/traceId/app/success/costMs（SOFA 摘要结构：
  * 执行是否成功、执行耗时、关键信息），超长值自动截断防磁盘膨胀；机器可解析。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public final class DigestLoggers {

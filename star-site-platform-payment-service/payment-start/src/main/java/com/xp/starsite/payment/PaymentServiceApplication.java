@@ -9,7 +9,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 /**
  * 支付微服务启动类（平台级收银台：统一支付单/退款/渠道回调状态机）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @SpringBootApplication(scanBasePackages = "com.xp.starsite")

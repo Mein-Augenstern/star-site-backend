@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
  * file 服务内部接口（Feign 契约）：服务间拉取文件内容（如账单导入解析）。
  * /internal/** 不经网关路由，仅限内网。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @FeignClient(name = "star-site-platform-file", contextId = "fileInternalApi", path = "/internal/file")

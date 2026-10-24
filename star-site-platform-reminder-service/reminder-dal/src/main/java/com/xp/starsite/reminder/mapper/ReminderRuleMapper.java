@@ -11,7 +11,7 @@ import java.util.List;
  * 提醒规则数据访问（DAL）：SQL 全部收敛在 mapper XML，业务层只见业务语义方法。
  * 本表无 deleted 列——撤销走物理删，保证幂等键 (source,biz_type,biz_id) 唯一键干净。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

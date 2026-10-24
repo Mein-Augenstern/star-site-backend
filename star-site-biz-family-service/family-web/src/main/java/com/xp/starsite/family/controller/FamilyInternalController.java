@@ -21,7 +21,7 @@ import java.util.List;
  * 调用方统一走 family-facade 的 FamilyApi + FamilyOwnershipGuard。
  * 业务逻辑统一经模板包裹（动作名 family.internal.*）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController

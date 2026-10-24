@@ -18,7 +18,7 @@ import java.util.Optional;
  * 收件人取 member 档案邮箱，为空则跳过；发送失败仅告警不阻断（站内信始终是主渠道）。
  * 双保险：SMTP host 未配置时本渠道整体静默。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

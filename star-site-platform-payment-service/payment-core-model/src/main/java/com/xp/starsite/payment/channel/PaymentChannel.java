@@ -9,7 +9,7 @@ import java.util.Map;
  * 统一收银台只面向本端口编程：预下单拿凭证 → 渠道异步回调验签解析 → 关单/退款。
  * 适配器清单：mock（沙箱，默认启用）、alipay（官方 SDK）、wechat（官方 SDK v3）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface PaymentChannel {

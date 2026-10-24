@@ -12,7 +12,7 @@ import com.xp.starsite.api.event.reminder.ReminderRepeatType;
  *  - recheck_daily：每日监测提醒（挂 metricType 时，至目标复查日截止）。
  * 纯 POJO——只构造 DTO 不发起调用。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public final class ReminderRuleAssembler {

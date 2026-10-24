@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * 简单分页视图
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

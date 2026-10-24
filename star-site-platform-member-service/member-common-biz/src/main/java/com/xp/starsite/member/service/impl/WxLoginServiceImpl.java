@@ -28,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 数据访问经仓储层（{@link MemberRepository}/{@link MemberIdentityRepository}，实现位于 core-service），
  * 身份查询语义：openid 精确命中 findByIdentity，unionid 跨端归一 findByUnionid（均 LIMIT 1）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

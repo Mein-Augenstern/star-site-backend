@@ -17,7 +17,7 @@ import static org.mockito.Mockito.when;
 
 /** star-async 核心语义单测：退避/死信/幂等提交
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 class AsyncCommandServiceTest {

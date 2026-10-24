@@ -21,7 +21,7 @@ import java.sql.Statement;
  * （回绕窗口内与存活旧实例同 id 的概率 = 同毫秒同序列，可忽略但必须可见）。
  * 全部 SQL 参数绑定（军规）；建表自动执行（IF NOT EXISTS，增量安全）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

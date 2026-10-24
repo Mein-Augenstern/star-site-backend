@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Import;
 /**
  * 财务微服务启动类（F1：账户 + 记账；F3 接入账单导入时再引 MQ/Feign）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @SpringBootApplication(scanBasePackages = "com.xp.starsite")

@@ -10,7 +10,7 @@ import java.util.List;
  * 资产估值历史数据访问（DAL）：SQL 全部收敛在 mapper XML。
  * 主键 DB 自增；只追加不删改（留痕语义），无 deleted 列。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

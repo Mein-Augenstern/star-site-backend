@@ -20,7 +20,7 @@ import java.util.List;
  * 降低录入成本的同时保住数据可信度。文件字节经 FileIntegration 读取，
  * 识别经 AiIntegration（fail-closed，失败翻译为友好提示）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

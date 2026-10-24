@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * 事件信封：所有跨服务事件的统一外壳（线上契约）。
  * eventId 全局唯一（UUID），消费端以 (eventId, consumerGroup) 做幂等。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

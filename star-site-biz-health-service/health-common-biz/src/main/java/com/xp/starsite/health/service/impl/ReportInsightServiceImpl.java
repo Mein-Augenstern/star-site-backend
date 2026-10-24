@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
  * llm.api-key 为空白时 LLM Bean 会因条件注解误创建，以配置值为准，
  * 提交必死命令不如入口直接拒绝。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

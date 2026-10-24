@@ -10,7 +10,7 @@ import java.util.List;
  * 站内通知数据访问（DAL）：SQL 全部收敛在 mapper XML。
  * 投递历史不删，无 deleted 列。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

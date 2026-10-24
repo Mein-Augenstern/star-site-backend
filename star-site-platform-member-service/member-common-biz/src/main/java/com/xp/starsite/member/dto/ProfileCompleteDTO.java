@@ -4,7 +4,7 @@ import lombok.Data;
 
 /** 完善资料入参（微信静默注册后引导补充）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

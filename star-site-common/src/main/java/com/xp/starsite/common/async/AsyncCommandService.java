@@ -12,7 +12,7 @@ import java.util.List;
  * 异步命令提交入口：在业务事务内调用 submit，命令与业务变更同事务原子落库
  * （asyncmd 的立身之本），提交方只管写，调度器负责可靠执行与重试。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

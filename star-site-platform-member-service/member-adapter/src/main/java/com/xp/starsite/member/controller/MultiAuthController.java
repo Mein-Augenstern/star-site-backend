@@ -28,7 +28,7 @@ import java.util.Map;
  * 业务逻辑统一经模板包裹：模板包掉成功与失败的全部响应处理（成功 R.ok / 失败 R.fail），
  * Controller 一行返回；动作命名规范 member.auth.* / member.bind.* / member.profile.*。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController

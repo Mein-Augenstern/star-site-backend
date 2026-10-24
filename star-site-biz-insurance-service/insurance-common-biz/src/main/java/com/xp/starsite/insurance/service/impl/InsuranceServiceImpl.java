@@ -42,7 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 消费端（reminder-service，Step 2）以 (source, bizType, bizId) 幂等。
  * 数据访问经仓储层（{@link InsurancePolicyRepository}，实现位于 core-service、底层调用 dal DAO）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

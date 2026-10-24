@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * 账单解析结果
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

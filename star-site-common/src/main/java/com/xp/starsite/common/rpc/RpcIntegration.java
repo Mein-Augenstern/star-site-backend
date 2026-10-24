@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  * 字段注入完整（缺依赖 fail-fast）；② 输出本服务 RPC 依赖面清单（服务 → 依赖服务）；
  * ③ 代码自识别——看到本注解即知「此类是跨服务出口，调用必须经 RpcCallGuard」。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Documented

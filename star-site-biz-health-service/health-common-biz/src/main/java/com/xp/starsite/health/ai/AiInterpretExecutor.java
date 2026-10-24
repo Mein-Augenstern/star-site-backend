@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  * 解读调用 LLM 耗时 30s+，异步化后提交方事务内落命令即返回，本执行器在后台完成
  * LLM 调用并落库缓存；失败由组件按指数退避重试，超限 DEAD。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

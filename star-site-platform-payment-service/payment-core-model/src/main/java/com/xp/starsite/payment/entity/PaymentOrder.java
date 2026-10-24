@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * 渠道回调以 uk_channel_trade（channel+channel_trade_no）防重放。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

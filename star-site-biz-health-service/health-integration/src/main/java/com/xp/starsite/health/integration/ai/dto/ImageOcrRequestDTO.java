@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * 拍照 OCR 请求（跨语言契约，字段与 Python app/schemas.py OcrRequest 对齐）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

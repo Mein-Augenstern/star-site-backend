@@ -12,7 +12,7 @@ import java.util.List;
  * 幂等依赖 uk_source_ext(source, external_id) 唯一键——重复导入由 DuplicateKeyException 语义承载。
  * 转账两笔流水共享 transferGroupId，同事务成对插入、成对删除。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

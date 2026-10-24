@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 孕周/预产期/产检里程碑等计算视图不入库，见 PregnancyVO。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

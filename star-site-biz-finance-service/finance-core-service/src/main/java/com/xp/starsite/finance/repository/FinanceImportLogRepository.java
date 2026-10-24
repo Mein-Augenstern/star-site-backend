@@ -9,7 +9,7 @@ import java.util.List;
  * 屏蔽 DO 与 SQL 细节——实现位于 core-service 模块内，底层调用 dal 的 DAO。
  * 导入记录只追加、不删改（消费结果审计留痕，前端按记录轮询导入进度）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface FinanceImportLogRepository {

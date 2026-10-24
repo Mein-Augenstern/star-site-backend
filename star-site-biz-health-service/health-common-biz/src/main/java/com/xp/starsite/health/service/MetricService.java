@@ -13,7 +13,7 @@ import java.util.List;
  * 报告指标读 health_indicator（体检报告单）。
  * 归属防线约定同 {@link ReportService}（首参 memberId + family 归属校验，fail-closed）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface MetricService {

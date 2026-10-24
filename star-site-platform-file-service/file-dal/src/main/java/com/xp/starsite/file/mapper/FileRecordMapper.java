@@ -9,7 +9,7 @@ import org.apache.ibatis.annotations.Param;
  * 主键自增：INSERT 不含 id（useGeneratedKeys 回填），created_at 由 DB 默认值维护。
  * 表无 deleted 列（文件不做逻辑删），查询不过滤逻辑删。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

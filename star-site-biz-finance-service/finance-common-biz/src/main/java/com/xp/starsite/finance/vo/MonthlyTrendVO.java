@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 
 /** 月度收支趋势点（近 12 个月）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

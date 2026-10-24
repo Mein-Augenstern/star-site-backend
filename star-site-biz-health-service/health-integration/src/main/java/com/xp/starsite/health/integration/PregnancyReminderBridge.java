@@ -16,7 +16,7 @@ import java.util.List;
  * 只负责调用 + 容错（tolerant：提醒是增值能力，失败不阻断主流程）；
  * 产检里程碑规则 DTO 的组装在 health-core-service 的 {@code PrenatalRuleAssembler}。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

@@ -8,7 +8,7 @@ import java.time.LocalDate;
 /**
  * 目标视图（含进度）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

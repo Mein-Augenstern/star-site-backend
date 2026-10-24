@@ -6,7 +6,7 @@ package com.xp.starsite.common.constants;
  * <p>全平台认证链路共用的 HTTP 头/Token 前缀/JWT claim 名约定，
  * 供 JwtUtil 签发校验、member 服务登录签发、网关与各服务拦截器鉴权时对齐使用。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public final class AuthConstants {

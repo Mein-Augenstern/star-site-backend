@@ -12,7 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * 必须条件装配：@RocketMQMessageListener 的 BeanPostProcessor 是无条件的，
  * MQ 停用时若仍注册消费者会"connect to null"导致启动失败。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Configuration

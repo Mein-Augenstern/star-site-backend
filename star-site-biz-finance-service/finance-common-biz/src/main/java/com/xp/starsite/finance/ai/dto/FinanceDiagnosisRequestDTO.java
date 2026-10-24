@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * 财务健康诊断请求（跨语言契约，字段与 Python DiagnosisRequest 对齐；数值均为字符串原样透传）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

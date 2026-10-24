@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 家庭成员档案数据对象（family_member 表镜像，DAL 自持——不依赖任何上层模型）。
  * 领域语义见 core-model 的 entity/FamilyMember。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

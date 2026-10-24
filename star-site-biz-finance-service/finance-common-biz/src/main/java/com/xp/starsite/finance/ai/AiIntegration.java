@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * 的 MQ 消费方向不允许反向依赖，见 {@link AiApi} 类注释）。
  * 诊断是实时生成（无缓存语义），fail-closed：失败经 RpcCallGuard 翻译为标准 RpcException 上抛。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Component

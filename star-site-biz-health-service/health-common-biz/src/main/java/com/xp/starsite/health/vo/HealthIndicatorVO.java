@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 /**
  * 体检指标视图
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

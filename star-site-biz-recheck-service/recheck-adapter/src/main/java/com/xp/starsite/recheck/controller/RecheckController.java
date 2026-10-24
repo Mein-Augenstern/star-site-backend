@@ -27,7 +27,7 @@ import java.util.List;
  * 鉴权：JwtAuthInterceptor 拦 /api/**，memberId 从网关注入的 JWT attribute 取；
  * 业务逻辑统一经模板包裹（动作名 recheck.plan.*）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController

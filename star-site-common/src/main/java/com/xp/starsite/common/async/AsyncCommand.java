@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 由 AsyncCommandConfig 的调度器认领执行，业务方经 AsyncCommandService 提交。
  * 纯 POJO——列映射在 AsyncCommandMapper 注解 SQL（map-underscore-to-camel-case）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

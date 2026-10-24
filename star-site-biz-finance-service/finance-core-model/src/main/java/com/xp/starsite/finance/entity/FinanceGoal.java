@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 /**
  * 家庭储蓄目标（finance_goal）：如 教育金/换车基金；V1 手动更新进度。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  */

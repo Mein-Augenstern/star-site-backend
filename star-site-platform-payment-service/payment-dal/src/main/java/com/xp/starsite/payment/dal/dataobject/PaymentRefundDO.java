@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 退款单数据对象（payment_refund 表镜像，DAL 自持）。
  * 领域语义见 core-model 的 entity/PaymentRefund。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

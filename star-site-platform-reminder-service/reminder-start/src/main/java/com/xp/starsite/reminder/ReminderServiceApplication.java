@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 /**
  * 提醒中心微服务启动类
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @SpringBootApplication(scanBasePackages = "com.xp.starsite")

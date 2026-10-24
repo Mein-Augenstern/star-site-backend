@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * 家庭目标数据访问（DAL）：finance_goal，逻辑删。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

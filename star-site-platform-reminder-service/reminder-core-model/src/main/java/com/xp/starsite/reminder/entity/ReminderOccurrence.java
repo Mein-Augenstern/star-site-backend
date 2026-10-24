@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 提醒实例（扫描从规则预生成，(rule_id, due_date) 唯一防重；随规则撤销物理删，无 deleted 列）。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

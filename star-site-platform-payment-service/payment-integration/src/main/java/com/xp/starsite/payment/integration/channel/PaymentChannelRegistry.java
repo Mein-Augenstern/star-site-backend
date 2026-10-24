@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  * 收银台按渠道类型取用。未装配的渠道（如生产关掉 mock、未配支付宝密钥）取用时即报
  * 「不支持的支付渠道」，把配置问题拦在调用点。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Component

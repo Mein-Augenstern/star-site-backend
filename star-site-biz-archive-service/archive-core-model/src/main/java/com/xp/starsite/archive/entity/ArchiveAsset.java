@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 车辆以 next_inspect_date 为源发年检提醒（ANNUAL 重复）；current_value 汇入净资产曲线。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

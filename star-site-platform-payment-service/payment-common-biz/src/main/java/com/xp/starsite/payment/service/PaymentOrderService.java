@@ -12,7 +12,7 @@ import java.util.Map;
  * 归属防线约定：方法首参 memberId 为当前登录账号（Controller 从 JWT attribute 取），
  * 查询/关单按归属账号收口；回调入口（handleNotify）不经 JWT、以渠道验签为唯一防线。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface PaymentOrderService {

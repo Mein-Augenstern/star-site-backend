@@ -12,7 +12,7 @@ import java.util.List;
  * 体检报告快照（跨服务传输用）：报告元数据 + 指标全集。
  * 归属字段冗余（familyMemberId），消费方据此校验报告确属目标成员。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

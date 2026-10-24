@@ -37,7 +37,7 @@ import java.util.Map;
  * 回调验签依赖请求头四件套（Wechatpay-Serial/Nonce/Signature/Timestamp），
  * 由回调入口统一透传 headers。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

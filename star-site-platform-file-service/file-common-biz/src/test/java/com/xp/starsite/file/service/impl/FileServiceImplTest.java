@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
  * 文件服务单测（FileController 下沉逻辑）：越权防线（仅上传者本人可读）与
  * 内容类型解析回落（mock 全部依赖，不连库、不落盘）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @ExtendWith(MockitoExtension.class)

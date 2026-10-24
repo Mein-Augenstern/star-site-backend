@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 幂等约束：uk_refund_no（应用侧退款单号）、uk_channel_refund（channel+channel_refund_no）防渠道重放。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

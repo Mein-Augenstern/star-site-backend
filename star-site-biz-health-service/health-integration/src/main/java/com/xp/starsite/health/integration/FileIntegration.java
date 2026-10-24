@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * 文件读取是 OCR 识别的强依赖，fail-closed：失败经 RpcCallGuard 翻译为
  * 标准 RpcException（带 retryable）上抛。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Component

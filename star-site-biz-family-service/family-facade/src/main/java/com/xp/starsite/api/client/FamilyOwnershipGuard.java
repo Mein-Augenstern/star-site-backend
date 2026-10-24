@@ -27,7 +27,7 @@ import java.util.List;
  * 调用经 {@link RpcCallGuard} 统一三段式处理（判 code/可重试判定/标准异常翻译），
  * 对外仍抛 BizException（历史语义：403 无权限 / 500 依赖不可用），消费方零改动。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

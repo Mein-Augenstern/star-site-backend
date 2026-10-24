@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 档案落库后组装产检里程碑规则（PrenatalRuleAssembler）并经 {@link PregnancyReminderBridge} 注册为提醒中心规则（幂等 upsert）。
  * 数据访问经仓储层（{@link PregnancyProfileRepository}，底层调用 dal DAO）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

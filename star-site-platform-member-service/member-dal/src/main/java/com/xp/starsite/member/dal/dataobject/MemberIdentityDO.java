@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
  * 登录身份数据对象（member_identity 表镜像，DAL 自持——不依赖任何上层模型）。
  * 领域语义见 core-model 的 entity/MemberIdentity。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

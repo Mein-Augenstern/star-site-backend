@@ -49,7 +49,7 @@ import com.xp.starsite.archive.constant.ArchiveReminderBizType;
  * 主键为应用侧雪花 id（{@link IdGenerator}）——半消息载荷需在 insert 前拿到 id，
  * 该语义保持不变。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

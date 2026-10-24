@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
  * （AI 智能体的 finance 工具按 memberId 透传调用，fail-closed）。
  * 业务逻辑统一经模板包裹（动作名 finance.internal.*）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController

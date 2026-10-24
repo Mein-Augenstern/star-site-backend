@@ -13,7 +13,7 @@ import java.util.List;
  * 存储引擎可替换（MySQL/Lindorm/TBase）——接口不变，换 XML/实现即可。
  * 逻辑删：health_report.deleted，查询一律带 deleted=0，删除为 UPDATE 置位。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

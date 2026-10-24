@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 /**
  * 月度分类预算（finance_budget）：按「分类 × 月份」控制支出。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  */

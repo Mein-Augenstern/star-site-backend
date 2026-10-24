@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * report_year 冗余存储，趋势查询免 join；无逻辑删（随报告重录物理清除）。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

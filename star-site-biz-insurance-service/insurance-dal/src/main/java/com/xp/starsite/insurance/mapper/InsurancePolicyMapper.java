@@ -11,7 +11,7 @@ import java.util.List;
  * SQL 全部收敛在 mapper XML，业务层只见业务语义方法。
  * 逻辑删：deleted 字段，查询一律带 deleted=0，删除为 UPDATE 置位。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

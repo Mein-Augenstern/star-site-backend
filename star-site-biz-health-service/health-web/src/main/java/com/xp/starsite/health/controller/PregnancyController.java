@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 拆分约定与鉴权说明见 {@link ReportController} 类注释；
  * 业务逻辑统一经模板包裹（动作名 health.pregnancy.*）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController

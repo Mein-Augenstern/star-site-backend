@@ -7,7 +7,7 @@ import lombok.Data;
 /**
  * 修改密码入参
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

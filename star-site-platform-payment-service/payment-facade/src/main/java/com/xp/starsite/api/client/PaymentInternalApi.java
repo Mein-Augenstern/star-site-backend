@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  * /internal/** 不经网关路由（外网 404），仅限内网服务间调用。
  * 归属校验：payment 侧按 ownerMemberId 收口（调用方透传登录账号）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @FeignClient(name = "star-site-platform-payment", contextId = "paymentInternalApi", path = "/internal/payment")

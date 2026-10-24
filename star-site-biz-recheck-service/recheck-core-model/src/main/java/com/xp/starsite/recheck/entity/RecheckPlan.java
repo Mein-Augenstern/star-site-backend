@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  * 报告/指标数据全在 health（横向服务），本表只存基线快照与闭环状态。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

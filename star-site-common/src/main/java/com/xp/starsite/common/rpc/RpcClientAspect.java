@@ -26,7 +26,7 @@ import java.lang.reflect.Method;
  * 条件装配：@ConditionalOnClass(FeignException)——有 Feign 运行时的服务才织入，
  * 网关/WebFlux 零感知（与 StarSiteFeignLogConfig 同款模式）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

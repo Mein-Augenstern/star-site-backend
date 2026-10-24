@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 
 /** 分类支出占比（饼图点）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

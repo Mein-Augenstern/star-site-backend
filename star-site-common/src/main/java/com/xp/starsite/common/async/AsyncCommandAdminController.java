@@ -28,7 +28,7 @@ import java.util.Map;
  * 业务逻辑统一经模板包裹（动作命名 async.admin.*；2026-10-15 前历史动作为
  * member.admin.async.*，旧值仅存于历史日志不再使用）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController

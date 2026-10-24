@@ -7,7 +7,7 @@ import lombok.Data;
 /**
  * 账单导入结果
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

@@ -12,7 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  * 「至少一次投递 + 业务幂等」的场景——doConsume 内部仍须保证业务可重入
  * （如 upsert），极端情况（业务成功、记录幂等失败）由 MQ 重试兜底。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

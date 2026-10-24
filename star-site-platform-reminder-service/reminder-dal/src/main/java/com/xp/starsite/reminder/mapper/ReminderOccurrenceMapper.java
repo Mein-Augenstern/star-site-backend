@@ -12,7 +12,7 @@ import java.util.List;
  * 提醒实例数据访问（DAL）：SQL 全部收敛在 mapper XML。
  * 本表无 deleted 列——随规则撤销物理删未完成实例；(rule_id, due_date) 唯一键防重。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

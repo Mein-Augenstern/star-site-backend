@@ -6,7 +6,7 @@ import lombok.Data;
 /**
  * 微信身份绑定已有账号入参：账密校验通过后，将当前微信 openid 挂到该账号
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 资金账户（finance_account）：钱在哪；credit/loan 为负债账户（余额=尚欠金额）。
  * 余额由流水增量维护，期初余额建户时一次性录入。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  */

@@ -8,7 +8,7 @@ import lombok.Data;
 /**
  * 注册入参
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

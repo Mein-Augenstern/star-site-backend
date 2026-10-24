@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 缴费提醒以 next_payment_date 为源（ANNUAL 重复），到期提醒以 maturity_date 为源。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 /**
  * 创建支付单请求（C 端收银台 / 业务服务代下单共用）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

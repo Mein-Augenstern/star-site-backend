@@ -26,7 +26,7 @@ import java.util.List;
  * AI 服务不可用时抛 503（fail-closed 翻译自 RpcException）；
  * 越权防线：复用 getDetail 聚合（内部已做归属校验），此处按 id+owner 查询即安全。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

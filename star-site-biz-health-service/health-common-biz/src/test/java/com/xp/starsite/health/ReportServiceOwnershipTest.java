@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
  * 报告服务越权防线单测：归属校验失败时拒绝读写（mock 全部依赖，不连库）。
  * 覆盖：建档/详情/列表收口/删除四条主链路的 403/400 分支。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @ExtendWith(MockitoExtension.class)

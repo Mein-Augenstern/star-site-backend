@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
  * 与 {@link RpcDependencyChecker}（启动期依赖注入校验）。
  * 超时基线见 StarSiteFeignLogConfig（star.rpc.timeout.* 可配置）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Configuration

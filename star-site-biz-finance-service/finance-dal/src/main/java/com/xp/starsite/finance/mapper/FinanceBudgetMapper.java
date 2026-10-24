@@ -10,7 +10,7 @@ import java.util.List;
  * 月度预算数据访问（DAL）：finance_budget，逻辑删。
  * 「分类 × 月份」一人一条：save 语义为 selectByOwnerCategoryPeriod 命中则更新、未命中新建。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

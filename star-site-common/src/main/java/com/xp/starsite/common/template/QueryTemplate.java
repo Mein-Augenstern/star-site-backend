@@ -11,7 +11,7 @@ import java.util.function.Supplier;
  * 后续可在此加缓存钩子，对调用方透明。
  * 用法（Controller）：{@code return queryTemplate.query("health.report.page", () -> ...);}
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public class QueryTemplate extends BizTemplate {

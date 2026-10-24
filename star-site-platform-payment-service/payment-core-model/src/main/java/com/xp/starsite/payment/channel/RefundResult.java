@@ -6,7 +6,7 @@ import lombok.Data;
 /**
  * 渠道退款受理结果
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

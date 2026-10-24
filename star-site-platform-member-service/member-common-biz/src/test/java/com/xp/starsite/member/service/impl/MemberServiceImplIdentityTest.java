@@ -34,7 +34,7 @@ import static org.mockito.Mockito.when;
  * 会员身份/资料用例单测（MultiAuthController 下沉逻辑）：
  * 登录方式脱敏列表、解绑防自锁、资料完善非空字段语义、邮箱验证码绑定（mock 全部依赖）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @ExtendWith(MockitoExtension.class)

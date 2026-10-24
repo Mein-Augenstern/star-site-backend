@@ -23,7 +23,7 @@ import java.util.function.Supplier;
  * 动作命名规范：{@code 服务.资源.动作}（如 health.report.page）。
  * 具体变体见 {@link QueryTemplate}（读）与 {@link WriteTemplate}（写）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

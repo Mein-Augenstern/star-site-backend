@@ -19,7 +19,7 @@ import org.springframework.core.env.Environment;
  * （env 带连字符的键映射 relaxed binding 易错，代码默认值零歧义，yml 仍可覆盖）。
  * 另有 {@link FeignTraceInterceptor} 透传 traceId/X-Caller-App。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Configuration

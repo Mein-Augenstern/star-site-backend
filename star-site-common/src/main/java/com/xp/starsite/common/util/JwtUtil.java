@@ -19,7 +19,7 @@ import java.util.Date;
  * 各业务服务的 JwtAuthInterceptor（MVC）与网关 JwtGlobalFilter（WebFlux）用 parseToken 校验，
  * claim 名以 AuthConstants 为准。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Component

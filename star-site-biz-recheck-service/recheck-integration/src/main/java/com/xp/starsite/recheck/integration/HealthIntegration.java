@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * 与提醒不同，报告读取是复查闭环的强依赖（建计划/闭环都靠它），fail-closed：
  * 失败经 RpcCallGuard 翻译为标准 RpcException（带 retryable）上抛。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Component

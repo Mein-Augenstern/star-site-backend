@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 到期提醒以 expiry_date 为源（非长期证件），扫描件存 file 服务。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

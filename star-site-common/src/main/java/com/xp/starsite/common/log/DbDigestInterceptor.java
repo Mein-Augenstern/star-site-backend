@@ -17,7 +17,7 @@ import java.util.Properties;
  * 记录 SQL（截断 500 字符）与耗时；慢 SQL（&gt;1s）额外在业务日志 warn 提示。
  * 由 {@link StarSiteLogConfig} 注册为 mybatis 插件，全服务自动生效。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Intercepts({

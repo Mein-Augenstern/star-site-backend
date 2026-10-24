@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 归属校验（FamilyOwnershipGuard）即以本表的 family_id → owner 关系为准。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

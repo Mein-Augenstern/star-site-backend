@@ -8,7 +8,7 @@ import java.math.BigDecimal;
  * 资产类型汇总行（DAL 查询投影）：GROUP BY asset_type 的总估值与数量。
  * 纯 POJO——列别名在 archive-dal 的 mapper XML 里对齐本类属性（驼峰自动映射）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

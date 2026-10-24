@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
  * 登录身份（member_identity，一个账号 N 种登录方式；多端归一）。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

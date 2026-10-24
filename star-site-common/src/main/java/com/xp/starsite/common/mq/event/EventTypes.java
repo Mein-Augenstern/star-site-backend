@@ -3,7 +3,7 @@ package com.xp.starsite.common.mq.event;
 /**
  * 事件类型常量（一个类型 = 一种语义；tag 同名，消费端可按 tag 订阅）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public final class EventTypes {

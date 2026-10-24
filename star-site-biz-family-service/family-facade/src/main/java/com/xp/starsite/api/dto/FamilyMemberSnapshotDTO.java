@@ -8,7 +8,7 @@ import java.time.LocalDate;
 /**
  * 家庭成员快照（跨服务传输用：归属校验 + 展示冗余）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

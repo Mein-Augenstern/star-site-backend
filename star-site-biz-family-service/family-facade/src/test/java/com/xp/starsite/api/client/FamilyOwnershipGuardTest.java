@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
  * 家庭归属防线单测：验证 FamilyOwnershipGuard 归属放行/越权 403/服务不可用 fail-closed 500
  * 三态语义（不启 Spring），以及成员范围列表的空家庭兜底。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 class FamilyOwnershipGuardTest {

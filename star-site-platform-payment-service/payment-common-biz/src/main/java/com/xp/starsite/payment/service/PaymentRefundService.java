@@ -6,7 +6,7 @@ import com.xp.starsite.payment.vo.PaymentRefundVO;
 /**
  * 退款服务：对支付成功支付单发起退款（渠道受理 → 状态机）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface PaymentRefundService {

@@ -11,7 +11,7 @@ import java.util.List;
  * 逻辑删：archive_document.deleted，查询一律带 deleted=0，删除为 UPDATE 置位。
  * 主键为应用侧雪花 id——INSERT 显式含 id 列（事务消息载荷需 insert 前拿到 id）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

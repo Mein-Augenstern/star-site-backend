@@ -4,7 +4,7 @@ package com.xp.starsite.payment.constant;
  * 支付渠道类型（payment_order.channel / 渠道路由键）。
  * 值随支付单落库且出现在渠道回调 URL（/api/payment/notify/{channel}），只增不改名。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public final class PaymentChannelType {

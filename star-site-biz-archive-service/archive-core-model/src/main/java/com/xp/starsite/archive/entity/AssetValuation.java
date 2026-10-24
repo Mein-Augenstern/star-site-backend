@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 用于资产估值变化曲线。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

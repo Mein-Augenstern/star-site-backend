@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
  * 家庭数据对象（family 表镜像，DAL 自持——不依赖任何上层模型）。
  * 领域语义见 core-model 的 entity/Family。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

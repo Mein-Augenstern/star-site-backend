@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  * 规则 DTO 的组装（复查日/每日监测两条规则、幂等键）在
  * recheck-core-service 的 {@code ReminderRuleAssembler}。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Component

@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 /**
  * 单条指标入参
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

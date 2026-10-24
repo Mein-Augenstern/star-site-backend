@@ -9,7 +9,7 @@ import java.util.List;
  * 屏蔽 DO 与 SQL 细节——实现位于 core-service 模块内，底层调用 dal 的 DAO。
  * health_indicator 无逻辑删，随报告重录物理清除。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface HealthIndicatorRepository {

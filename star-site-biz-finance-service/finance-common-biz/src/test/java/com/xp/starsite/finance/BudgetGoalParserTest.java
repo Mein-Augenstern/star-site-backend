@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
 /**
  * 预算/目标/账单解析单元测试（mock 全部依赖；解析器用 mock 微信账单样本）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @ExtendWith(MockitoExtension.class)

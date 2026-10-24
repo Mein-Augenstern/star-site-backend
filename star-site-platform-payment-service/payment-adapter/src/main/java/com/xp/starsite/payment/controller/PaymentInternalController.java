@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 调用方统一走 payment-facade 的 PaymentInternalApi；
  * 业务与转换逻辑全部下沉本服务（军规：控制器零映射），动作名 payment.internal.*。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController

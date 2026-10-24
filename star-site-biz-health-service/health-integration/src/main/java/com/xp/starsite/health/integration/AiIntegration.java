@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  * 领域内其他类禁止直接依赖 AI 服务的 Feign。
  * AI 是解读/OCR 的强依赖，fail-closed：失败由 RpcClientAspect 统一翻译为 RpcException 上抛。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Component

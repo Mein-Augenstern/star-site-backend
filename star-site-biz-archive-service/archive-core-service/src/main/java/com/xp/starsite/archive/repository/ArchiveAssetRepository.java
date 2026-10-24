@@ -12,7 +12,7 @@ import java.util.Optional;
  * 屏蔽 DO 与 SQL 细节——实现位于 core-service 模块内，底层调用 dal 的 DAO。
  * {@link AssetTypeSummary} 为 dal 聚合查询的只读投影（非领域实体），经仓储透出。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface ArchiveAssetRepository {

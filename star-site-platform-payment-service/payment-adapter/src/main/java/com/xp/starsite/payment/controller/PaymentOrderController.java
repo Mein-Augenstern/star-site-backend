@@ -26,7 +26,7 @@ import java.util.List;
  * 鉴权：JwtAuthInterceptor 拦 /api/**（渠道回调走 /api/payment/notify/**，已排除）；
  * 业务逻辑统一经模板包裹（动作名 payment.order.*）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController

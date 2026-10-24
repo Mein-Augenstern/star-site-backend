@@ -8,7 +8,7 @@ import com.xp.starsite.health.vo.VisitVO;
  * 就医记录服务：门诊/住院/产检等就诊事件的登记、查询与删除。
  * 归属防线约定同 {@link ReportService}（首参 memberId + family 归属校验，fail-closed）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface VisitService {

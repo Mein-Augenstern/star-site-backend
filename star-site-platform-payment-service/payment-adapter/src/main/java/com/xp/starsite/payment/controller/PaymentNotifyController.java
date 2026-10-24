@@ -24,7 +24,7 @@ import java.util.Map;
  * 返回渠道原生应答体——不套业务 R 模板（模板约定：渠道协议/文件流响应例外）；
  * 验签失败/金额不符返回 4xx 原文，渠道侧会重试。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

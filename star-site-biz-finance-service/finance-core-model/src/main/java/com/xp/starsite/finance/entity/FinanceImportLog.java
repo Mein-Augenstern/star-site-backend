@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
  * 账单导入记录（finance_import_log）：FileUploaded 事件消费结果，
  * 前端按 id 轮询导入进度与结果。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  */

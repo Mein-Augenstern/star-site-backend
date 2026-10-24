@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * 报告解读结果（跨语言契约）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

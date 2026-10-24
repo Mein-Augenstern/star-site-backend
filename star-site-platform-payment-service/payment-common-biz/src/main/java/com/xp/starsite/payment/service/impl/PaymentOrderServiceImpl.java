@@ -34,7 +34,7 @@ import java.util.Map;
  * 支付单服务实现：下单幂等（同业务键复用在途单）→ 渠道路由预下单 → 回调 CAS 状态机
  * → 事务消息发布支付成功事件（MQ 停用期发布失败不阻断入账，业务方以内部查单兜底）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

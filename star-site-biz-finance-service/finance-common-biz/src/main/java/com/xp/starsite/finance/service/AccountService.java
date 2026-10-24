@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * 资金账户服务。首参 memberId 用于归属校验。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface AccountService {

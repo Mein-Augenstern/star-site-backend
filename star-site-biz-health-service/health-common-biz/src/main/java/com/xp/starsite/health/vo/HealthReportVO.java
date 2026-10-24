@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * 体检报告视图（详情时 indicators 非空）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

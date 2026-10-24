@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 与报告指标（health_indicator）互不隶属；血压一次录入产生 bp_sys/bp_dia 两行。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

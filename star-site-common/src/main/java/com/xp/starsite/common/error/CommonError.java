@@ -22,7 +22,7 @@ import java.io.StringWriter;
  * 暴露面提示：stackTrace 会随 HTTP/RPC 响应出服务（家庭内网平台，诊断价值优先），
  * 对外公网网关若开放，应在边缘网关剥离该字段。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

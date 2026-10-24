@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 就医记录（visit_record 表）：门诊/住院/产检等就诊事件台账。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

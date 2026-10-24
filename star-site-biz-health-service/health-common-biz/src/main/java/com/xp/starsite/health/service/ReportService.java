@@ -15,7 +15,7 @@ import java.util.List;
  * 带 familyMemberId 的写入先经 {@link com.xp.starsite.api.client.FamilyOwnershipGuard} 校验；
  * 列表/搜索不传 familyMemberId 时强制收口在「自己家庭的成员集合」内，fail-closed。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface ReportService {

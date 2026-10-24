@@ -13,7 +13,7 @@ import java.util.List;
  * UPDATE 行锁锁账户 → WHERE deleted=0 判存在 → balance=balance+delta 原子更新），
  * 并发流水/导入下不丢更新；严禁业务层读-算-写覆盖余额。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

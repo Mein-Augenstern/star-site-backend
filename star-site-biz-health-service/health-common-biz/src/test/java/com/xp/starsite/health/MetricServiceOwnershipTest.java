@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 /**
  * 日常指标服务越权防线单测：批次内任一成员不归属整批拒绝（mock 全部依赖，不连库）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @ExtendWith(MockitoExtension.class)

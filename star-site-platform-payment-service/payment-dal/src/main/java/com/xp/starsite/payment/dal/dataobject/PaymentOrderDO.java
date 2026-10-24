@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 支付单数据对象（payment_order 表镜像，DAL 自持——不依赖任何上层模型）。
  * 领域语义见 core-model 的 entity/PaymentOrder。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

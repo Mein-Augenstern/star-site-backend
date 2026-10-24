@@ -10,7 +10,7 @@ import java.util.function.Supplier;
  * 事务仍由 Service 的 @Transactional 承担；模板包掉成功与失败处理
  * （成功 R.ok/R.voidOk，失败 R.fail），后续可加程序化事务/审计钩子，对调用方透明。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public class WriteTemplate extends BizTemplate {

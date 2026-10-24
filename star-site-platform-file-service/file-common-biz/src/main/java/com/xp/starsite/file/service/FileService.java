@@ -7,7 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 /**
  * 文件服务
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface FileService {

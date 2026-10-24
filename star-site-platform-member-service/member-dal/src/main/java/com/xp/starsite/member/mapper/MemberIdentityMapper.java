@@ -11,7 +11,7 @@ import java.util.List;
  * 逻辑删：member_identity.deleted，查询一律带 deleted=0，删除为 UPDATE 置位。
  * (identity_type, identifier) 唯一键 + unionid 跨端归一键；credential 落 session_key/BCrypt 密文（敏感不下发）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

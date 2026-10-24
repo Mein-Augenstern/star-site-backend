@@ -7,7 +7,7 @@ package com.xp.starsite.member.vo;
  * @param identityType 身份类型（WECHAT_MP/PASSWORD/EMAIL 等）
  * @param identifier   脱敏后的标识符（PASSWORD 明文回显，其余中段打码）
  * @param createdAt    绑定时间（ISO 字符串，可空）
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public record IdentityVO(Long id, String identityType, String identifier, String createdAt) {

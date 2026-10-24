@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 /**
  * 资产负债表
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

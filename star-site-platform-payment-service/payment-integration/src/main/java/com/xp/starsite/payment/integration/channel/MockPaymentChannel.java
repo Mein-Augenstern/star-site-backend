@@ -25,7 +25,7 @@ import java.util.Map;
  * 只把渠道侧换成 HMAC-SHA256 本地签名——联调/演示零外部依赖，生产经
  * star.payment.mock.enabled=false 关闭（关闭后创建 mock 渠道支付单即报不支持渠道）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

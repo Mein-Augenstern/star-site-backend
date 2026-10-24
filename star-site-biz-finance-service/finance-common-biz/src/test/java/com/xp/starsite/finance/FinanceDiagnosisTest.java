@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
  * 财务 AI 诊断单元测试：聚合快照结构化上送 AI 服务、失败翻译 503（mock 全部依赖）。
  * LLM 拆分到 ai 服务后，本测试只验证「聚合 → 集成层」的编排与容错（prompt 在 AI 服务侧）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @ExtendWith(MockitoExtension.class)

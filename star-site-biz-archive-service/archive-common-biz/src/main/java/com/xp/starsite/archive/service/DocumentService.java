@@ -7,7 +7,7 @@ import com.xp.starsite.archive.vo.PageVO;
 /**
  * 证件夹服务。首参 memberId 为当前登录顶梁柱，用于归属校验。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface DocumentService {

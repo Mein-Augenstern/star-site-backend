@@ -16,7 +16,7 @@ import java.util.Map;
  * （method/path/status/cost/caller——caller 取 X-Caller-App 头，谁调的我一目了然）；
  * ③ 请求结束清理 MDC。中间件层自动生效，业务代码零侵入。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public class RpcServerDigestFilter extends OncePerRequestFilter {

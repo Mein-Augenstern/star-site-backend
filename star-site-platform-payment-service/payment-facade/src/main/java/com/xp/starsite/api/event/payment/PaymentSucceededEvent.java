@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 业务方按 source+bizType+bizId 幂等驱动业务单状态流转（如保单「缴费中→已缴清」）。
  * MQ 停用期事件不投递，业务方以 PaymentInternalApi.getByBiz 同步查询兜底。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

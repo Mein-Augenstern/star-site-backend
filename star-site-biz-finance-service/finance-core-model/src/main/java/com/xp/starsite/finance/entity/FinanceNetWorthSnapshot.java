@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 净资产快照（finance_net_worth_snapshot）：每日调度落一行，
  * uk(owner_member_id, snap_date) 幂等；净资产曲线（F2 资产负债表）的数据源。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  */

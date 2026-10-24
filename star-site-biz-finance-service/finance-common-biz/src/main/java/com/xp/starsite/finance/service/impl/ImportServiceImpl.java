@@ -29,7 +29,7 @@ import java.util.List;
  * 幂等：uk_source_ext(source, external_id) 唯一键，重复导入的行 DuplicateKeyException 跳过；
  * 余额：解析批的净额（收入 + / 支出 -）一次增量更新账户，与流水同事务。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

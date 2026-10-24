@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  *
  * /internal/** 不经网关路由（外网 404），仅限内网服务间调用。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @FeignClient(name = "star-site-platform-ai", contextId = "financeAiInternalApi", path = "/internal/ai")

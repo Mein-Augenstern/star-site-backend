@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
  * 使用原生 rocketmq-client API（非 rocketmq-spring 注解式），
  * 由 RocketMqEventPublisher 内置，业务方零感知。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 class DomainTransactionListener implements TransactionListener {

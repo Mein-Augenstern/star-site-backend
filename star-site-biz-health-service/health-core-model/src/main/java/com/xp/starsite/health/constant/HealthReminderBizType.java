@@ -6,7 +6,7 @@ package com.xp.starsite.health.constant;
  * source/bizType 会落 reminder 库并参与幂等键（source+bizType+bizId），
  * 值一经上线只能新增、不能改名（改名 = 幂等键漂移 = 重复规则）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public final class HealthReminderBizType {

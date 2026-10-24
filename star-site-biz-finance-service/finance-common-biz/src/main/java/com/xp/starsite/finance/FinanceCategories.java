@@ -8,7 +8,7 @@ import java.util.Arrays;
 /**
  * 收支分类（V1 内置枚举 + 预留表化，F4 开放自定义）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Getter

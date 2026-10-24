@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 越权防线：所有成员读写先经 requireFamily/requireMember 收口在「本人家庭」内
  * （/internal/family 的归属校验是全平台越权防线，语义保持逐行等价）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

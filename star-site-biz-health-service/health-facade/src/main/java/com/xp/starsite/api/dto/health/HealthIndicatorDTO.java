@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 体检指标快照（跨服务传输用）：health_indicator 单行投影。
  * abnormalFlag: 0正常 1偏高 2偏低；valueNum/valueText 二选一有值。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

@@ -7,7 +7,7 @@ import java.util.UUID;
 /**
  * 存储键生成：{yyyyMM}/{uuid}{.ext}，本地与 OSS 共用
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public final class StorageKeys {

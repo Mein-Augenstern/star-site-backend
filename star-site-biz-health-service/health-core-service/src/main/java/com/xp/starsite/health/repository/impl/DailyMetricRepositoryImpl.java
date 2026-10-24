@@ -16,7 +16,7 @@ import java.util.Optional;
  * 日常健康指标仓储实现：调用 dal 的 {@link DailyMetricMapper}（DAO）操作数据库，
  * DO↔Entity 转换收敛于此——上层（service）只见领域模型。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Component

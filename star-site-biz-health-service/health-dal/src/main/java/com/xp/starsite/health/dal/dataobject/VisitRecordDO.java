@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 就医记录数据对象（visit_record 表的镜像映射，DAL 自持——不依赖任何上层模型）。
  * 字段与表列一一对应；领域语义见 core-model 的 {@link com.xp.starsite.health.entity.VisitRecord}。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

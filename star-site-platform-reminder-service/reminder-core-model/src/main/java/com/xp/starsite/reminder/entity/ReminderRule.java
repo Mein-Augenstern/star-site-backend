@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
  * 衍生物无历史价值，唯一键才干净，故本表无 deleted 列）。
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

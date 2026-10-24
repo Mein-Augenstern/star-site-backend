@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 体检指标数据对象（health_indicator 表镜像，DAL 自持——不依赖任何上层模型）。
  * 领域语义见 core-model 的 entity/HealthIndicator。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

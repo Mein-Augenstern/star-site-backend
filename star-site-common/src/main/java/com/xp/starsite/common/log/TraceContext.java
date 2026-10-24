@@ -9,7 +9,7 @@ import org.slf4j.MDC;
  * 与 digest 日志字段 → 出口（Feign 调用/MQ 发送）透传给下游 → 请求结束 clear（防线程池串号）。
  * 无 traceId 时由入口生成（32 位 hex，兼容 SOFA Tracer 风格）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public final class TraceContext {

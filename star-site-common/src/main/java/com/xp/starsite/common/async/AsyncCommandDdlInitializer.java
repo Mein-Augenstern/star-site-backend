@@ -12,7 +12,7 @@ import java.sql.Statement;
  * 不再依赖 member/共享库的表），启动时自动执行 IF NOT EXISTS 建表（增量安全）。
  * 正式 DDL 同步在 docker/mysql-init/18-async-command.sql。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

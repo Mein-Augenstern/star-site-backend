@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 /**
  * 预下单请求（渠道无关）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

@@ -11,7 +11,7 @@ import java.util.List;
  * 净资产快照数据访问（DAL）：finance_net_worth_snapshot，自增主键，无逻辑删。
  * uk(owner_member_id, snap_date) 幂等：当日已有则 update 覆盖，并发插入由 DuplicateKeyException 兜底。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

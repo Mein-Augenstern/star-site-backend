@@ -11,7 +11,7 @@ import java.util.Optional;
  * 屏蔽 DO 与 SQL 细节——实现位于 core-service 模块内，底层调用 dal 的 DAO。
  * 快照按 uk(owner, snap_date) 当日覆盖更新、从不删除——曲线为只增不减的时间序列。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface FinanceNetWorthSnapshotRepository {

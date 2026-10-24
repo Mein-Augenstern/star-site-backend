@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * 报告指标数据访问（DAL）：health_indicator 无逻辑删（随报告重录物理清除）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

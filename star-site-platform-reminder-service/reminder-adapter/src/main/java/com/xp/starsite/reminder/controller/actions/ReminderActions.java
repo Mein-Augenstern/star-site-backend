@@ -6,7 +6,7 @@ package com.xp.starsite.reminder.controller.actions;
  * 动作名会进模板留痕与 digest，只能新增、不能改名：字符串值与历史值逐字节一致。
  * 常量名取「资源.动作」段，省略服务前缀 reminder.。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public final class ReminderActions {

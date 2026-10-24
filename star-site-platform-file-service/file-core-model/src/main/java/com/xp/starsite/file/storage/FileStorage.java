@@ -5,7 +5,7 @@ import java.io.InputStream;
 /**
  * 文件存储抽象：本地磁盘 / OSS 可切换
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface FileStorage {

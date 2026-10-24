@@ -16,7 +16,7 @@ import java.io.IOException;
  * BASIC 级别下本类负责响应体重缓冲（feign 契约：logAndRebufferResponse 后响应可重读）。
  * 只记 digest 不落 feign 原生日志行；URL 只保留到路径（去 query 防敏感参数入盘）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public class FeignDigestLogger extends feign.Logger {

@@ -10,7 +10,7 @@ import java.util.Optional;
  * 支付单仓储（领域导向）：对上层（service）暴露领域模型，
  * 屏蔽 DO 与 SQL 细节——实现位于 core-service 模块内，底层调用 dal 的 DAO。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface PaymentOrderRepository {

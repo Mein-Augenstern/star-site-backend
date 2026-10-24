@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * 账单导入记录数据访问（DAL）：finance_import_log，自增主键（DB 生成），无逻辑删。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

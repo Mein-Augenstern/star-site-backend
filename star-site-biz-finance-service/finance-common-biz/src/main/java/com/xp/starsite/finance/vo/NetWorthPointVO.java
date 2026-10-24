@@ -8,7 +8,7 @@ import java.time.LocalDate;
 /**
  * 净资产曲线点
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

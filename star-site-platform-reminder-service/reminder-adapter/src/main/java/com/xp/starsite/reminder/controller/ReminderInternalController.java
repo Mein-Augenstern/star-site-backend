@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 跨服务提醒规则的注册/撤销（幂等键 source+bizType+bizId）与手动触发扫描；
  * 动作名 reminder.internal.*。调用方统一走 reminder-facade 的 ReminderApi。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @RestController

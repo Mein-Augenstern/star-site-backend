@@ -11,7 +11,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * Web 配置：/api/** 全部需要 JWT，渠道回调 /api/payment/notify/** 例外
  * （外部渠道服务器无 token，唯一防线是渠道验签；CORS 统一在网关处理）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Configuration

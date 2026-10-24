@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 家庭资产服务（房产/车辆/存款理财台账）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface AssetService {

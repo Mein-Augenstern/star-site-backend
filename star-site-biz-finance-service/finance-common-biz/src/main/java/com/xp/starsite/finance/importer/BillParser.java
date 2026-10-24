@@ -6,7 +6,7 @@ import java.util.Map;
  * 账单解析器（策略模式）：每渠道一个实现，按渠道名从 {@link BillParserRegistry} 取。
  * 实现只负责"文本行 → 流水草稿"，落库/去重/余额由导入服务统一处理。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface BillParser {

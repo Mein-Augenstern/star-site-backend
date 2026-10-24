@@ -10,7 +10,7 @@ import java.time.LocalDate;
 
 /** 用户自建提醒规则入参（用药/复查/疫苗等）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

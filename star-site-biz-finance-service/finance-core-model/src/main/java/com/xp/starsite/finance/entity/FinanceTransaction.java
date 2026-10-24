@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 交易流水（finance_transaction）：记账的唯一事实源，账户余额由流水增量维护；
  * balance_after 快照用于对账。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  * 纯 POJO——表结构映射在 DAL 的 mapper XML（resultType 驼峰自动映射）。
  */

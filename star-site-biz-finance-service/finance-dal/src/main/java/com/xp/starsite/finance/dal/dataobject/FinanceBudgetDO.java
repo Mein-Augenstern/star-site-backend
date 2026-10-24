@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * 月度分类预算数据对象（finance_budget 表镜像，DAL 自持——不依赖任何上层模型）。
  * 领域语义见 core-model 的 entity/FinanceBudget。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

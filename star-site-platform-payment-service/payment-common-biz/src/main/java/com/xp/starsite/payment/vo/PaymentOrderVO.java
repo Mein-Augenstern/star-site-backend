@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 /**
  * 支付单视图（含支付凭证，创建接口返回）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

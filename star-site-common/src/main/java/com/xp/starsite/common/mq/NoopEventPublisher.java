@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
  * 发布为空操作并告警——事件丢失意味着消费方漏处理，需业务侧自行补偿
  * （如 reminder 降级为 @Scheduled 扫描、账单导入可走同步接口重传）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Slf4j

@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * 报告解读请求（跨语言契约，字段与 Python InterpretRequest 对齐；prompt 在 AI 服务侧）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

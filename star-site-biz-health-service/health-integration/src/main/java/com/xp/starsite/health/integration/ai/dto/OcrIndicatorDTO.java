@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 /**
  * OCR 单项指标草稿（跨语言契约，与 Python OcrIndicator 对齐）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Data

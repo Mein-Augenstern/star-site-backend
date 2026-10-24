@@ -35,7 +35,7 @@ import static org.mockito.Mockito.when;
  * 提醒中心单元测试：规则 upsert/撤销、重复日期推算、扫描投递（mock 全部依赖）。
  * mock 的是仓储业务语义方法（findByIdempotentKey/selectEnabled/selectDuePendingUpTo/markNotified 等）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @ExtendWith(MockitoExtension.class)

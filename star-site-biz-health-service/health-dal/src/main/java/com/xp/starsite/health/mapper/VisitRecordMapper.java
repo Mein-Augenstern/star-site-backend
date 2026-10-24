@@ -11,7 +11,7 @@ import java.util.List;
  * 就医记录数据访问（DAL）：visit_record，逻辑删。
  * 入参/出参均为 {@link VisitRecordDO}（DAL 自持数据对象，不依赖 core-model）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Mapper

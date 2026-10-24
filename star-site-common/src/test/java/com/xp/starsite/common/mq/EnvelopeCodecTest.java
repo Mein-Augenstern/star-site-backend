@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * 事件信封编解码单测：验证 JSON 往返保留 LocalDateTime（发布端与消费端共用 jsr310 配置的约定），
  * 坏报文解码抛异常进 DLQ。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 class EnvelopeCodecTest {

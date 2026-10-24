@@ -8,7 +8,7 @@ import lombok.Getter;
  * retryable 标注失败是否可重试（超时/依赖未就绪/5xx = true，参数与权限类 4xx = false），
  * 来源优先取响应体 R.retryable（提供方声明），缺省按状态段位推断。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @Getter

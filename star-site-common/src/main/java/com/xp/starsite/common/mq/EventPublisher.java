@@ -5,7 +5,7 @@ package com.xp.starsite.common.mq;
  * <p>
  * 使用方在配置类里 @Import(StarSiteMqConfig.class) 并配置 rocketmq.name-server 启用。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface EventPublisher {

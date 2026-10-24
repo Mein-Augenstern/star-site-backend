@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 会员服务接口（账号/资料/多端登录身份管理）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public interface MemberService {

@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 /**
  * 就医记录服务越权防线单测：归属校验失败时拒绝读写（mock 全部依赖，不连库）。
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 @ExtendWith(MockitoExtension.class)

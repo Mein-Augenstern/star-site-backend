@@ -3,7 +3,7 @@ package com.xp.starsite.member.constant;
 /**
  * 会员身份类型（member_identity.identity_type 落库值）
  *
- * @author xiaopu
+ * @author muyi
  * @since 2026-10
  */
 public final class IdentityType {
