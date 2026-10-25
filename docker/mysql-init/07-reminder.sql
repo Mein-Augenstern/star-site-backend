@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS `reminder_occurrence` (
   `created_at`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_rule_due` (`rule_id`, `due_date`),
-  KEY `idx_owner_due` (`owner_member_id`, `due_date`, `status`)
+  KEY `idx_owner_due` (`owner_member_id`, `due_date`, `status`),
+  KEY `idx_due_status` (`due_date`, `status`) COMMENT '每日扫描 job：到期未通知（不带 owner/rule 前缀时兜底）'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='提醒实例';
 
 -- 站内通知：到期实例的投递记录，前端铃铛数据源
@@ -52,5 +53,6 @@ CREATE TABLE IF NOT EXISTS `notification` (
   `read_flag`       TINYINT      NOT NULL DEFAULT 0 COMMENT '0未读 1已读',
   `created_at`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_owner_read` (`owner_member_id`, `read_flag`)
+  KEY `idx_owner_read` (`owner_member_id`, `read_flag`),
+  KEY `idx_owner_id` (`owner_member_id`, `id`) COMMENT '铃铛分页：按持有人 id 倒序（idx_owner_read 中间隔 read_flag 断序）'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='站内通知';

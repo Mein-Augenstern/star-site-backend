@@ -46,5 +46,7 @@ CREATE TABLE IF NOT EXISTS `finance_transaction` (
   PRIMARY KEY (`id`),
   KEY `idx_family_time` (`family_id`, `trans_time`),
   KEY `idx_account_time` (`account_id`, `trans_time`),
+  KEY `idx_owner_time` (`owner_member_id`, `trans_time`, `id`) COMMENT '流水主查询：按持有人+时间倒序分页（idx_family_time 最左 family_id 被跳过）',
+  KEY `idx_transfer_group` (`transfer_group_id`) COMMENT '转账删除：按转账组取成对流水',
   UNIQUE KEY `uk_owner_source_ext` (`owner_member_id`, `source`, `external_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='交易流水';
