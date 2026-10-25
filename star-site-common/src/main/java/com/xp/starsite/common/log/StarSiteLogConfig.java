@@ -14,7 +14,6 @@ import org.apache.ibatis.plugin.Interceptor;
 
 import java.util.EnumSet;
 
-import com.xp.starsite.common.id.SequenceWorkerIdAllocator;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
 import lombok.extern.slf4j.Slf4j;
@@ -74,12 +73,14 @@ public class StarSiteLogConfig {
     }
 
     /**
-     * 全局 ID（物理主键）通用组件：雪花算法 + sequence 表分配机器位。
+     * 全局 ID（物理主键）通用组件：引擎已迁移至 starsite-sequence 组件
+     * （com.xp.starsite:starsite-sequence 的 SnowflakeIdGenerator/MysqlWorkerIdAllocator），
+     * 本方法保留 backend 侧的分配策略编排（部署决策不进组件默认装配）：
      * 每个服务在 sys_sequence 表中有各自的一行 sequence（隔离键=服务名），
      * 启动时原子分配 workerId——根治全平台共享 workerId=1 的跨服务撞号问题。
      * <ul>
      *   <li>显式配置 star.snowflake.worker-id 优先（单测/特殊部署确定性用）；</li>
-     *   <li>无 DB（理论兜底）或分配失败：回落 hash(服务名)%1024（按服务确定，降低撞号面）；</li>
+     *   <li>无 DB（理论兜底）或租约失败：回落 hash(服务名)%1024（按服务确定，降低撞号面）；</li>
      *   <li>sequence 表缺失自动创建（IF NOT EXISTS），DDL 同步在 docker/mysql-init/22-sys-sequence.sql。</li>
      * </ul>
      * 需要应用侧生成 id 的场景经业务层显式调用 nextId()（替代 MyBatis-Plus ASSIGN_ID）。
@@ -99,9 +100,13 @@ public class StarSiteLogConfig {
             return new com.xp.starsite.common.util.IdGenerator(fallbackWorkerId(appName));
         }
         try {
-            long workerId = new SequenceWorkerIdAllocator(dataSource, appName,
-                    appName + "@" + env.getProperty("PID", "0") + "@" + System.currentTimeMillis()).allocate();
-            log.info("[id] workerId 经 sequence 表分配: service={}, workerId={}", appName, workerId);
+            // 组件的 MySQL 租约分配器（__global__ 池 + LAST_INSERT_ID 原子取号，语义与原自研一致）
+            long workerId = new com.xp.starsite.sequence.MysqlWorkerIdAllocator(
+                    dataSource, "sys_sequence", appName,
+                    appName + "@" + env.getProperty("PID", "0") + "@" + System.currentTimeMillis(),
+                    true, 10,
+                    com.xp.starsite.sequence.MysqlWorkerIdAllocator.WraparoundPolicy.RESET).allocate();
+            log.info("[id] workerId 经 sequence 表分配（starsite-sequence 租约）: service={}, workerId={}", appName, workerId);
             return new com.xp.starsite.common.util.IdGenerator(workerId);
         } catch (Exception e) {
             long fallback = fallbackWorkerId(appName);

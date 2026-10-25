@@ -51,6 +51,9 @@ star:
     timeout:
       connect-ms: 3000
       read-ms: 10000
-  async:
-    # star-async 管控端管理员白名单（逗号分隔 memberId；未配置=放行，本地开发态）
-    admin-member-ids: ${STAR_ASYNC_ADMIN_MEMBER_IDS:}
+# starsite-async-command 组件（引 jar 自动装配；STAR_ASYNC_ENABLED 兼容原部署开关）
+starsite:
+  async-command:
+    enabled: ${STAR_ASYNC_ENABLED:true}
+    # 管控端点鉴权：内置静态 Token 守卫（请求头 X-Starsite-Admin-Token；未配置=放行+启动 WARN）
+    admin-token: ${STARSITE_ASYNC_ADMIN_TOKEN:}

@@ -6,8 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
-import org.springframework.context.annotation.Import;
-import com.xp.starsite.common.async.AsyncCommandConfig;
 
 /**
  * 体检报告微服务启动类
@@ -17,13 +15,12 @@ import com.xp.starsite.common.async.AsyncCommandConfig;
  */
 @SpringBootApplication(scanBasePackages = "com.xp.starsite")
 @EnableDiscoveryClient
-// star-async 异步命令调度（STAR_ASYNC_ENABLED=true 启用组件）
+// health 自有 @Scheduled 扫描任务与组件调度线程并存（组件自带调度，无需 @EnableScheduling 供其使用）
 @EnableScheduling
 // 归属校验调 family 服务（FamilyApi 契约在 star-site-api）
 // 跨语言 AI 契约在消费方 integration 模块（docs/技术/12 §跨语言规约），一并纳入扫描
 @EnableFeignClients(basePackages = {"com.xp.starsite.api.client", "com.xp.starsite.health.integration.ai"})
-// star-async 异步命令组件：显式导入（无注解配置类，网关不导入则零感知）
-@Import(AsyncCommandConfig.class)
+// starsite-async-command 组件经 starter 自动装配（starsite.async-command.enabled，默认 true）
 @MapperScan("com.xp.starsite.health.mapper")
 public class HealthServiceApplication {
 

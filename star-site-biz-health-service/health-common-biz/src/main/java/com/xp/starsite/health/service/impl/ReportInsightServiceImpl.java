@@ -1,6 +1,6 @@
 package com.xp.starsite.health.service.impl;
 
-import com.xp.starsite.common.async.AsyncCommandService;
+import com.xp.starsite.asynccmd.AsyncCommandClient;
 import com.xp.starsite.health.ai.AiInterpretExecutor;
 import com.xp.starsite.health.ai.ReportInterpretationService;
 import com.xp.starsite.health.ai.ReportOcrService;
@@ -30,7 +30,7 @@ public class ReportInsightServiceImpl implements ReportInsightService {
 
     private final ReportInterpretationService interpretationService;
     private final ReportOcrService ocrService;
-    private final AsyncCommandService asyncCommandService;
+    private final AsyncCommandClient asyncCommandClient;
     private final Environment env;
 
     @Override
@@ -45,7 +45,7 @@ public class ReportInsightServiceImpl implements ReportInsightService {
                     ERR_LLM_NOT_CONFIGURED, "AI 解读未启用（未配置 LLM_API_KEY）");
         }
         String payload = "{\"memberId\":" + memberId + ",\"reportId\":" + reportId + ",\"force\":" + force + "}";
-        asyncCommandService.submitIdempotent(AiInterpretExecutor.TYPE, "report:" + reportId, payload);
+        asyncCommandClient.submitIdempotent(AiInterpretExecutor.TYPE, "report:" + reportId, payload);
         return true;
     }
 
