@@ -2,8 +2,8 @@ package com.xp.starsite.health.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xp.starsite.asynccmd.AsyncCommand;
-import com.xp.starsite.asynccmd.AsyncCommandExecutor;
+import com.xp.starsite.asynccmd.executor.AsyncCommandExecutor;
+import com.xp.starsite.asynccmd.model.AsyncCommand;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

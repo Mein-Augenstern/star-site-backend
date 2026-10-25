@@ -1,6 +1,6 @@
 package com.xp.starsite.health.service.impl;
 
-import com.xp.starsite.asynccmd.AsyncCommandClient;
+import com.xp.starsite.asynccmd.client.AsyncCommandClient;
 import com.xp.starsite.health.ai.AiInterpretExecutor;
 import com.xp.starsite.health.ai.ReportInterpretationService;
 import com.xp.starsite.health.ai.ReportOcrService;

@@ -74,8 +74,9 @@ public class StarSiteLogConfig {
 
     /**
      * 全局 ID（物理主键）通用组件：引擎已迁移至 starsite-sequence 组件
-     * （com.xp.starsite:starsite-sequence 的 SnowflakeIdGenerator/MysqlWorkerIdAllocator），
-     * 本方法保留 backend 侧的分配策略编排（部署决策不进组件默认装配）：
+     * （com.xp.starsite:starsite-sequence 的 generator/facade/allocator 分包），
+     * 本方法注册组件门面 Bean（starsite-async-command 等组件 starter 按类型取用），
+     * 并保留 backend 侧的分配策略编排（部署决策不进组件默认装配）：
      * 每个服务在 sys_sequence 表中有各自的一行 sequence（隔离键=服务名），
      * 启动时原子分配 workerId——根治全平台共享 workerId=1 的跨服务撞号问题。
      * <ul>
@@ -86,32 +87,50 @@ public class StarSiteLogConfig {
      * 需要应用侧生成 id 的场景经业务层显式调用 nextId()（替代 MyBatis-Plus ASSIGN_ID）。
      */
     @Bean
-    public com.xp.starsite.common.util.IdGenerator idGenerator(Environment env,
-                                                               ObjectProvider<DataSource> dataSourceProvider) {
+    public com.xp.starsite.sequence.facade.StarsiteIdGenerator starsiteIdGenerator(
+            Environment env, ObjectProvider<DataSource> dataSourceProvider) {
         String appName = env.getProperty("spring.application.name", "unknown");
+        long workerId = resolveWorkerId(appName, env, dataSourceProvider);
+        return new com.xp.starsite.sequence.facade.StarsiteIdGenerator(
+                new com.xp.starsite.sequence.generator.SnowflakeIdGenerator(
+                        workerId, 1767225600000L, 10, 12, 2000,
+                        com.xp.starsite.sequence.generator.SnowflakeIdGenerator.BackwardPolicy.CLAMP),
+                workerId, "mysql-lease(" + appName + ")");
+    }
+
+    /** 兼容门面 Bean：保留 backend 原 IdGenerator API（nextId()），内部委托组件门面（同一引擎实例） */
+    @Bean
+    public com.xp.starsite.common.util.IdGenerator idGenerator(
+            com.xp.starsite.sequence.facade.StarsiteIdGenerator starsiteIdGenerator) {
+        return new com.xp.starsite.common.util.IdGenerator(starsiteIdGenerator);
+    }
+
+    /** 机器位分配策略：显式配置 → sequence 表租约 → hash 回落 */
+    private long resolveWorkerId(String appName, Environment env,
+                                 ObjectProvider<DataSource> dataSourceProvider) {
         Long explicit = env.getProperty("star.snowflake.worker-id", Long.class);
         if (explicit != null) {
             log.info("[id] workerId 使用显式配置: service={}, workerId={}", appName, explicit);
-            return new com.xp.starsite.common.util.IdGenerator(explicit);
+            return explicit;
         }
         DataSource dataSource = dataSourceProvider.getIfAvailable();
         if (dataSource == null) {
             log.warn("[id] 无可用 DataSource，workerId 回落 hash: service={}", appName);
-            return new com.xp.starsite.common.util.IdGenerator(fallbackWorkerId(appName));
+            return fallbackWorkerId(appName);
         }
         try {
             // 组件的 MySQL 租约分配器（__global__ 池 + LAST_INSERT_ID 原子取号，语义与原自研一致）
-            long workerId = new com.xp.starsite.sequence.MysqlWorkerIdAllocator(
+            long workerId = new com.xp.starsite.sequence.allocator.MysqlWorkerIdAllocator(
                     dataSource, "sys_sequence", appName,
                     appName + "@" + env.getProperty("PID", "0") + "@" + System.currentTimeMillis(),
                     true, 10,
-                    com.xp.starsite.sequence.MysqlWorkerIdAllocator.WraparoundPolicy.RESET).allocate();
+                    com.xp.starsite.sequence.allocator.MysqlWorkerIdAllocator.WraparoundPolicy.RESET).allocate();
             log.info("[id] workerId 经 sequence 表分配（starsite-sequence 租约）: service={}, workerId={}", appName, workerId);
-            return new com.xp.starsite.common.util.IdGenerator(workerId);
+            return workerId;
         } catch (Exception e) {
             long fallback = fallbackWorkerId(appName);
             log.warn("[id] workerId sequence 分配失败，回落 hash({}): service={}, err={}", fallback, appName, e.getMessage());
-            return new com.xp.starsite.common.util.IdGenerator(fallback);
+            return fallback;
         }
     }
 

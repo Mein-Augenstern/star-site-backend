@@ -15,8 +15,8 @@
  */
 package com.xp.starsite.common.util;
 
-import com.xp.starsite.sequence.SnowflakeIdGenerator;
-import com.xp.starsite.sequence.StarsiteIdGenerator;
+import com.xp.starsite.sequence.facade.StarsiteIdGenerator;
+import com.xp.starsite.sequence.generator.SnowflakeIdGenerator;
 
 /**
  * 雪花 id 生成器（兼容门面）：引擎已迁移至 starsite-sequence 组件
@@ -62,7 +62,7 @@ public class IdGenerator {
      * 生成下一个全局唯一 id（同一毫秒内序列递增，翻毫秒重置；时钟回拨按 CLAMP 策略钳制）。
      *
      * @return 64 位雪花 id
-     * @throws com.xp.starsite.sequence.ClockBackwardException 理论不抛（CLAMP 策略钳制任意幅度回拨）；
+     * @throws com.xp.starsite.sequence.generator.ClockBackwardException 理论不抛（CLAMP 策略钳制任意幅度回拨）；
      *         声明于此供调用方感知引擎语义
      */
     public long nextId() {
