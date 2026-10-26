@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # backend 依赖组件仓的 0.1.0-SNAPSHOT（未发布任何远端仓库）——CI 先装组件到本地 m2
+      - uses: actions/checkout@v4
+        with:
+          repository: Mein-Augenstern/star-site-components
+          path: star-site-components
+          ref: main
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Install components (skip tests, covered by its own CI)
+        run: mvn -B -f star-site-components install -DskipTests
+
+      - name: Build & test backend
+        run: mvn -B verify
