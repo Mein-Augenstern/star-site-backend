@@ -11,10 +11,22 @@ on:
       - ".github/workflows/deploy.yml"
 
 jobs:
+  # 密钥门卫：secrets 上下文不能直接进 job 级 if（工作流会直接失败），
+  # 经 gate job 转成 needs.outputs 再判断——未配置密钥时 release 显示 skipped，整体绿
+  secrets-gate:
+    runs-on: ubuntu-latest
+    outputs:
+      ok: ${{ steps.check.outputs.ok }}
+    steps:
+      - id: check
+        env:
+          HAS_SECRETS: ${{ secrets.ACR_REGISTRY != '' && secrets.ACR_USERNAME != '' && secrets.ACR_PASSWORD != '' && secrets.SSH_HOST_A != '' && secrets.SSH_HOST_B != '' && secrets.SSH_PRIVATE_KEY != '' }}
+        run: echo "ok=$HAS_SECRETS" >> "$GITHUB_OUTPUT"
+
   release:
+    needs: secrets-gate
     runs-on: ubuntu-24.04
-    # 密钥未配置（开源形态/本地开发期）→ 跳过发布而非失败；代码正确性由 ci.yml 把关
-    if: ${{ secrets.ACR_REGISTRY != '' && secrets.SSH_HOST_A != '' && secrets.SSH_HOST_B != '' }}
+    if: needs.secrets-gate.outputs.ok == 'true'
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 2 }
