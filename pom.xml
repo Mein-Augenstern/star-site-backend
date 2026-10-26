@@ -166,6 +166,16 @@
                         <parameters>true</parameters>
                     </configuration>
                 </plugin>
+                <!-- JDK 21.0.12+（2025-10 CPU，JDK-8345742）默认禁运时代理动态 attach，
+                     Mockito 的 inline mockmaker 依赖 ByteBuddy 自附加——CI runner 新 JDK 上
+                     报 "Agent failed to start! / Could not initialize MockMaker"，显式放开 -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <configuration>
+                        <argLine>-XX:+EnableDynamicAgentLoading</argLine>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
