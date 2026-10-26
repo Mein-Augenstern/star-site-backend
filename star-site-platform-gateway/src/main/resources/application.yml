@@ -91,3 +91,11 @@ management:
 logging:
   level:
     com.xp.starsite: info
+
+# starsite 组件禁用：网关是 WebFlux 无 DB 服务——async-command(jdbc 形态)与 lock(db 模式)
+# 均需 DataSource/MyBatis，不关会在装配期快速失败。发号组件保留（无 DB 回落 hash 机器位，可用）。
+starsite:
+  async-command:
+    enabled: false
+  lock:
+    enabled: false

@@ -61,3 +61,12 @@ star:
     timeout:
       connect-ms: 3000
       read-ms: 10000
+
+# starsite-lock 组件（每日净资产快照的多实例防重跑门控）
+# db 模式复用本服务 MyBatis + DataSource；锁行主键由 starsite-sequence 发号；表自动创建（IF NOT EXISTS）
+starsite:
+  lock:
+    mode: db
+    # 快照对全部 owner 逐个落行，执行时长可能超默认 30s——TTL 放宽到 10 分钟
+    # （锁过期后他方进入的场景由 uk(owner, date) 幂等吸收）
+    ttl-ms: 600000

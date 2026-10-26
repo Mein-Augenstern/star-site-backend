@@ -57,7 +57,14 @@ class ReportServiceTest {
     private ArchiveApi archiveApi;
 
     private ReportServiceImpl service() {
-        return new ReportServiceImpl(accountRepository, transactionRepository, snapshotRepository, archiveApi, new com.xp.starsite.common.rpc.RpcCallGuard());
+        return new ReportServiceImpl(accountRepository, transactionRepository, snapshotRepository, archiveApi,
+                new com.xp.starsite.common.rpc.RpcCallGuard(), new AlwaysGrantLockStub());
+    }
+
+    /** 恒放行锁桩：单测语境下快照门控永远通过（门控语义由 ReminderScanTaskTest 覆盖） */
+    private static final class AlwaysGrantLockStub implements com.xp.starsite.lock.client.LockClient {
+        @Override public boolean tryLock(String lockName) { return true; }
+        @Override public void unlock(String lockName) { /* no-op */ }
     }
 
     private FinanceAccount account(long id, String type, String balance) {

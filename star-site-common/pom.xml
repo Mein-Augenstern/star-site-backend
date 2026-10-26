@@ -127,6 +127,13 @@
             <artifactId>starsite-async-command-spring-boot-starter</artifactId>
             <version>0.1.0-SNAPSHOT</version>
         </dependency>
+        <!-- 分布式锁组件（定时任务多实例防重跑等；db 模式复用各服务 MyBatis + DataSource，
+             锁行主键由上面的 sequence 组件发号——引 jar 即用） -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>starsite-lock-spring-boot-starter</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

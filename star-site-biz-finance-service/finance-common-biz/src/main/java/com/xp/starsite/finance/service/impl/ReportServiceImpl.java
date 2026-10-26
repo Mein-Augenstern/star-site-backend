@@ -15,6 +15,7 @@ import com.xp.starsite.finance.vo.IncomeExpenseVO;
 import com.xp.starsite.finance.vo.CategoryShareVO;
 import com.xp.starsite.finance.vo.MonthlyTrendVO;
 import com.xp.starsite.finance.vo.NetWorthPointVO;
+import com.xp.starsite.lock.client.LockClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,6 +58,7 @@ public class ReportServiceImpl implements ReportService {
     private final FinanceNetWorthSnapshotRepository snapshotRepository;
     private final ArchiveApi archiveApi;
     private final com.xp.starsite.common.rpc.RpcCallGuard rpc;
+    private final LockClient lockClient;
 
     @Value("${finance.snapshot-cron:0 30 2 * * ?}")
     private String cronHint;
@@ -235,19 +237,35 @@ public class ReportServiceImpl implements ReportService {
         return vo;
     }
 
-    /** 每日快照：对全部有账户的 owner 各落一行（当前单实例 @Scheduled，多实例时再引锁——技术雷达后置项） */
+    /** 调度锁名（component_schedule_lock 表 lock_name） */
+    private static final String SNAPSHOT_LOCK = "finance-daily-snapshot";
+
+    /**
+     * 每日快照：对全部有账户的 owner 各落一行（uk(owner,date) 幂等兜底）。
+     * 多实例防重跑：starsite-lock 抢锁门控——未抢到锁的实例本轮跳过；
+     * 快照批量执行可能超过默认 30s 锁 TTL，锁过期后他方进入也由 uk 幂等吸收（重复行冲突按单 owner 失败记录）。
+     */
     @Scheduled(cron = "${finance.snapshot-cron:0 30 2 * * ?}")
     public void dailySnapshot() {
-        List<Long> owners = accountRepository.listDistinctOwnerIds();
-        for (Long owner : owners) {
-            try {
-                snapshotToday(owner);
-            } catch (Exception e) {
-                // 单个 owner 失败不阻断整批
-                log.error("净资产快照失败: owner={}, err={}", owner, e.getMessage());
-            }
+        if (!lockClient.tryLock(SNAPSHOT_LOCK)) {
+            log.info("每日净资产快照跳过：他方实例持锁执行中");
+            return;
         }
-        log.info("每日净资产快照完成: cron={}, owners={}", cronHint, owners.size());
+        try {
+            List<Long> owners = accountRepository.listDistinctOwnerIds();
+            for (Long owner : owners) {
+                try {
+                    snapshotToday(owner);
+                } catch (Exception e) {
+                    // 单个 owner 失败不阻断整批
+                    log.error("净资产快照失败: owner={}, err={}", owner, e.getMessage());
+                }
+            }
+            log.info("每日净资产快照完成: cron={}, owners={}", cronHint, owners.size());
+        } finally {
+            // 主动释放让位；释放异常组件内部已吞掉并等 TTL 自动过期
+            lockClient.unlock(SNAPSHOT_LOCK);
+        }
     }
 
     private List<FinanceAccount> accountsOf(Long memberId) {
