@@ -48,3 +48,8 @@ UPDATE `sys_sequence` SET `id` = 1 WHERE `service_name` = '__global__' AND `id` 
 -- 【2026-10-27 补充】锁组件表更名（历史默认 component_schedule_lock → starsite_lock）：
 -- 锁行是瞬态状态，直接 RENAME 保留现网即可；不迁移则组件会在新表名下自动建表（锁状态零损失）
 -- RENAME TABLE `component_schedule_lock` TO `starsite_lock`;
+
+-- 【2026-10-28 补充】锁重入计数存储端化（hold_count 列）——重入层数从 Pod 本地移入锁行，
+-- 同 ownerId 跨实例共享一致；已更名的表直接加列（未更名的先执行上方 RENAME）
+-- ALTER TABLE `starsite_lock` ADD COLUMN `hold_count` INT NOT NULL DEFAULT 0
+--   COMMENT '重入持有层数（存储端权威）' AFTER `locked_until`;
