@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ReminderScanTask {
 
-    /** 调度锁名（component_schedule_lock 表的 lock_name，全平台唯一即可） */
+    /** 调度锁名（starsite_lock 表的 lock_name，全平台唯一即可） */
     static final String LOCK_NAME = "reminder-daily-scan";
 
     private final ReminderService reminderService;

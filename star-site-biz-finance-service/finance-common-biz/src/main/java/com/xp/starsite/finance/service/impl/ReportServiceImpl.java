@@ -237,7 +237,7 @@ public class ReportServiceImpl implements ReportService {
         return vo;
     }
 
-    /** 调度锁名（component_schedule_lock 表 lock_name） */
+    /** 调度锁名（starsite_lock 表 lock_name） */
     private static final String SNAPSHOT_LOCK = "finance-daily-snapshot";
 
     /**

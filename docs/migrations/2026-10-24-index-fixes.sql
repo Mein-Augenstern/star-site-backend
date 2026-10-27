@@ -44,3 +44,7 @@ UPDATE `sys_sequence` SET `id` = 1 WHERE `service_name` = '__global__' AND `id` 
 -- 【冗余清理】审计确认无任何查询引用（写放大纯开销），确认无外部报表依赖后删除
 -- ALTER TABLE `insurance_policy` DROP INDEX `idx_next_payment`;
 -- ALTER TABLE `archive_document` DROP INDEX `idx_expiry`;
+
+-- 【2026-10-27 补充】锁组件表更名（历史默认 component_schedule_lock → starsite_lock）：
+-- 锁行是瞬态状态，直接 RENAME 保留现网即可；不迁移则组件会在新表名下自动建表（锁状态零损失）
+-- RENAME TABLE `component_schedule_lock` TO `starsite_lock`;
