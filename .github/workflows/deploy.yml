@@ -9,6 +9,9 @@ on:
       - "star-site-*/**"
       - "docker/**"
       - ".github/workflows/deploy.yml"
+  # 手动触发：配好 Secrets 后无需等代码变更即可验证发布链路（Actions 页面 Run workflow，
+  # 或 gh workflow run deploy -R ...）；注意手动触发时 changed 检测基于最近一次 commit
+  workflow_dispatch:
 
 jobs:
   # 密钥门卫：secrets 上下文不能直接进 job 级 if（工作流会直接失败），
