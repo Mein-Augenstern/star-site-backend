@@ -79,6 +79,6 @@ star:
 # db 模式复用本服务 MyBatis + DataSource；锁行主键由 starsite-sequence 发号；表自动创建（IF NOT EXISTS）
 starsite:
   lock:
-    mode: db
+    mode: mysql
     # 扫描含补实例+批量通知，执行时长可能超默认 30s——TTL 放宽到 5 分钟（崩溃后最多等一个 TTL 自动接管）
     ttl-ms: 300000
