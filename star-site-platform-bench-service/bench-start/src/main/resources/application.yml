@@ -1,8 +1,13 @@
 spring:
   application:
     name: bench-service
+  cloud:
+    nacos:
+      server-addr: ${NACOS_HOST:localhost}:8848
+      discovery:
+        namespace: public
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/star_site?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3307/star_site?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:root123}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -11,6 +16,7 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+# lock 的 mysql 形态经 MyBatis mapper（ScheduleLockMapper）实现，需保留 mapper XML 扫描
 mybatis:
   mapper-locations: classpath:com/xp/starsite/**/mybatis/*.xml
   configuration:
@@ -23,9 +29,13 @@ starsite:
     service-name: bench-service
   async-command:
     mode: mysql
-    store: mysql
   lock:
     mode: mysql
+
+# star-site-common 的 JwtUtil 需要（压测服务不做鉴权，仅占位满足装配）
+jwt:
+  secret: "${JWT_SECRET:bench-service-local-secret-32bytes-000000!}"
+  expire-minutes: 720
 
 server:
   port: 18090

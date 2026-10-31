@@ -33,10 +33,12 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
 
     private static final AntPathMatcher MATCHER = new AntPathMatcher();
 
-    /** 免 token 白名单（/api/payment/notify/** 为渠道服务器异步回调，防线是渠道验签） */
+    /** 免 token 白名单（/api/payment/notify/** 为渠道服务器异步回调，防线是渠道验签；
+     *  /api/bench/** 为三组件压测端点——仅本地/内网开闸，公网部署须移除该路由或加访问控制） */
     private static final String[] WHITELIST = {
             "/api/auth/**",
             "/api/payment/notify/**",
+            "/api/bench/**",
             "/actuator/**",
     };
 

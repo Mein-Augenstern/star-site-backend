@@ -13,6 +13,10 @@ spring:
         ip: 127.0.0.1
     gateway:
       routes:
+        - id: bench-route
+          uri: lb://bench-service
+          predicates:
+            - Path=/api/bench/**
         - id: admin-async-route
           uri: lb://star-site-biz-health
           predicates:
