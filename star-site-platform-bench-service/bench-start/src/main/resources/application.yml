@@ -7,7 +7,11 @@ spring:
       discovery:
         namespace: public
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:3307/star_site?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    # connectTimeout/socketTimeout（故障注入实证的根因修复）：Docker 端口代理在容器停止后
+    # 仍接受 TCP 但不转发，驱动默认 connectTimeout=0（无限）→ 请求静默挂死、actuator/health
+    # 挂死（编排器将连环重启 Pod）。加超时后 DB 故障 5s 内显性报错（lock fail-open 语义可控），
+    # socketTimeout=30s 防执行中挂起无限占用 Tomcat 线程
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3307/star_site?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectTimeout=5000&socketTimeout=30000
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:root123}
     driver-class-name: com.mysql.cj.jdbc.Driver
