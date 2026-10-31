@@ -1,0 +1,20 @@
+#
+# ShardingSphere Proxy 服务端配置（三组件分布式形态 · distributed-sharding.md 路线 A）
+# 形态选型注记：嵌入式 JDBC 与 Boot 3.2 同 classpath 存在 snakeyaml 1.x/2.x、
+# javax JAXB、classpath sql/ 目录 XML 扫描三重冲突（实装实证）——Proxy 独立进程形态
+# 对三组件 100% 零侵入（应用视其为普通 MySQL），是开源组件的正确集成边界。
+#
+mode:
+  type: Standalone
+  repository:
+    type: JDBC
+
+authority:
+  users:
+    - user: root@%
+      password: root123
+  privilege:
+    type: ALL_PERMITTED
+
+props:
+  sql-show: false

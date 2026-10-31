@@ -116,23 +116,25 @@
         </dependency>
 
         <!-- 通用组件库（starsite-sequence 雪花 + starsite-async-command 异步命令）：
-             engine 与调度器本体在组件仓，backend 仅做策略编排与兼容门面 -->
+             engine 与调度器本体在组件仓，backend 仅做策略编排与兼容门面。
+             0.2.1：方言 XML 迁移 sql/ → dialect/（避开 ShardingSphere JDBC 仓储
+             对 classpath sql/ 目录 XML 的 JAXB 扫描冲突——分片形态实装实证） -->
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>starsite-sequence</artifactId>
-            <version>0.2.0</version>
+            <version>0.2.2</version>
         </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>starsite-async-command-spring-boot-starter</artifactId>
-            <version>0.2.0</version>
+            <version>0.2.2</version>
         </dependency>
         <!-- 分布式锁组件（定时任务多实例防重跑等；db 模式复用各服务 MyBatis + DataSource，
              锁行主键由上面的 sequence 组件发号——引 jar 即用） -->
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>starsite-lock-spring-boot-starter</artifactId>
-            <version>0.2.0</version>
+            <version>0.2.2</version>
         </dependency>
 
         <dependency>

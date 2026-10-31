@@ -1,0 +1,45 @@
+#
+# 三组件分片逻辑库 sharding_db（Proxy 对外伪装成一个 MySQL 库）
+# 拓扑：1 逻辑库 ds_0（真 MySQL star_site 库）× 每逻辑表 10 物理表
+#   starsite_lock   ← lock_name：争锁/释放自动精确路由单片（互斥语义与单表等价）
+#   async_command   ← biz_key：提交/幂等同片闭合；认领/回收广播全分片（fan-out）
+#   sys_sequence 等未列出的表 → single table 走 ds_0（租约控制面不分片，设计 P1）
+# 分片算法：INLINE（Groovy）——字符串键 hashCode 取模；proxy 独立进程，无需自定义类
+#
+databaseName: sharding_db
+
+# 注：mode 段只在 server.yaml（database 配置不接受 mode——proxy 启动校验）
+dataSources:
+  ds_0:
+    url: jdbc:mysql://star-mysql:3306/star_site?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectTimeout=5000&socketTimeout=30000
+    username: root
+    password: root123
+    maxPoolSize: 20
+    minPoolSize: 5
+
+rules:
+  - !SHARDING
+    tables:
+      starsite_lock:
+        actualDataNodes: ds_0.starsite_lock_${0..9}
+        tableStrategy:
+          standard:
+            shardingColumn: lock_name
+            shardingAlgorithmName: lock-inline
+      async_command:
+        actualDataNodes: ds_0.async_command_${0..9}
+        tableStrategy:
+          standard:
+            shardingColumn: biz_key
+            shardingAlgorithmName: async-inline
+    shardingAlgorithms:
+      lock-inline:
+        type: INLINE
+        props:
+          algorithm-expression: starsite_lock_${Math.floorMod(lock_name.hashCode(), 10)}
+          allow-range-query-with-inline-sharding: true
+      async-inline:
+        type: INLINE
+        props:
+          algorithm-expression: async_command_${Math.floorMod(biz_key.hashCode(), 10)}
+          allow-range-query-with-inline-sharding: true

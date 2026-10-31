@@ -7,11 +7,14 @@ spring:
       discovery:
         namespace: public
   datasource:
-    # connectTimeout/socketTimeout（故障注入实证的根因修复）：Docker 端口代理在容器停止后
-    # 仍接受 TCP 但不转发，驱动默认 connectTimeout=0（无限）→ 请求静默挂死、actuator/health
-    # 挂死（编排器将连环重启 Pod）。加超时后 DB 故障 5s 内显性报错（lock fail-open 语义可控），
-    # socketTimeout=30s 防执行中挂起无限占用 Tomcat 线程
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:3307/star_site?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectTimeout=5000&socketTimeout=30000
+    # 分片形态（distributed-sharding.md 路线 A · ShardingSphere Proxy 5.4.1 独立进程）：
+    # 应用视 proxy 为普通 MySQL（逻辑库 sharding_db），三组件依赖与 SQL 零改动——
+    # 路由/改写/广播全在 proxy 层（lock_name/biz_key 精确路由单片，认领/回收广播全分片）。
+    # 嵌入式 JDBC 形态与 Boot 3.2 同 classpath 存在 snakeyaml/JAXB/classpath sql 目录扫描
+    # 三重冲突（实装实证），proxy 形态是零侵入的正确集成边界。
+    # 直连真库跑单表形态时改回 :3307/star_site（BENCH_DB_URL 覆盖）。
+    # connectTimeout/socketTimeout 超时铁律保留（故障注入实证 OBS-106）。
+    url: ${BENCH_DB_URL:jdbc:mysql://localhost:13307/sharding_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&connectTimeout=5000&socketTimeout=30000}
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:root123}
     driver-class-name: com.mysql.cj.jdbc.Driver
