@@ -129,7 +129,12 @@ public class StarSiteLogConfig {
             return workerId;
         } catch (Exception e) {
             long fallback = fallbackWorkerId(appName);
-            log.warn("[id] workerId sequence 分配失败，回落 hash({}): service={}, err={}", fallback, appName, e.getMessage());
+            // ERROR 而非 WARN（BUG-009 实证）：租约失败常因 sys_sequence 结构陈旧（旧 volume 无 id 列），
+            // 回落 hash 只是降级不是修复——跨服务撞号风险必须醒目可见，消息直接给排查动作
+            log.error("[id] workerId sequence 分配失败，回落 hash({}): service={}, err={}"
+                            + "（排查：DESC sys_sequence 是否含 id/gmt_* 列——旧库需按 docker/mysql-init/22-sys-sequence.sql 重建；"
+                            + "组件 0.2.1+ 的结构校验会在启动期给出明确报错）",
+                    fallback, appName, e.getMessage());
             return fallback;
         }
     }
