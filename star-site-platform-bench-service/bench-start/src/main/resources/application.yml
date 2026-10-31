@@ -11,6 +11,11 @@ spring:
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:root123}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      # 极限摸高结论（见 components docs/full-benchmark.md）：默认池 10 在 128 并发下
+      # 打满且 ~112 请求排队（吞吐平台 ~390 ops/s、P99 769ms）；压测形态调至 20，
+      # 生产按「实例数×池 ≤ MySQL max_connections(200)」约束配置
+      maximum-pool-size: ${HIKARI_MAX_POOL:20}
   data:
     redis:
       host: ${REDIS_HOST:localhost}
