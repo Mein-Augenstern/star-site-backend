@@ -41,6 +41,10 @@ starsite:
     service-name: bench-service
   async-command:
     mode: mysql
+    # 终态行清理（OBS-111，loop 压测实证单日堆近 4000 行）：bench 保留 0 天即时清终态，
+    # 生产按对账需求设保留期（默认关，开启后每小时低频批量两步法清理）
+    retention-enabled: true
+    retention-days: 0
   lock:
     mode: mysql
 
