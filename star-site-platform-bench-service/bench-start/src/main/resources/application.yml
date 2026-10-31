@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: bench-service
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/star_site?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+mybatis:
+  mapper-locations: classpath:com/xp/starsite/**/mybatis/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+# 三组件压测配置（默认 MySQL 形态；可通过环境变量切换）
+starsite:
+  sequence:
+    mode: mysql
+    service-name: bench-service
+  async-command:
+    mode: mysql
+    store: mysql
+  lock:
+    mode: mysql
+
+server:
+  port: 18090
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    com.xp.starsite: info

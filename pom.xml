@@ -25,6 +25,7 @@
         <module>star-site-biz-finance-service</module>
         <module>star-site-biz-recheck-service</module>
         <module>star-site-platform-payment-service</module>
+        <module>star-site-platform-bench-service</module>
     </modules>
 
     <properties>
