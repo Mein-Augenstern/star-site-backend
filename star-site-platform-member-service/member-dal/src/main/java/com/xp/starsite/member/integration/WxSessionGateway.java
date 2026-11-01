@@ -45,11 +45,15 @@ public class WxSessionGateway {
         }
         JsonNode resp;
         try {
-            resp = restClient.get()
+            // 微信 API 返回 Content-Type: text/plain（非 application/json）——
+            // RestClient 的 JsonNode converter 不认 text/plain（S01-B 实调踩坑），
+            // 先按 String 收再手动解析（参数 appid/secret/code 全程 URI 模板占位绑定）
+            String body = restClient.get()
                     .uri("https://api.weixin.qq.com/sns/jscode2session?appid={a}&secret={s}&js_code={c}&grant_type=authorization_code",
                             appid, secret, code)
                     .retrieve()
-                    .body(JsonNode.class);
+                    .body(String.class);
+            resp = body == null ? null : new com.fasterxml.jackson.databind.ObjectMapper().readTree(body);
         } catch (Exception e) {
             log.warn("jscode2session 调用失败: {}", e.getMessage());
             throw new BizException(503, "微信登录服务暂不可用，请稍后再试");
