@@ -24,6 +24,13 @@
             <groupId>com.xp.starsite</groupId>
             <artifactId>star-site-common</artifactId>
         </dependency>
+        <!-- 定时任务恰一执行组件（ReminderScanTask 试点）：@StarsiteScheduled 注解 +
+             复用 lock 争锁恰一 + schedule_run_log 执行流水（0.2.3 首个生产接入点） -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>starsite-schedule-spring-boot-starter</artifactId>
+            <version>0.2.3</version>
+        </dependency>
         <!-- ReminderMqConfig 条件装配 + 消费领域事件类型 -->
                 <dependency>
             <groupId>com.xp.starsite</groupId>

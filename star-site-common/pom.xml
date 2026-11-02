@@ -118,7 +118,9 @@
         <!-- 通用组件库（starsite-sequence 雪花 + starsite-async-command 异步命令）：
              engine 与调度器本体在组件仓，backend 仅做策略编排与兼容门面。
              0.2.1：方言 XML 迁移 sql/ → dialect/（避开 ShardingSphere JDBC 仓储
-             对 classpath sql/ 目录 XML 的 JAXB 扫描冲突——分片形态实装实证） -->
+             对 classpath sql/ 目录 XML 的 JAXB 扫描冲突——分片形态实装实证）。
+             0.2.3：lock 升级与 starsite-schedule 0.2.3 的传递依赖对齐（schedule
+             starter 依赖 lock 0.2.3，混版会在 classpath 产生两版 lock） -->
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>starsite-sequence</artifactId>
@@ -134,7 +136,7 @@
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>starsite-lock-spring-boot-starter</artifactId>
-            <version>0.2.2</version>
+            <version>0.2.3</version>
         </dependency>
 
         <dependency>

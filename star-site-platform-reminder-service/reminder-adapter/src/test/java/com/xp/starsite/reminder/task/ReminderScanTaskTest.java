@@ -1,22 +1,23 @@
 package com.xp.starsite.reminder.task;
 
-import com.xp.starsite.lock.client.LockClient;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.xp.starsite.reminder.service.ReminderService;
+import com.xp.starsite.schedule.api.MisfirePolicy;
+import com.xp.starsite.schedule.api.StarsiteScheduled;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
- * 提醒扫描任务的锁门控语义单测：抢到锁才执行 + 主动让位 + 未抢到零副作用。
- * （锁本身的互斥/TTL 语义由组件仓覆盖，这里只验任务的接法。）
+ * 提醒扫描任务的接法单测（2026-11-02 组件化迁移后）：
+ * 锁门控/恰一/流水语义由 starsite-schedule 组件仓覆盖（55 项测试），
+ * 这里只验任务侧三件事——业务调用、异常向上交组件吞噬留痕、注解元数据钉死。
  *
  * @author muyi
  * @since 2026-10
@@ -27,41 +28,37 @@ class ReminderScanTaskTest {
     @Mock
     private ReminderService reminderService;
 
-    @Mock
-    private LockClient lockClient;
-
     @InjectMocks
     private ReminderScanTask task;
 
     @Test
-    void 抢到锁_执行扫描并主动让位() {
-        when(lockClient.tryLock(ReminderScanTask.LOCK_NAME)).thenReturn(true);
+    void 扫描调用领域服务() {
         when(reminderService.scanAndNotify()).thenReturn(3);
 
         task.scan();
 
         verify(reminderService).scanAndNotify();
-        verify(lockClient).unlock(ReminderScanTask.LOCK_NAME);
     }
 
     @Test
-    void 未抢到锁_跳过本轮且不释放他方的锁() {
-        when(lockClient.tryLock(ReminderScanTask.LOCK_NAME)).thenReturn(false);
-
-        task.scan();
-
-        verify(reminderService, never()).scanAndNotify();
-        // 关键：绝不能 unlock——那是他方实例持有的锁（组件侧 CAS 防误删，任务侧同样不越权）
-        verify(lockClient, never()).unlock(anyString());
-    }
-
-    @Test
-    void 扫描异常_仍然让位() {
-        when(lockClient.tryLock(ReminderScanTask.LOCK_NAME)).thenReturn(true);
+    void 领域异常向上抛_由组件吞噬并落FAILED流水() {
+        // 异常不吞在任务体里：ExactlyOnceRunner 接住落 FAILED + error 摘要
         when(reminderService.scanAndNotify()).thenThrow(new IllegalStateException("db down"));
 
         assertThrows(IllegalStateException.class, task::scan);
+    }
 
-        verify(lockClient).unlock(ReminderScanTask.LOCK_NAME);
+    @Test
+    void 注解元数据_恰一语义与错过策略钉死() throws Exception {
+        Method scan = ReminderScanTask.class.getMethod("scan");
+        StarsiteScheduled anno = scan.getAnnotation(StarsiteScheduled.class);
+
+        org.junit.jupiter.api.Assertions.assertEquals(ReminderScanTask.TASK_NAME, anno.name());
+        org.junit.jupiter.api.Assertions.assertEquals("${reminder.scan-cron:0 0 8 * * ?}", anno.cron());
+        org.junit.jupiter.api.Assertions.assertTrue(anno.guard(), "恰一执行不可退化为本地模式");
+        org.junit.jupiter.api.Assertions.assertEquals(MisfirePolicy.SKIP, anno.misfire(),
+                "通知类任务错过等次日——补发旧通知是打扰");
+        org.junit.jupiter.api.Assertions.assertEquals("Asia/Shanghai", anno.zone(),
+                "触发时区钉死北京（容器 UTC 陷阱实证）");
     }
 }

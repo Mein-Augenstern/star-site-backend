@@ -31,10 +31,11 @@
       <artifactId>starsite-async-command-spring-boot-starter</artifactId>
       <version>0.2.2</version>
     </dependency>
+    <!-- 0.2.3：与 star-site-common 引入的 lock 版本对齐（schedule 0.2.3 传递依赖） -->
     <dependency>
       <groupId>com.xp.starsite</groupId>
       <artifactId>starsite-lock-spring-boot-starter</artifactId>
-      <version>0.2.2</version>
+      <version>0.2.3</version>
     </dependency>
     <!-- Web + MyBatis + MySQL -->
     <dependency>
