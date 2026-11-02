@@ -82,11 +82,15 @@ public class GatewayDigestWebFilter implements GlobalFilter, Ordered {
         exchange.getAttributes().put(ATTR_TRACE_ID, traceId);
 
         // ② 向下游透传：X-Trace-Id + X-Caller-App（值=本网关标识，下游知道"谁调的我"）
+        // 用 request.mutate().build() 两步构建——exchange.mutate(request -> headers) 在
+        // LoadBalancer 过滤器链中被覆盖（日志巡检实证：网关 digest 有 traceId 但 member 自建新 ID）。
+        // 改为直接 mutate ServerHttpRequest → 再 mutate exchange，确保 header 在 routing filter 可见。
         final String routeId = resolveRouteId(exchange);
-        var mutated = exchange.mutate().request(r -> r.headers(h -> {
-            h.set(TraceContext.HEADER_TRACE_ID, traceId);
-            h.set(TraceContext.HEADER_CALLER_APP, "gateway:" + routeId);
-        })).build();
+        var mutatedRequest = exchange.getRequest().mutate()
+                .header(TraceContext.HEADER_TRACE_ID, traceId)
+                .header(TraceContext.HEADER_CALLER_APP, "gateway:" + routeId)
+                .build();
+        var mutated = exchange.mutate().request(mutatedRequest).build();
 
         // ③ digest：请求完成时打（span=server 对齐 Servlet 版语义；route 字段网关特有）
         return chain.filter(mutated).doFinally(signal -> {
