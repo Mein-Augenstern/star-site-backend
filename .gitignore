@@ -19,3 +19,6 @@ deploy/.env.node-a-*
 
 # mimosa 扫描状态
 .mimosa/
+
+# 密钥文件（曾入库已轮换，见 invest 仓同款处置）
+docker/.env
