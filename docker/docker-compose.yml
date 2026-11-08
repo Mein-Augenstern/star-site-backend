@@ -127,9 +127,9 @@ services:
     environment:
       <<: *app-env
       SPRING_CLOUD_NACOS_DISCOVERY_IP: star-platform-gateway
-      # invest 容器化后同网络直连（原 host.docker.internal:8790 指宿主进程——
-      # nohup 时活时死 + launchd 被 macOS TCC 拦，G2 收口改容器常驻）
-      INVEST_UPSTREAM: http://star-invest-star:8790
+      # invest 生产数据面在 ECS（S11 统一入口拓扑）；本机 star-invest-star 仅调试用。
+      # 缺省仍指向本机容器，生产经 .env 覆盖为公网统一入口。
+      INVEST_UPSTREAM: ${INVEST_UPSTREAM:-http://star-invest-star:8790}
       JAVA_OPTS: -Xmx192m -Xms64m
     ports:
       - "8080:8080"
