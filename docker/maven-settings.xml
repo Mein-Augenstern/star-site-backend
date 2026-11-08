@@ -1,8 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 容器内构建用的 Maven 配置：Aliyun 公共镜像源（国内网络可用） -->
+<!-- 容器内构建用的 Maven 配置：
+     1. Aliyun 公共镜像源（国内网络可用）
+     2. localRepository 指向随仓库携带的 m2-local（starsite 组件预置仓库，
+        224K——组件未发布 Maven Central 前容器构建的唯一解法；其余依赖
+        照常从镜像源下载进该目录做层缓存） -->
 <settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+    <localRepository>/build/docker/m2-local</localRepository>
     <mirrors>
         <mirror>
             <id>aliyun-public</id>
