@@ -24,6 +24,14 @@ spring:
     url: jdbc:mysql://127.0.0.1:3307/star_site?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: root123
+    # HikariCP 调优（2026-11-10：36h 连接池耗尽 → 登录全线超时，实证加配置）
+    hikari:
+      maximum-pool-size: 5            # 个人工具，5 个连接足够
+      minimum-idle: 1                 # 平时只保持 1 个空闲连接
+      connection-timeout: 5000        # 5 秒拿不到就报错（默认 30s 太长）
+      leak-detection-threshold: 60000 # 60 秒未归还 → WARN 日志（提前发现泄漏）
+      max-lifetime: 600000            # 10 分钟强制回收（默认 30min，Mac 环境太长）
+      keepalive-time: 120000          # 每 2 分钟心跳（防 Mac 休眠 TCP 断裂）
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml
