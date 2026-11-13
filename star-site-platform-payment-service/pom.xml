@@ -22,7 +22,7 @@
         <module>payment-integration</module>
         <module>payment-core-service</module>
         <module>payment-common-biz</module>
-        <module>payment-adapter</module>
+        <module>payment-web</module>
         <module>payment-start</module>
     </modules>
 

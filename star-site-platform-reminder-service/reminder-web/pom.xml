@@ -10,9 +10,9 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>reminder-adapter</artifactId>
-    <name>reminder-adapter</name>
-    <description>提醒域适配层（COLA 触发器）：REST 入口 + MQ 事件监听 + 每日扫描定时器</description>
+    <artifactId>reminder-web</artifactId>
+    <name>reminder-web</name>
+    <description>提醒域 Web 层（COLA 触发器）：controller + MQ 事件监听 + 每日扫描定时器</description>
 
     <dependencies>
         <dependency>

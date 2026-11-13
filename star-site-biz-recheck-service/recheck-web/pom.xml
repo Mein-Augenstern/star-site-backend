@@ -6,23 +6,28 @@
 
     <parent>
         <groupId>com.xp.starsite</groupId>
-        <artifactId>star-site-platform-file-service</artifactId>
+        <artifactId>star-site-biz-recheck-service</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>file-adapter</artifactId>
-    <name>file-adapter</name>
-    <description>文件域适配层：REST 入口（上传/下载控制器）</description>
+    <artifactId>recheck-web</artifactId>
+    <name>recheck-web</name>
+    <description>复查闭环 Web 层：controller（V 层，禁止直依赖 mapper/core-service）</description>
 
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>file-common-biz</artifactId>
+            <artifactId>recheck-common-biz</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

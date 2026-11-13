@@ -22,7 +22,7 @@
         <module>file-dal</module>
         <module>file-core-service</module>
         <module>file-common-biz</module>
-        <module>file-adapter</module>
+        <module>file-web</module>
         <module>file-start</module>
     </modules>
 

@@ -21,7 +21,7 @@
         <module>recheck-integration</module>
         <module>recheck-core-service</module>
         <module>recheck-common-biz</module>
-        <module>recheck-adapter</module>
+        <module>recheck-web</module>
         <module>recheck-start</module>
     </modules>
 

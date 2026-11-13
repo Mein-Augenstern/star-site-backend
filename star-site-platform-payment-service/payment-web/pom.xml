@@ -10,9 +10,9 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>payment-adapter</artifactId>
-    <name>payment-adapter</name>
-    <description>支付域接入层：controller（V 层，禁止直依赖 mapper/core-service）——C 端收银台、渠道回调、内部契约实现</description>
+    <artifactId>payment-web</artifactId>
+    <name>payment-web</name>
+    <description>支付域 Web 层：controller（V 层，禁止直依赖 mapper/core-service）——C 端收银台、渠道回调、内部契约实现</description>
 
     <dependencies>
         <dependency>

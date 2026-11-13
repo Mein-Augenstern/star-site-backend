@@ -6,24 +6,18 @@
 
     <parent>
         <groupId>com.xp.starsite</groupId>
-        <artifactId>star-site-platform-member-service</artifactId>
+        <artifactId>star-site-platform-file-service</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>member-adapter</artifactId>
-    <name>member-adapter</name>
-    <description>会员域适配层：REST 入口（web + internal 控制器）</description>
+    <artifactId>file-web</artifactId>
+    <name>file-web</name>
+    <description>文件域 Web 层：controller（V 层，禁止直依赖 mapper/core-service）——上传/下载 REST 入口</description>
 
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>member-common-biz</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <!-- internal 接口返回跨服务契约 DTO -->
-                <dependency>
-            <groupId>com.xp.starsite</groupId>
-            <artifactId>member-facade</artifactId>
+            <artifactId>file-common-biz</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

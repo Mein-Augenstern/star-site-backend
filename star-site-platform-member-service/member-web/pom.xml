@@ -6,28 +6,29 @@
 
     <parent>
         <groupId>com.xp.starsite</groupId>
-        <artifactId>star-site-biz-recheck-service</artifactId>
+        <artifactId>star-site-platform-member-service</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>recheck-adapter</artifactId>
-    <name>recheck-adapter</name>
-    <description>复查闭环接入层：controller（V 层，禁止直依赖 mapper/core-service）</description>
+    <artifactId>member-web</artifactId>
+    <name>member-web</name>
+    <description>会员域 Web 层：controller（V 层，禁止直依赖 mapper/core-service）——web + internal 控制器</description>
 
     <dependencies>
         <dependency>
             <groupId>com.xp.starsite</groupId>
-            <artifactId>recheck-common-biz</artifactId>
+            <artifactId>member-common-biz</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- internal 接口返回跨服务契约 DTO -->
+                <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>member-facade</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>
