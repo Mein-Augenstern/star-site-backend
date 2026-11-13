@@ -1,8 +1,24 @@
 #!/usr/bin/env python3
 """为 fin2(memberId=12) 灌入真实感演示数据：账户/成员/流水/保单/资产/提醒快照"""
-import subprocess, random
+import subprocess
 from datetime import datetime, timedelta
 from decimal import Decimal
+
+class Rng:
+    """确定性伪随机（演示数据专用）：乘同余法，同 seed 同数据；非安全场景，不用于密钥/令牌"""
+    def __init__(self, seed=42):
+        self._s = seed or 1
+    def _next(self):
+        self._s = (self._s * 1103515245 + 12345) % (2**31)
+        return self._s
+    def randint(self, lo, hi):
+        return lo + self._next() % (hi - lo + 1)
+    def uniform(self, lo, hi):
+        return lo + (self._next() / 2**31) * (hi - lo)
+    def choice(self, seq):
+        return seq[self._next() % len(seq)]
+
+rng = Rng(42)
 
 MYSQL = ["docker", "exec", "-i", "star-mysql", "mysql", "--default-character-set=utf8mb4",
          "-uroot", "-proot123", "star_site"]
@@ -11,7 +27,6 @@ def sql(statements):
     for s in statements:
         subprocess.run(MYSQL, input=s.encode(), check=True)
 
-random.seed(42)
 ME, FAMILY = 12, 8
 
 # ---------- 账户（重置为真实感组合） ----------
@@ -47,24 +62,24 @@ for m in range(3):
 for m in range(3):
     base = today - timedelta(days=30 * m)
     for _ in range(18):
-        day = base - timedelta(days=random.randint(0, 27))
-        cat = random.choice(list(CATS_EXP))
+        day = base - timedelta(days=rng.randint(0, 27))
+        cat = rng.choice(list(CATS_EXP))
         lo, hi = CATS_EXP[cat]
-        amt = round(random.uniform(lo, hi), 2)
-        acc = random.choice([9002, 9003])
+        amt = round(rng.uniform(lo, hi), 2)
+        acc = rng.choice([9002, 9003])
         txid += 1
         txs.append((txid, acc, 2, amt, cat if cat in ("MORTGAGE", "CAR", "MEDICAL", "EDUCATION") else
-                    random.choice(["FOOD", "SHOPPING", "OTHER_EXPENSE"]), cat, day))
+                    rng.choice(["FOOD", "SHOPPING", "OTHER_EXPENSE"]), cat, day))
 
 # 信用卡消费几笔 + 还款
 for _ in range(5):
-    day = today - timedelta(days=random.randint(1, 60))
+    day = today - timedelta(days=rng.randint(1, 60))
     txid += 1
-    txs.append((txid, 9005, 2, round(random.uniform(100, 2000), 2), "SHOPPING", "信用卡消费", day))
+    txs.append((txid, 9005, 2, round(rng.uniform(100, 2000), 2), "SHOPPING", "信用卡消费", day))
 
 rows = []
 for tid, acc, d, amt, cat, cname, day in txs:
-    t = day.strftime("%Y-%m-%d") + f" {random.randint(8,21):02d}:{random.randint(0,59):02d}:00"
+    t = day.strftime("%Y-%m-%d") + f" {rng.randint(8,21):02d}:{rng.randint(0,59):02d}:00"
     rows.append(f"({tid},{FAMILY},{ME},{acc},'账户{acc}',{d},{amt},'{cat}','{cname}','{t}',1)")
 
 sql([f"""INSERT INTO finance_transaction
