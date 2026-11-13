@@ -1,5 +1,6 @@
 package com.xp.starsite.api.client;
 
+import com.xp.starsite.api.dto.PaymentOrderCreateInternalDTO;
 import com.xp.starsite.api.dto.PaymentOrderDTO;
 import com.xp.starsite.common.result.R;
 import org.springframework.cloud.openfeign.FeignClient;

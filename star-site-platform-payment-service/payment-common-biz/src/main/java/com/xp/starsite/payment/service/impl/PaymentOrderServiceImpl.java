@@ -1,6 +1,6 @@
 package com.xp.starsite.payment.service.impl;
 
-import com.xp.starsite.api.client.PaymentOrderCreateInternalDTO;
+import com.xp.starsite.api.dto.PaymentOrderCreateInternalDTO;
 import com.xp.starsite.api.dto.PaymentOrderDTO;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.ResultCode;

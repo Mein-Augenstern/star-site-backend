@@ -1,4 +1,4 @@
-package com.xp.starsite.api.client;
+package com.xp.starsite.api.dto;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;

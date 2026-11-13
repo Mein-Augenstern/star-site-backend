@@ -59,7 +59,7 @@ public interface PaymentOrderService {
      * @return 支付单快照（含支付凭证）
      */
     com.xp.starsite.api.dto.PaymentOrderDTO createInternal(Long memberId,
-                                                           com.xp.starsite.api.client.PaymentOrderCreateInternalDTO dto);
+                                                           com.xp.starsite.api.dto.PaymentOrderCreateInternalDTO dto);
 
     /**
      * 按业务幂等键查单（内部契约，供业务方驱动状态流转）；尚无支付单时返回 null
