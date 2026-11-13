@@ -50,7 +50,11 @@ class FinanceDiagnosisTest {
 
     private void stubReports() {
         when(reportService.balanceSheet(ME)).thenReturn(sheet("2105000", "8000"));
-        when(reportService.incomeExpense(ME, 2026, 9)).thenReturn(ie("12000", "4000"));
+        // 服务侧取 LocalDateTime.now().minusMonths(1) 的年月——stub 同源动态计算，
+        // 写死年月会让测试在跨月当天起永久红灯（曾在 2026-11 因写死 2026/9 失败）
+        java.time.LocalDateTime lastMonth = java.time.LocalDateTime.now().minusMonths(1);
+        when(reportService.incomeExpense(ME, lastMonth.getYear(), lastMonth.getMonthValue()))
+                .thenReturn(ie("12000", "4000"));
         when(reportService.cashFlow(ME)).thenReturn(new com.xp.starsite.finance.vo.CashFlowVO());
         when(accountRepository.listByOwner(ME)).thenReturn(List.of());
     }
