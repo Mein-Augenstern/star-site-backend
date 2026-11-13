@@ -1,5 +1,6 @@
 package com.xp.starsite.archive.controller;
 
+import com.xp.starsite.api.client.ArchiveApi;
 import com.xp.starsite.api.dto.AssetSummaryDTO;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>
  * 业务逻辑统一经查询模板包裹：模板包掉成功与失败的全部响应处理（成功 R.ok / 失败 R.fail），
  * Controller 一行返回；动作命名规范 archive.internal.*。
+ * 本控制器 implements ArchiveApi——契约签名编译期对齐（原 summary 方法更名 assetSummary 对齐契约）。
  *
  * @author muyi
  * @since 2026-10
@@ -23,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/internal/archive")
 @RequiredArgsConstructor
-public class ArchiveInternalController {
+public class ArchiveInternalController implements ArchiveApi {
 
     private final AssetService assetService;
     private final QueryTemplate queryTemplate;
@@ -35,7 +37,7 @@ public class ArchiveInternalController {
      * @return 资产总览 DTO（总估值）
      */
     @GetMapping("/assets/summary")
-    public R<AssetSummaryDTO> summary(@RequestParam("memberId") Long memberId) {
+    public R<AssetSummaryDTO> assetSummary(@RequestParam("memberId") Long memberId) {
         return queryTemplate.query(ArchiveActions.INTERNAL_SUMMARY,
                 () -> new AssetSummaryDTO(assetService.summary(memberId).getTotalValue()));
     }

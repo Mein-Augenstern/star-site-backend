@@ -1,5 +1,6 @@
 package com.xp.starsite.member.controller;
 
+import com.xp.starsite.api.client.MemberApi;
 import com.xp.starsite.api.dto.MemberContactDTO;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>
  * 业务逻辑统一经模板包裹：模板包掉成功与失败的全部响应处理（成功 R.ok / 失败 R.fail），
  * Controller 一行返回；动作命名规范 member.internal.*。
+ * 本控制器 implements MemberApi——契约签名编译期对齐（路径/参数以 facade 为准）。
  *
  * @author muyi
  * @since 2026-10
@@ -24,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/internal/member")
 @RequiredArgsConstructor
-public class MemberInternalController {
+public class MemberInternalController implements MemberApi {
 
     private final MemberService memberService;
     private final QueryTemplate queryTemplate;
@@ -36,7 +38,7 @@ public class MemberInternalController {
      * @return 联系方式（会员不存在时 data 为 null）
      */
     @GetMapping("/{id}/contact")
-    public R<MemberContactDTO> contact(@PathVariable Long id) {
+    public R<MemberContactDTO> contact(@PathVariable("id") Long id) {
         return queryTemplate.query(MemberActions.INTERNAL_CONTACT, () -> memberService.getContact(id));
     }
 }

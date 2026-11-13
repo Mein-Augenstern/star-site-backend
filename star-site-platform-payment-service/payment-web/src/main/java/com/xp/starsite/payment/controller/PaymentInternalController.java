@@ -1,5 +1,6 @@
 package com.xp.starsite.payment.controller;
 
+import com.xp.starsite.api.client.PaymentInternalApi;
 import com.xp.starsite.api.dto.PaymentOrderCreateInternalDTO;
 import com.xp.starsite.api.dto.PaymentOrderDTO;
 import com.xp.starsite.common.constants.AuthConstants;
@@ -24,6 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
  * JwtAuthInterceptor 只拦 /api/**，本控制器不经 JWT，仅限内网服务间调用。
  * 调用方统一走 payment-facade 的 PaymentInternalApi；
  * 业务与转换逻辑全部下沉本服务（军规：控制器零映射），动作名 payment.internal.*。
+ * 本控制器 implements PaymentInternalApi——契约签名编译期对齐（路径/参数以 facade 为准，
+ * 实现侧额外叠加 @Valid 参数校验）。
  *
  * @author muyi
  * @since 2026-10
@@ -31,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/internal/payment")
 @RequiredArgsConstructor
-public class PaymentInternalController {
+public class PaymentInternalController implements PaymentInternalApi {
 
     private final PaymentOrderService orderService;
     private final QueryTemplate queryTemplate;

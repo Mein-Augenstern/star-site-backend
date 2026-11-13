@@ -1,5 +1,6 @@
 package com.xp.starsite.health.controller;
 
+import com.xp.starsite.api.client.HealthApi;
 import com.xp.starsite.api.dto.health.HealthReportDTO;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
@@ -24,6 +25,8 @@ import java.util.List;
  * 归属防线：复用 {@link ReportService} 内部方法的归属校验（首参 memberId，fail-closed），
  * 调用方仍须先经 FamilyOwnershipGuard 校验成员归属。
  * 业务逻辑统一经模板包裹（动作名 health.internal.*）；映射下沉在 service（军规：控制器零映射）。
+ * 本控制器 implements HealthApi——契约签名编译期对齐（getReportDetail；listReports 为
+ * 提供方扩展端点，不在契约内）。
  *
  * @author muyi
  * @since 2026-10
@@ -31,7 +34,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/internal/health")
 @RequiredArgsConstructor
-public class HealthInternalController {
+public class HealthInternalController implements HealthApi {
 
     private final ReportService reportService;
     private final QueryTemplate queryTemplate;

@@ -1,5 +1,6 @@
 package com.xp.starsite.reminder.controller;
 
+import com.xp.starsite.api.client.ReminderApi;
 import com.xp.starsite.api.dto.ReminderRuleDTO;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.WriteTemplate;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
  * 服务间内部接口（网关无路由，仅内网）。
  * 跨服务提醒规则的注册/撤销（幂等键 source+bizType+bizId）与手动触发扫描；
  * 动作名 reminder.internal.*。调用方统一走 reminder-facade 的 ReminderApi。
+ * 本控制器 implements ReminderApi——契约签名编译期对齐（upsertRule/deleteRule；
+ * scan 为提供方私有端点，不在契约内）。
  *
  * @author muyi
  * @since 2026-10
@@ -22,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/internal/reminder")
 @RequiredArgsConstructor
-public class ReminderInternalController {
+public class ReminderInternalController implements ReminderApi {
 
     private final ReminderService reminderService;
     private final WriteTemplate writeTemplate;

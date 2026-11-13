@@ -1,5 +1,6 @@
 package com.xp.starsite.family.controller;
 
+import com.xp.starsite.api.client.FamilyApi;
 import com.xp.starsite.api.dto.FamilyMemberSnapshotDTO;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
@@ -19,6 +20,7 @@ import java.util.List;
  * /internal/** 不在网关路由表里，外网请求到网关直接 404；
  * JwtAuthInterceptor 只拦 /api/**，本控制器不经 JWT，仅限内网服务间调用。
  * 调用方统一走 family-facade 的 FamilyApi + FamilyOwnershipGuard。
+ * 本控制器 implements FamilyApi——契约签名编译期对齐（路径/参数以 facade 为准）。
  * 业务逻辑统一经模板包裹（动作名 family.internal.*）。
  *
  * @author muyi
@@ -27,7 +29,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/internal/family")
 @RequiredArgsConstructor
-public class FamilyInternalController {
+public class FamilyInternalController implements FamilyApi {
 
     private final FamilyService familyService;
     private final QueryTemplate queryTemplate;

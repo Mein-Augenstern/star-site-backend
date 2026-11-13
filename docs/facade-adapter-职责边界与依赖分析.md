@@ -40,8 +40,8 @@ facade **不是「对外提供 HTTP 服务」的模块**，它是**给其他服�
 - **依赖**：`*-common-biz` + `spring-boot-starter-web`（重：传递拉入本服务全链实现）
 - **零横切代码**：全局异常处理（`common.exception.GlobalExceptionHandler`）、JWT 拦截器
   （`common.web.JwtAuthInterceptor`）都在 star-site-common，adapter 内无 config/interceptor
-- **契约对齐方式**：`/internal/**` 控制器**不 implements** facade 接口，靠路径约定手工对齐
-  （全仓 grep `implements` 无一处控制器实现 facade 接口）
+- **契约对齐方式**：`/internal/**` 控制器 implements 对应 facade 接口（2026-11-13 起，
+  7 个服务全部对齐，签名漂移编译期暴露；此前靠路径约定手工对齐）
 
 ## 3. 全服务模块清单
 
@@ -168,9 +168,12 @@ facade 轻依赖独立是这套 SOFA/COLA 分层的存在前提：
    聚合 pom `<modules>`、start pom 依赖、reminder 聚合 pom 的 COLA 分层注释；
    Java 包名与 import 零改动，docker/deploy/k8s/.github 零引用（构建只认 `*-start` 的 fat jar），
    验证：全仓 reactor 编译通过 + reminder-web（唯一带测试模块）测试通过
-2. **可选增强**：`/internal/**` 控制器 implements 对应 facade 接口
-   （如 `PaymentInternalController implements PaymentInternalApi`），契约漂移提前到编译期暴露；
-   注意 Feign 接口上的 `@RequestParam` 等注解对服务端同样生效，属低风险对齐
+2. **可选增强（✅ 已实施，2026-11-13）**：`/internal/**` 控制器 implements 对应 facade 接口
+   ——7 服务全部落地（family/health/payment/reminder/file/archive/member；file 的实现类是与
+   FileController 同文件的包级私有 FileInternalController；archive 的 summary 方法更名
+   assetSummary 对齐契约；member/file 的 @PathVariable 补显式名）。提供方扩展端点
+   （health.listReports、reminder.scan）不进契约，留在控制器。控制器保留自身映射注解
+   （不依赖 Spring 5.1+ 接口注解继承），编译期保证的是方法签名与返回类型对齐
 3. **不建议**在可预见的演进里合并 facade 与 adapter/web（理由见 §5）；
    若未来某 facade 确认永远零消费（如 payment-facade 长期不接线），可评估降级为
    「仅 DTO/事件、无 Feign 接口」甚至并入本服务 common-biz，但那是删除契约而非合并模块

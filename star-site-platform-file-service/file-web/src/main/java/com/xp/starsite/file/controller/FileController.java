@@ -1,5 +1,6 @@
 package com.xp.starsite.file.controller;
 
+import com.xp.starsite.api.client.FileApi;
 import com.xp.starsite.common.constants.AuthConstants;
 import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.R;
@@ -89,6 +90,7 @@ public class FileController {
  * <p>
  * 业务逻辑统一经查询模板包裹：模板包掉成功与失败的全部响应处理，
  * Controller 一行返回；动作命名规范 file.internal.*。
+ * 本控制器 implements FileApi——契约签名编译期对齐（路径/参数以 facade 为准）。
  *
  * @author muyi
  * @since 2026-10
@@ -96,7 +98,7 @@ public class FileController {
 @RestController
 @RequestMapping("/internal/file")
 @RequiredArgsConstructor
-class FileInternalController {
+class FileInternalController implements FileApi {
 
     private final FileService fileService;
     private final FileStorage fileStorage;
@@ -109,7 +111,7 @@ class FileInternalController {
      * @return 文件字节内容
      */
     @GetMapping("/{id}/content")
-    public R<byte[]> content(@org.springframework.web.bind.annotation.PathVariable Long id) {
+    public R<byte[]> content(@org.springframework.web.bind.annotation.PathVariable("id") Long id) {
         return queryTemplate.query(FileActions.INTERNAL_CONTENT, () -> {
             FileRecord record = fileService.requireFile(id);
             try {
