@@ -20,16 +20,17 @@
       <artifactId>star-site-common</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <!-- 三组件 starter -->
+    <!-- 三组件 starter（0.2.3 全线对齐：idempotent-starter 0.2.3 传递依赖 sequence-starter
+         0.2.3，避免 0.2.2 core + 0.2.3 starter 混线） -->
     <dependency>
       <groupId>com.xp.starsite</groupId>
       <artifactId>starsite-sequence-spring-boot-starter</artifactId>
-      <version>0.2.2</version>
+      <version>0.2.3</version>
     </dependency>
     <dependency>
       <groupId>com.xp.starsite</groupId>
       <artifactId>starsite-async-command-spring-boot-starter</artifactId>
-      <version>0.2.2</version>
+      <version>0.2.3</version>
     </dependency>
     <!-- 0.2.3：与 star-site-common 引入的 lock 版本对齐（schedule 0.2.3 传递依赖） -->
     <dependency>

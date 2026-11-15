@@ -120,11 +120,12 @@ public class StarSiteLogConfig {
         }
         try {
             // 组件的 MySQL 租约分配器（__global__ 池 + LAST_INSERT_ID 原子取号，语义与原自研一致）
-            long workerId = new com.xp.starsite.sequence.allocator.MysqlWorkerIdAllocator(
+            // （0.2.3 未发布线分包重构：allocator → allocator.mysql，构造签名不变）
+            long workerId = new com.xp.starsite.sequence.allocator.mysql.MysqlWorkerIdAllocator(
                     dataSource, "sys_sequence", appName,
                     appName + "@" + env.getProperty("PID", "0") + "@" + System.currentTimeMillis(),
                     true, 10,
-                    com.xp.starsite.sequence.allocator.MysqlWorkerIdAllocator.WraparoundPolicy.RESET).allocate();
+                    com.xp.starsite.sequence.allocator.mysql.MysqlWorkerIdAllocator.WraparoundPolicy.RESET).allocate();
             log.info("[id] workerId 经 sequence 表分配（starsite-sequence 租约）: service={}, workerId={}", appName, workerId);
             return workerId;
         } catch (Exception e) {

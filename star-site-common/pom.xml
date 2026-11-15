@@ -100,12 +100,8 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- 幂等消费基类用 JdbcTemplate：provided（业务服务的 mybatis-plus 已传递提供） -->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
-            <scope>provided</scope>
-        </dependency>
+        <!-- （原幂等基类 JdbcTemplate provided 依赖已移除：内核改用 starsite-idempotent，
+             spring-jdbc 由 idempotent 核心库传递提供） -->
 
         <!-- DbDigestInterceptor（SQL 摘要拦截器）仅编译期需要 mybatis，provided
              （业务服务自带 mybatis starter 传递提供；运行期由宿主服务的类加载器解析） -->
@@ -119,23 +115,32 @@
              engine 与调度器本体在组件仓，backend 仅做策略编排与兼容门面。
              0.2.1：方言 XML 迁移 sql/ → dialect/（避开 ShardingSphere JDBC 仓储
              对 classpath sql/ 目录 XML 的 JAXB 扫描冲突——分片形态实装实证）。
-             0.2.3：lock 升级与 starsite-schedule 0.2.3 的传递依赖对齐（schedule
-             starter 依赖 lock 0.2.3，混版会在 classpath 产生两版 lock） -->
+             0.2.3 全线对齐：idempotent-starter 0.2.3 传递依赖 sequence-starter 0.2.3，
+             混版（0.2.2 core + 0.2.3 starter）classpath 风险，统一升 0.2.3 -->
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>starsite-sequence</artifactId>
-            <version>0.2.2</version>
+            <version>0.2.3</version>
         </dependency>
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>starsite-async-command-spring-boot-starter</artifactId>
-            <version>0.2.2</version>
+            <version>0.2.3</version>
         </dependency>
         <!-- 分布式锁组件（定时任务多实例防重跑等；db 模式复用各服务 MyBatis + DataSource，
              锁行主键由上面的 sequence 组件发号——引 jar 即用） -->
         <dependency>
             <groupId>com.xp.starsite</groupId>
             <artifactId>starsite-lock-spring-boot-starter</artifactId>
+            <version>0.2.3</version>
+        </dependency>
+        <!-- API 幂等键组件（Stripe 同款语义：重复请求回放首次成功结果、FAILED 释放键重执行）：
+             MQ 幂等消费基类 AbstractIdempotentConsumer 的内核（替换原 event_consume 手工表，
+             修复「业务失败后幂等行已落库 → MQ 重投被跳过 → 失败事件永不重试」缺陷）。
+             starter 传递依赖 sequence-starter 0.2.3，与上面 sequence 对齐 -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>starsite-idempotent-spring-boot-starter</artifactId>
             <version>0.2.3</version>
         </dependency>
 

@@ -2,12 +2,12 @@ package com.xp.starsite.finance.mq;
 
 import com.xp.starsite.api.client.FileApi;
 import com.xp.starsite.common.rpc.RpcCallGuard;
+import com.xp.starsite.idempotent.api.IdempotentClient;
 import com.xp.starsite.finance.repository.FinanceImportLogRepository;
 import com.xp.starsite.finance.service.ImportService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * MQ 消费者条件装配：配置 rocketmq.name-server 时才注册 TOPIC_FILE 消费者。
@@ -23,11 +23,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class FinanceMqConfig {
 
     @Bean
-    public FileUploadedConsumer fileUploadedConsumer(JdbcTemplate jdbcTemplate,
+    public FileUploadedConsumer fileUploadedConsumer(IdempotentClient idempotentClient,
                                                      FileApi fileApi,
                                                      RpcCallGuard rpcCallGuard,
                                                      ImportService importService,
                                                      FinanceImportLogRepository importLogRepository) {
-        return new FileUploadedConsumer(jdbcTemplate, fileApi, rpcCallGuard, importService, importLogRepository);
+        return new FileUploadedConsumer(idempotentClient, fileApi, rpcCallGuard, importService, importLogRepository);
     }
 }

@@ -89,3 +89,8 @@ starsite:
     store: auto
     # 悬挂 RUNNING 判死阈值（须大于任务最长执行时长；lock TTL 5min + 余量）
     stale-threshold-seconds: 900
+  # starsite-idempotent 组件（2026-11 MQ 消费幂等内核迁移，替换 event_consume 手工表）
+  # store=auto：有 DataSource 走 jdbc（idempotent_record 表构造期自动创建）；
+  # scope=消费组、key=eventId；FAILED 释放键 → MQ 重投可重执行（修复旧表失败不重试缺陷）
+  idempotent:
+    store: auto

@@ -13,10 +13,10 @@ import com.xp.starsite.finance.entity.FinanceImportLog;
 import com.xp.starsite.finance.repository.FinanceImportLogRepository;
 import com.xp.starsite.finance.service.ImportService;
 import com.xp.starsite.finance.service.ImportResult;
+import com.xp.starsite.idempotent.api.IdempotentClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.Map;
 
@@ -42,9 +42,9 @@ public class FileUploadedConsumer extends AbstractIdempotentConsumer implements 
     private final ImportService importService;
     private final FinanceImportLogRepository importLogRepository;
 
-    public FileUploadedConsumer(JdbcTemplate jdbcTemplate, FileApi fileApi, RpcCallGuard rpc,
+    public FileUploadedConsumer(IdempotentClient idempotentClient, FileApi fileApi, RpcCallGuard rpc,
                                 ImportService importService, FinanceImportLogRepository importLogRepository) {
-        super(jdbcTemplate, "G_finance_file");
+        super(idempotentClient, "G_finance_file");
         this.fileApi = fileApi;
         this.rpc = rpc;
         this.importService = importService;

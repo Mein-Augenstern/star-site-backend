@@ -1,4 +1,6 @@
 -- MQ 域：消费幂等（star-site-common AbstractIdempotentConsumer）
+-- 2026-11 起幂等内核已迁移至 starsite-idempotent 组件（表 idempotent_record，见 22-idempotent.sql）；
+-- 本表保留存量数据与回滚能力，新消费不再写入
 -- 注意：MySQL 容器 volume 已初始化过的话，本文件不会自动执行，需手动跑一次
 USE star_site;
 

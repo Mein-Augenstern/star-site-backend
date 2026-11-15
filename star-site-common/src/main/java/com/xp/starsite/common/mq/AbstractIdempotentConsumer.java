@@ -1,16 +1,25 @@
 package com.xp.starsite.common.mq;
 
+import com.xp.starsite.idempotent.api.IdempotentClient;
+import com.xp.starsite.idempotent.api.IdempotentResult;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DuplicateKeyException;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * 幂等消费基类：以 (consumerGroup, eventId) 唯一键落 event_consume 表去重。
+ * 幂等消费基类：内核为 starsite-idempotent 组件（{@link IdempotentClient#guard}，
+ * scope=消费组、key=eventId；2026-11 由 event_consume 手工表迁移而来，
+ * 表由 idempotent_record 接管、event_consume 保留存量数据）。
  * <p>
- * 子类实现 doConsume；重复消息直接跳过。注意：doConsume 与幂等记录
- * 不在同一事务（消费端各自管理业务事务），因此本基类适用于
- * 「至少一次投递 + 业务幂等」的场景——doConsume 内部仍须保证业务可重入
- * （如 upsert），极端情况（业务成功、记录幂等失败）由 MQ 重试兜底。
+ * 语义（组件四态映射）：
+ * <ul>
+ *   <li>EXECUTED：首次消费，已执行 doConsume</li>
+ *   <li>REPLAYED：键记忆窗口内重复消息，零执行跳过</li>
+ *   <li>doConsume 异常：组件标记 FAILED 后<b>释放键</b>并原样上抛交 MQ 重试，
+ *       重投时键已释放可重执行——修复旧实现「先落幂等行再消费，业务失败后
+ *       重投被当重复跳过、失败事件永不重试」的缺陷（旧表语义下首败即 at-most-once）</li>
+ *   <li>CONFLICT/FAILED（他方在飞等待耗尽/目睹他方失败）：上抛交 MQ 稍后重投</li>
+ * </ul>
+ * 子类实现 doConsume。注意：组件保证同 eventId 恰一执行，但 doConsume 的业务
+ * 落库与幂等记录不在同一事务（各自管理事务），消费端仍须业务可重入（如 upsert）。
  *
  * @author muyi
  * @since 2026-10
@@ -18,11 +27,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @Slf4j
 public abstract class AbstractIdempotentConsumer {
 
-    private final JdbcTemplate jdbcTemplate;
+    private final IdempotentClient idempotentClient;
     private final String consumerGroup;
 
-    protected AbstractIdempotentConsumer(JdbcTemplate jdbcTemplate, String consumerGroup) {
-        this.jdbcTemplate = jdbcTemplate;
+    protected AbstractIdempotentConsumer(IdempotentClient idempotentClient, String consumerGroup) {
+        this.idempotentClient = idempotentClient;
         this.consumerGroup = consumerGroup;
     }
 
@@ -35,7 +44,7 @@ public abstract class AbstractIdempotentConsumer {
 
     /**
      * 带留痕的幂等消费：mq-consume-digest 一行/次（topic/tag/eventId/状态/耗时），
-     * doConsume 异常原样上抛交 MQ 重试（业务可重入由子类保证）。
+     * doConsume 异常与未获终态（CONFLICT/FAILED）原样上抛交 MQ 重试。
      *
      * @param traceId 发送方透传的 traceId（消息属性 trace_id，可空）
      */
@@ -43,24 +52,33 @@ public abstract class AbstractIdempotentConsumer {
                                               String traceId, Runnable doConsume) {
         com.xp.starsite.common.log.TraceContext.set(traceId);
         long start = System.currentTimeMillis();
-        boolean first;
         try {
-            jdbcTemplate.update(
-                    "INSERT INTO event_consume (consumer_group, event_id, consumed_at) VALUES (?, ?, NOW())",
-                    consumerGroup, eventId);
-            first = true;
-        } catch (DuplicateKeyException e) {
-            log.info("重复事件，跳过: group={}, eventId={}", consumerGroup, eventId);
-            emitConsumeDigest(topic, tag, eventId, "duplicate", null, start);
-            return false;
-        }
-        try {
-            doConsume.run();
-            emitConsumeDigest(topic, tag, eventId, "success", null, start);
-            return true;
-        } catch (Exception e) {
-            emitConsumeDigest(topic, tag, eventId, "error", e.getClass().getSimpleName(), start);
-            throw e;
+            IdempotentResult result;
+            try {
+                result = idempotentClient.guard(consumerGroup, eventId, () -> {
+                    doConsume.run();
+                    return "ok";
+                });
+            } catch (Exception e) {
+                // 动作失败：组件已标 FAILED 释放键后重抛——重投可重执行
+                emitConsumeDigest(topic, tag, eventId, "error", e.getClass().getSimpleName(), start);
+                throw e;
+            }
+            if (result.isExecuted()) {
+                emitConsumeDigest(topic, tag, eventId, "success", null, start);
+                return true;
+            }
+            if (result.isReplayed()) {
+                log.info("重复事件，跳过: group={}, eventId={}", consumerGroup, eventId);
+                emitConsumeDigest(topic, tag, eventId, "duplicate", null, start);
+                return false;
+            }
+            // CONFLICT（他方在飞且等待窗口耗尽）/ FAILED（目睹他方失败）：无确定性结局，
+            // 上抛交 MQ 稍后重投（勿 ACK——首执行可能仍在飞或已失败）
+            String err = result.getError() != null ? result.getError() : result.getKind().name();
+            emitConsumeDigest(topic, tag, eventId, "error", err, start);
+            throw new IllegalStateException("幂等消费未获终态，交 MQ 重投: group=" + consumerGroup
+                    + ", eventId=" + eventId + ", kind=" + result.getKind());
         } finally {
             com.xp.starsite.common.log.TraceContext.clear();
         }

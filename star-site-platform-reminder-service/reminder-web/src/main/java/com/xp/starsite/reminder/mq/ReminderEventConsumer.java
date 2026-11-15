@@ -9,10 +9,10 @@ import com.xp.starsite.common.mq.event.EventTypes;
 import com.xp.starsite.reminder.service.ReminderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.xp.starsite.idempotent.api.IdempotentClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * 提醒事件消费者：Register/Cancel 经 eventId 幂等后分发到规则 upsert/撤销。
@@ -32,8 +32,8 @@ public class ReminderEventConsumer extends AbstractIdempotentConsumer implements
 
     private final ReminderService reminderService;
 
-    public ReminderEventConsumer(JdbcTemplate jdbcTemplate, ReminderService reminderService) {
-        super(jdbcTemplate, "G_reminder_reminder");
+    public ReminderEventConsumer(IdempotentClient idempotentClient, ReminderService reminderService) {
+        super(idempotentClient, "G_reminder_reminder");
         this.reminderService = reminderService;
     }
 

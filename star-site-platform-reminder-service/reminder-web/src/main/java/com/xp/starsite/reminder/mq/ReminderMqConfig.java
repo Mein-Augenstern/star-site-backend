@@ -1,10 +1,10 @@
 package com.xp.starsite.reminder.mq;
 
+import com.xp.starsite.idempotent.api.IdempotentClient;
 import com.xp.starsite.reminder.service.ReminderService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * MQ 消费者条件装配：配置 rocketmq.name-server 时才注册 TOPIC_REMINDER 消费者。
@@ -20,8 +20,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class ReminderMqConfig {
 
     @Bean
-    public ReminderEventConsumer reminderEventConsumer(JdbcTemplate jdbcTemplate,
+    public ReminderEventConsumer reminderEventConsumer(IdempotentClient idempotentClient,
                                                        ReminderService reminderService) {
-        return new ReminderEventConsumer(jdbcTemplate, reminderService);
+        return new ReminderEventConsumer(idempotentClient, reminderService);
     }
 }
