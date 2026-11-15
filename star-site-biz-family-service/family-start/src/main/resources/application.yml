@@ -52,3 +52,9 @@ star:
     timeout:
       connect-ms: 3000
       read-ms: 10000
+
+# starsite-lock 组件（2026-11 建家庭并发防护：同账号并发创建串行化，
+# 锁名 family-create:{ownerMemberId}；db 模式复用本服务 MyBatis + DataSource，锁表自动创建）
+starsite:
+  lock:
+    mode: mysql

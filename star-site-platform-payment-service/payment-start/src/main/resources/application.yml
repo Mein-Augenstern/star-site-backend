@@ -63,3 +63,9 @@ star:
     #   star.payment.alipay.gateway-url（沙箱覆盖为 https://openapi-sandbox.dl.alipaydev.com/gateway）
     # 微信支付 Native（v3）同规则，接入时补齐：
     #   star.payment.wechat.merchant-id / merchant-serial-no / private-key-path / api-v3-key / app-id
+
+# starsite-lock 组件（2026-11 退款并发防护：同支付单并发退款申请串行化，
+# 锁名 payment-refund:{orderId}；db 模式复用本服务 MyBatis + DataSource，锁表自动创建）
+starsite:
+  lock:
+    mode: mysql

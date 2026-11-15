@@ -1,10 +1,12 @@
 package com.xp.starsite.family.controller;
 
 import com.xp.starsite.common.constants.AuthConstants;
+import com.xp.starsite.common.exception.BizException;
 import com.xp.starsite.common.result.R;
 import com.xp.starsite.common.template.QueryTemplate;
 import com.xp.starsite.common.template.WriteTemplate;
 import com.xp.starsite.family.controller.actions.FamilyActions;
+import com.xp.starsite.lock.client.LockClient;
 import com.xp.starsite.family.dto.FamilyCreateDTO;
 import com.xp.starsite.family.dto.FamilyMemberDTO;
 import com.xp.starsite.family.service.FamilyService;
@@ -28,6 +30,13 @@ import java.util.List;
  * 家庭档案接口：家庭建档、成员档案（自然人）增删改查。
  * 全部端点需 JWT；业务逻辑统一经模板包裹（动作名 family.*），
  * 归属防线由 Service 层 FamilyOwnershipGuard 承担（fail-closed）。
+ * <p>
+ * 并发防线（2026-11 starsite-lock）：建家庭经 {@code family-create:{ownerMemberId}}
+ * 锁串行化——count-then-insert 且 family 表无 uk 兜底，并发双击会落两个家庭
+ * （不可恢复的数据污染）；锁在控制器层获取/释放（service.create 是
+ * {@code @Transactional}，事务内 finally 释放会留出「事务提交前窗口」——
+ * 并发方窗口期 countByOwner 读不到未提交的插入行）。顺序重复仍走 service 层
+ * 4005「已有家庭」业务语义不变。
  *
  * @author muyi
  * @since 2026-10
@@ -40,6 +49,7 @@ public class FamilyController {
     private final FamilyService familyService;
     private final QueryTemplate queryTemplate;
     private final WriteTemplate writeTemplate;
+    private final LockClient lockClient;
 
     /**
      * 创建家庭（一个顶梁柱一个家）
@@ -51,8 +61,16 @@ public class FamilyController {
     @PostMapping
     public R<FamilyVO> create(@RequestAttribute(AuthConstants.CLAIM_MEMBER_ID) Long memberId,
                               @Valid @RequestBody FamilyCreateDTO dto) {
-        return writeTemplate.write(FamilyActions.CREATE,
-                () -> familyService.create(memberId, dto));
+        String lock = "family-create:" + memberId;
+        if (!lockClient.tryLock(lock)) {
+            throw new BizException(4005, "已有家庭，无需重复创建");
+        }
+        try {
+            return writeTemplate.write(FamilyActions.CREATE,
+                    () -> familyService.create(memberId, dto));
+        } finally {
+            lockClient.unlock(lock);
+        }
     }
 
     /**
