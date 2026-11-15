@@ -15,12 +15,11 @@ import com.xp.starsite.finance.vo.IncomeExpenseVO;
 import com.xp.starsite.finance.vo.CategoryShareVO;
 import com.xp.starsite.finance.vo.MonthlyTrendVO;
 import com.xp.starsite.finance.vo.NetWorthPointVO;
-import com.xp.starsite.lock.client.LockClient;
+import com.xp.starsite.schedule.api.MisfirePolicy;
+import com.xp.starsite.schedule.api.StarsiteScheduled;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -58,10 +57,6 @@ public class ReportServiceImpl implements ReportService {
     private final FinanceNetWorthSnapshotRepository snapshotRepository;
     private final ArchiveApi archiveApi;
     private final com.xp.starsite.common.rpc.RpcCallGuard rpc;
-    private final LockClient lockClient;
-
-    @Value("${finance.snapshot-cron:0 30 2 * * ?}")
-    private String cronHint;
 
     @Override
     public BalanceSheetVO balanceSheet(Long memberId) {
@@ -237,35 +232,29 @@ public class ReportServiceImpl implements ReportService {
         return vo;
     }
 
-    /** 调度锁名（starsite_lock 表 lock_name） */
-    private static final String SNAPSHOT_LOCK = "finance-daily-snapshot";
-
     /**
      * 每日快照：对全部有账户的 owner 各落一行（uk(owner,date) 幂等兜底）。
-     * 多实例防重跑：starsite-lock 抢锁门控——未抢到锁的实例本轮跳过；
-     * 快照批量执行可能超过默认 30s 锁 TTL，锁过期后他方进入也由 uk 幂等吸收（重复行冲突按单 owner 失败记录）。
+     * <p>
+     * 迁移注记（2026-11-15 组件化二号试点，照 reminder ReminderScanTask 先例）：
+     * 原 @Scheduled + 手写 lockClient.tryLock/unlock 样板已被 {@code @StarsiteScheduled}
+     * 吸收——多实例恰一执行经 starsite-lock 争锁门控（锁名 sch:finance-daily-snapshot），
+     * 执行流水（RUNNING/DONE/FAILED/SKIPPED_LOCKED/SKIPPED_STALE）落 schedule_run_log 表；
+     * 快照批量执行可能超过锁 TTL，锁过期后他方进入也由 uk(owner, date) 幂等吸收
+     * （重复行冲突按单 owner 失败记录）。错过策略 SKIP：快照类任务错过当日等次日。
      */
-    @Scheduled(cron = "${finance.snapshot-cron:0 30 2 * * ?}")
+    @StarsiteScheduled(name = "finance-daily-snapshot", cron = "${finance.snapshot-cron:0 30 2 * * ?}",
+            misfire = MisfirePolicy.SKIP)
     public void dailySnapshot() {
-        if (!lockClient.tryLock(SNAPSHOT_LOCK)) {
-            log.info("每日净资产快照跳过：他方实例持锁执行中");
-            return;
-        }
-        try {
-            List<Long> owners = accountRepository.listDistinctOwnerIds();
-            for (Long owner : owners) {
-                try {
-                    snapshotToday(owner);
-                } catch (Exception e) {
-                    // 单个 owner 失败不阻断整批
-                    log.error("净资产快照失败: owner={}, err={}", owner, e.getMessage());
-                }
+        List<Long> owners = accountRepository.listDistinctOwnerIds();
+        for (Long owner : owners) {
+            try {
+                snapshotToday(owner);
+            } catch (Exception e) {
+                // 单个 owner 失败不阻断整批
+                log.error("净资产快照失败: owner={}, err={}", owner, e.getMessage());
             }
-            log.info("每日净资产快照完成: cron={}, owners={}", cronHint, owners.size());
-        } finally {
-            // 主动释放让位；释放异常组件内部已吞掉并等 TTL 自动过期
-            lockClient.unlock(SNAPSHOT_LOCK);
         }
+        log.info("每日净资产快照完成: owners={}", owners.size());
     }
 
     private List<FinanceAccount> accountsOf(Long memberId) {

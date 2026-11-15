@@ -70,3 +70,13 @@ starsite:
     # 快照对全部 owner 逐个落行，执行时长可能超默认 30s——TTL 放宽到 10 分钟
     # （锁过期后他方进入的场景由 uk(owner, date) 幂等吸收）
     ttl-ms: 600000
+  # starsite-schedule 组件（2026-11-15 dailySnapshot 组件化二号试点，锁名 sch:finance-daily-snapshot；
+  # 上面 lock ttl-ms 10min 同时供 guard 锁使用——快照批量执行时长可能超默认 30s）
+  schedule:
+    store: auto
+    # 悬挂 RUNNING 判死阈值（须大于任务最长执行时长；lock TTL 10min + 余量）
+    stale-threshold-seconds: 1200
+  # starsite-idempotent 组件（2026-11 MQ 消费幂等内核迁移，替换 event_consume 手工表；
+  # scope=消费组、key=eventId，FAILED 释放键 → MQ 重投可重执行）
+  idempotent:
+    store: auto

@@ -49,6 +49,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
+        <!-- starsite-schedule 组件（2026-11-15 dailySnapshot 组件化二号试点；
+             0.2.3 传递依赖 lock 0.2.3，与 star-site-common 锁版本一致） -->
+        <dependency>
+            <groupId>com.xp.starsite</groupId>
+            <artifactId>starsite-schedule-spring-boot-starter</artifactId>
+            <version>0.2.3</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
